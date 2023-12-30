@@ -1,0 +1,6 @@
+#
+- name: Download cephadm server
+  get_url:
+    url: "{{ server_url }}"
+    dest: "{{ cephadm_bin }}"
+    mode: 0755

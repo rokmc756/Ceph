@@ -1,0 +1,5 @@
+major_versioin: 18
+minior_version: 12
+patch_version: 0
+server_url: "https://download.ceph.com/rpm-{{ major_version }}.{{ minior_version }}.{{ patch_version }}/el9/noarch/cephadm"
+

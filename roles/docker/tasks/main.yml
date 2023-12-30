@@ -1,0 +1,17 @@
+---
+# Initialize Linux Hosts
+
+# For now fail if it's not suppoted OS
+- name: Check OS
+  fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
+  when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
+
+#
+- name: Install Docker
+  import_tasks: install.yml
+  tags: install
+
+#
+- name: Uninstall Docker
+  import_tasks: uninstall.yml
+  tags: uninstall

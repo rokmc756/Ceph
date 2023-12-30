@@ -1,0 +1,284 @@
+---
+# Install Docker for Ceph in Rocky 9.x
+
+- name: Alternative python version to python2
+  become: true
+  become_user: root
+  command: alternatives --set python /usr/bin/python2
+  ignore_errors: yes
+  register: python_version_alternative
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+- name: X
+  debug:
+    var: python_version_alternative
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+- name: Uninstall python3-pip
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - "python3-pip"
+
+- name: Install the EPEL repo and other required packages to your system
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: present
+  ignore_errors: yes
+  register: dependency_packages_installed
+  with_items:
+    - "epel-release"
+    - "firewalld"
+    - "python3"
+    - "python3-devel"
+    - "python3-psycopg2"
+    - "python3-pip"
+    - "python3-setuptools"
+    - "libselinux-python3"
+    - "wget"
+    - "yum-utils"
+
+- name: X
+  debug:
+    var: dependency_packages_installed
+
+#
+- name: Install the EPEL repo and other required packages to your system
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: present
+  ignore_errors: yes
+  register: python2_packages_installed
+  with_items:
+    - "python2-pip"
+    - "python2-psycopg2"
+    - "libselinux-python2"
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+#
+- debug:
+    var: epel_installed
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+#
+- name: Disabling SELinux to be required
+  become: true
+  become_user: root
+  selinux:
+    state: disabled
+  register: selinux_disabled
+  notify:
+    - Restart system
+    - Waiting for server to come back after reboot
+
+- name: X
+  debug:
+    var: selinux_disabled.stdout_lines
+
+- name: Check if selinux has been disabled in Configurtion file
+  become: true
+  become_user: root
+  command: grep SELINUX /etc/sysconfig/selinux
+  register: sevalue
+
+- name: X
+  debug:
+    var: sevalue.stdout_lines
+
+- name: Add docker repository
+  become: true
+  become_user: root
+  yum_repository:
+    name: docker-ce
+    description: Add docker repsotiry
+    baseurl: "https://download.docker.com/linux/centos/{{ hostvars[inventory_hostname].ansible_distribution_major_version }}/x86_64/stable/"
+    gpgcheck: "no"
+  register: docker_repo_added
+
+- name: X
+  debug:
+    var: docker_repo_added
+
+- name: Install the latest version of docker-ce packages in all nodes
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "docker-ce"
+  register: docker_installed
+
+- name: X
+  debug:
+    var: docker_installed
+
+- name: Install Docker-Compose using pip
+  become: true
+  become_user: root
+  shell: |
+    export PATH=$PATH:/usr/local/bin && pip3 install --upgrade pip
+    export PATH=$PATH:/usr/local/bin && pip3 install --upgrade --ignore-installed pip setuptools
+    export PATH=$PATH:/usr/local/bin && pip3 install setuptools_rust
+    export PATH=$PATH:/usr/local/bin && pip3 install docker-compose
+  ignore_errors: yes
+  register: docker_compose_installed
+  # pip2 install docker-compose
+  # pip3.6 is on centos or rocky8
+  # pip-3.6 is on /usr/local/bin installed manually
+
+- name:
+  debug:
+    var: docker_installed
+
+- name: Enable and start docker
+  become: true
+  become_user: root
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+    daemon-reload: yes
+  register: docker_enabled
+  until: docker_enabled is succeeded
+  retries: 30
+  delay: 10
+#  failed_when: docker_enabled is failure
+
+- name:
+  debug:
+    var: docker_enabled
+
+- name: Verify that docker is installed correctly by running the hello-world image.
+  become: true
+  become_user: root
+  shell: |
+    docker run hello-world
+  ignore_errors: yes
+  register: docker_run_helloo
+
+- debug:
+    var: docker_run_hellow
+
+
+# previous certs
+# openssl req -x509 -new -nodes -sha512 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/ca.key -out /root/certs/ca.crt
+- name: Generate your own SSL certificate
+  become: true
+  become_user: root
+  shell: |
+    mkdir /root/certs && mkdir /data/certs
+    openssl genrsa -out /root/certs/ca.key 4096
+    openssl req -x509 -new -nodes -sha512 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/ca.key -out /root/certs/ca.crt
+    openssl genrsa -out /root/certs/{{ ansible_fqdn }}.key 4096
+    openssl req -sha512 -new -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/{{ ansible_fqdn }}.key -out /root/certs/{{ ansible_fqdn }}.csr
+  register: certs_generated
+
+- debug:
+    var: certs_generated
+
+- name: Copy an x509 v3 extension file.
+  become: true
+  become_user: root
+  template: src=v3.ext.j2 dest=/root/certs/v3.ext  owner=root group=root mode=644 force=yes
+  register: v3_ext_copied
+
+- debug:
+    var: v3_ext_copied
+
+- name: Generate an x509 v3 extension file.
+  become: true
+  become_user: root
+  shell: |
+    openssl x509 -req -sha512 -days 3650 -extfile /root/certs/v3.ext -CA /root/certs/ca.crt -CAkey /root/certs/ca.key -CAcreateserial -in /root/certs/{{ ansible_fqdn }}.csr -out /root/certs/{{ ansible_fqdn }}.crt
+  register: v3_ext_generated
+
+- debug:
+    var: v3_ext_generated
+
+- name: Generate an x509 v3 extension file.
+  become: true
+  become_user: root
+  shell: |
+    cp -f /root/certs/{{ ansible_fqdn }}.crt /data/certs/
+    cp -f /root/certs/{{ ansible_fqdn }}.key /data/certs/
+    openssl x509 -inform PEM -in /root/certs/{{ ansible_fqdn }}.crt -out /root/certs/{{ ansible_fqdn }}.cert
+    mkdir -p /etc/docker/certs.d/{{ ansible_fqdn }}:443
+    cp -f /root/certs/{{ ansible_fqdn }}.cert /etc/docker/certs.d/{{ ansible_fqdn }}:443/
+    cp -f /root/certs/{{ ansible_fqdn }}.key /etc/docker/certs.d/{{ ansible_fqdn }}:443/
+    cp -f /root/certs/ca.crt /etc/docker/certs.d/{{ ansible_fqdn }}:443/
+  register: certs_generated
+
+- name: X
+  debug:
+    var: certs_generated
+
+
+- name: Configure the docker daemon to use systemd for the management of the cotainer's cgroups and repository
+  become: true
+  become_user: root
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root group=root mode=644 force=yes
+  register: cgroup_docker_configured
+
+- name: X
+  debug:
+    var: cgroup_docker_configured
+
+- name: Restart Docker
+  become: true
+  become_user: root
+  systemd:
+    name: docker
+    state: restarted
+  register: docker_restarted
+  until: docker_restarted is succeeded
+  retries: 3
+  delay: 10
+
+- name: X
+  debug:
+    var: docker_restarted
+
+- name: Alternative python version to python2
+  become: true
+  become_user: root
+  command: alternatives --set python /usr/bin/python2
+  ignore_errors: yes
+  register: python_version_alternative
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+
+- name: X
+  debug:
+    var: python_version_alternative
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+
+- name: Enable and start firewalld
+  become: true
+  become_user: root
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+    daemon-reload: yes
+  register: firewalld_enabled
+
+- name: Allow port 80 through the firewalld.
+  become: true
+  become_user: root
+  shell: |
+    firewall-cmd --permanent --zone=public --add-port=80/tcp
+    firewall-cmd --permanent --zone=public --add-port=22/tcp
+    firewall-cmd --reload
+  register: firewalld_port_allowed
+
+- name:
+  debug:
+    var: firewalld_port_allowed

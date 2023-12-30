@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    print_debug: true
+    install_pkgs: true
+  roles:
+    - { role: docker }
+#    - { role: init-hosts }
