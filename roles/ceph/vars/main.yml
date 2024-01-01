@@ -1,5 +1,7 @@
-major_versioin: 18
-minior_version: 12
-patch_version: 0
-server_url: "https://download.ceph.com/rpm-{{ major_version }}.{{ minior_version }}.{{ patch_version }}/el9/noarch/cephadm"
+cephadm:
+  major_version: 18
+  minor_version: 2
+  patch_version: 0
+  bin: "/root/cephadm"
 
+server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"

@@ -1,0 +1,21 @@
+#- name: Change file ownership, group and permissions
+#  file:
+#    path: "{{ cephadm.bin }}"
+#    owner: root
+#    group: root
+
+- name: Uninstall Ceph Reef
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm install
+  register: uninstall_cephadm
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+- name: Remove repo for Ceph Reef
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm rm-repo
+  register: remove_repo
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

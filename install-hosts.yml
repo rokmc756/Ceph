@@ -6,4 +6,5 @@
     install_pkgs: true
   roles:
     - { role: docker }
+    - { role: ceph }
 #    - { role: init-hosts }

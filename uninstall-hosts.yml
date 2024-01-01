@@ -4,5 +4,6 @@
     print_debug: true
     uninstall_pkgs: true
   roles:
+    - { role: ceph }
     - { role: docker }
 #    - { role: init-hosts }
