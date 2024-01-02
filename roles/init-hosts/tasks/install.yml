@@ -92,3 +92,9 @@
   fail:
     msg: "One or more of the: sshpass, ssh-keygen, ssh-copy-id are missing on this machine. Please install them - using your distribution's recommended method - before continuing."
   when: os_tools_exist.rc != 0
+
+#
+# - name: Activate the SHA1 crypto-policy on top of the DEFAULT policy for enabling ssh-rsa algorithm
+#  shell: update-crypto-policies --set DEFAULT:SHA1
+#  register: activate_sha1
+# Need to reboot system after applying this option and check if there are security issues

@@ -29,6 +29,15 @@
 - debug: msg={{ add_repo }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+- name: Install Podman
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "podman"
+
 - name: Install Ceph Reef
   become: true
   become_user: root
@@ -112,12 +121,21 @@
 - debug: msg={{ enable_ceph_cli }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+- name: Copy SSH Keys to Other Ceph Nodes
+  shell: |
+    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
+  register: copy_ssh_keys
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
 - name: Allow deployment of monitor daemons on arbitrary hosts to add the nodes to the cluster
   become: true
   become_user: root
   shell: |
-    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- for i in {02..03}; do ceph orch host add rk9-ceph-mon$i; done
+    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
   register: add_nodes
+  with_items: "{{ groups['mon'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ add_nodes }}
@@ -127,8 +145,9 @@
   become: true
   become_user: root
   shell: |
-    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- for i in {01..03}; do ceph orch host label add rk9-ceph-mon$i mon-mgr-$i; done
+    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
   register: label_nodes
+  with_items: "{{ groups['mon'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ label_nodes }}
@@ -152,30 +171,30 @@
   become_user: root
   shell: |
     /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch apply mon --unmanaged
-  register: confirm_label
+  register: add_monitors
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-- debug: msg={{ disable_monitor }}
+- debug: msg={{ add_monitors }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-- name: Deploy each additional monitor:
-  become: true
-  become_user: root
-  shell: |
-    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch daemon add mon *<host1:ip>
-  register: deploy_additional_monitor
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-- debug: msg={{ deploy_additional_monitor }}
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
+#- name: Deploy each additional monitor:
+#  become: true
+#  become_user: root
+#  shell: |
+#    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch daemon add mon *<host1:ip>
+#  register: deploy_additional_monitor
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#
+#- debug: msg={{ deploy_additional_monitor }}
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - name: Add the OSD Nodes to the cluster;
   become: true
   become_user: root
   shell: |
-    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- for i in {12..03}; do ceph orch host add rk9-ceph-osd$i; done
+    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
   register: add_osd_nodes
+  with_items: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ add_osd_nodes }}
@@ -185,8 +204,9 @@
   become: true
   become_user: root
   shell: |
-    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- for i in {01..03}; do ceph orch host label add rk9-ceph-osd$i osd$i; done
+    /usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
   register: label_osd_nodes
+  with_items: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ label_osd_nodes }}
@@ -300,5 +320,3 @@
     systemctl list-units 'ceph*'
   register: list_containers
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-

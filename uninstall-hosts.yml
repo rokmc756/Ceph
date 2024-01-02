@@ -5,5 +5,5 @@
     uninstall_pkgs: true
   roles:
     - { role: ceph }
-    - { role: docker }
+#    - { role: docker }
 #    - { role: init-hosts }
