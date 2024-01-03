@@ -26,9 +26,11 @@ Installs Ceph via Puppet. Ceph can also be installed manually. Use of cephadm an
 
 ### Ceph Deployment Requirements:
 Depending on the deployment method you choose, there are different requirements for deploying Ceph storage cluster.\
-In this tutorial, we will use cephadm to deploy Ceph storage cluster on Rocky Linux Below are the requirements for deploying Ceph storage cluster via cephadm;\
-Python 3 (installed by default on Rocky Linux) Systemd Podman or Docker for running containers (we use docker in this setup) Time synchronization (such as chrony or NTP) LVM2 for provisioning storage devices.\
-We are using raw devices without any filesystem in this guide. All the required dependencies are installed automatically by the bootstrap process.
+In this tutorial, we will use cephadm to deploy Ceph storage cluster on Rocky Linux Below are the requirements for\
+deploying Ceph storage cluster via cephadm; Python 3 (installed by default on Rocky Linux) Systemd Podman or Docker\
+for running containers (we use docker in this setup) Time synchronization (such as chrony or NTP) LVM2 for provisioning\
+storage devices. We are using raw devices without any filesystem in this guide.\
+All the required dependencies are installed automatically by the bootstrap process.
 
 ## Supported Ceph version
 * Ceph 18.x and higher versions
