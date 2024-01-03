@@ -42,7 +42,7 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ get_fsid.stdout }}
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
 #
 - name: Set fact for fsid
@@ -62,6 +62,7 @@
 
 #
 - debug: msg={{ remove_osd }}
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
 #
 - name: Remove the cluster hosts and check if there is ceph daemon running
@@ -77,6 +78,7 @@
 
 #
 - debug: msg={{ remove_cluster_hosts }}
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
 #
 - name: Remove the ceph storage cluster
@@ -89,6 +91,7 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ remove_ceph_storage }}
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
 #
 - name: Remove the ceph package repository
@@ -99,6 +102,7 @@
   register: remove_ceph_repo
 
 - debug: msg={{ remove_ceph_repo }}
+  when: print_debug == true
 
 - name: Cleanup the ceph configuration files
   become: true
@@ -109,6 +113,7 @@
   when: inventory_hostname in groups['all']
 
 - debug: msg={{ cleanup_ceph_config }}
+  when: print_debug == true
 
 #
 - name: Cleanup the ceph block devices
@@ -121,6 +126,7 @@
   when: inventory_hostname in groups['osd']
 
 - debug: msg={{ cleanup_ceph_block_devices }}
+  when: inventory_hostname in groups['osd'] and print_debug == true
 
 #
 - name: Kill processes of conmon and podman
@@ -134,6 +140,7 @@
   when: inventory_hostname in groups['all']
 
 - debug: msg={{ kill_conmon_podman }}
+  when: inventory_hostname in groups['all'] and print_debug == true
 
 #
 - name: Uninstall conmon package

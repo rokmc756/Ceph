@@ -1,45 +1,53 @@
 ---
 # Uninstall Docker for Ceph in Rocky 8.x and Rocky 9.x
 #
-- name: Down all docker containers for harbor by docker-compose down -v
-  become: true
-  become_user: root
-  shell: |
-    docker-compose down -v
-  ignore_errors: yes
-  register: docker_compose_down
+#- name: Down all docker containers for harbor by docker-compose down -v
+#  become: true
+#  become_user: root
+#  shell: |
+#    docker-compose down -v
+#  ignore_errors: yes
+#  register: docker_compose_down
+#
+#- name: Print output of down all docker containers
+#  debug:
+#    var: docker_compose_down
+#  when: print_debug == true
 
-- name: Print output of down all docker containers
-  debug:
-    var: docker_compose_down
-
+#
 - name: Verify that docker is uninstalled correctly by removing the hello-world image
   become: true
   become_user: root
-  shell: |
-    docker rm hello-world
+  shell: docker image rm $(docker images | grep hello-world | awk '{print $3}')
   ignore_errors: yes
   register: docker_rm_hello
 
+#
 - name: Print output of uninstalling hello-world docker image
   debug:
     var: docker_rm_hello
+  when: print_debug == true
 
+#
 - name: Uninstall Docker-Compose using pip
   become: true
   become_user: root
   shell: |
-    export PATH=$PATH:/usr/local/bin && pip3 uninstall docker-compose -y
-    export PATH=$PATH:/usr/local/bin && pip3 uninstall setuptools_rust -y
-    export PATH=$PATH:/usr/local/bin && pip3 uninstall pip setuptools -y
-  ignore_errors: yes
+    export PATH=$PATH:/usr/local/bin && pip3 uninstall {{ item }} -y
   register: docker_compose_uninstalled
-  # pip2 install docker-compose
+  ignore_errors: yes
+  with_items:
+    - docker-compose
+    - setuptools_rust
+    - setuptools
 
+#
 - name: Print output of uninstalling docker-comose by pip3
   debug:
-    var: docker_uninstalled
+    var: docker_compose_uninstalled
+  when: print_debug == true
 
+#
 - name: Alternative python version to python3
   become: true
   become_user: root
@@ -47,10 +55,13 @@
   ignore_errors: yes
   register: python_version_alternative
 
+#
 - name: Print output of alternative python3 version
   debug:
     var: python_version_alternative
+  when: print_debug == true
 
+#
 - name: Disable and Stop docker
   become: true
   become_user: root
@@ -61,10 +72,13 @@
   ignore_errors: yes
   register: docker_disabled
 
+#
 - name: Print output of disabling and stopping docker
   debug:
     var: docker_disabled
+  when: print_debug == true
 
+#
 - name: Remove repository (and clean up left-over metadata)
   become: true
   become_user: root
@@ -75,10 +89,13 @@
   ignore_errors: yes
   register: docker_repo_removed
 
+#
 - name: Print output of removing repository
   debug:
     var: docker_repo_removed
+  when: print_debug == true
 
+#
 - name: Alternative python 2.7 version
   become: true
   become_user: root
@@ -87,6 +104,7 @@
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
   # command: update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
+#
 - name: Uninstall the latest version of docker-ce packages
   become: true
   become_user: root
@@ -97,10 +115,13 @@
     - "docker-ce"
   register: docker_uninstalled
 
+#
 - name: Print output of uninstalling docker-ce package
   debug:
     var: docker_uninstalled
+  when: print_debug == true
 
+#
 - name: Uninstall the EPEL repo and other required packages to your system
   become: true
   become_user: root
@@ -113,10 +134,13 @@
     - wget
     - yum-utils
 
+#
 - name: Print output of uninstalling EPEL repo and other required packages
   debug:
     var: epel_uninstalled
+  when: print_debug == true
 
+#
 - name: Enabling SELinux to be required
   become: true
   become_user: root
@@ -128,21 +152,27 @@
     - Restart system
     - Waiting for server to come back after reboot
 
+#
 - name: Print output of enabling SELinux
   debug:
     var: selinux_enabled.stdout_lines
+  when: print_debug == true
 
-- name: Check if selinux has been enabled in Configurtion file
+#
+- name: Check if SELinux has been enabled in Configurtion file
   become: true
   become_user: root
   command: grep SELINUX /etc/sysconfig/selinux
   ignore_errors: yes
   register: sevalue
 
+#
 - name: Print output of checking SELinux eanbled
   debug:
     var: sevalue.stdout_lines
+  when: print_debug == true
 
+#
 - name: Remove certs/docker files and directories
   become: true
   become_user: root
@@ -154,6 +184,8 @@
   ignore_errors: yes
   register: certs_removed
 
+#
 - name: Print output of removing certs/docker files and directories
   debug:
     var: certs_removed
+  when: print_debug == true

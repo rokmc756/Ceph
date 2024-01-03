@@ -11,6 +11,7 @@
 #
 - name: Print cephadm existence
   debug: msg={{ cephadm_bin_exists }}
+  when: print_debug == true
 
 #
 - name: Copy cephadm binary from local directory, roles/ceph/files
@@ -78,6 +79,7 @@
   register: add_repo
 
 - debug: msg={{ add_repo }}
+  when: print_debug == true
 
 #
 - name: Install Podman
@@ -98,3 +100,4 @@
   register: install_ceph_cli_tools
 
 - debug: msg={{ install_ceph_cli_tools }}
+  when: print_debug == true

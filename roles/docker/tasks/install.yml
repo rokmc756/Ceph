@@ -9,11 +9,13 @@
   register: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
+#
 - name: Print output of alternative python
   debug:
     var: python_version_alternative
-  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8 and print_debug == true
 
+#
 - name: Uninstall python3-pip
   become: true
   become_user: root
@@ -23,6 +25,7 @@
   with_items:
     - "python3-pip"
 
+#
 - name: Install the EPEL repo and other required packages to your system
   become: true
   become_user: root
@@ -43,10 +46,13 @@
     - "wget"
     - "yum-utils"
 
+#
 - name: Print output of installing dependency packages
   debug:
     var: dependency_packages_installed
+  when: print_debug == true
 
+#
 - name: Install the EPEL repo and other required packages to your system
   become: true
   become_user: root
@@ -61,11 +67,13 @@
     - "libselinux-python2"
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
+#
 - name: Print output of installing EPEL and required packages
   debug:
     var: epel_installed
-  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8 and print_debug == true
 
+#
 - name: Disabling SELinux to be required
   become: true
   become_user: root
@@ -76,20 +84,26 @@
     - Restart system
     - Waiting for server to come back after reboot
 
+#
 - name: Print output of disabling SELinux
   debug:
     var: selinux_disabled.stdout_lines
+  when: print_debug == true
 
-- name: Check if selinux has been disabled in Configurtion file
+#
+- name: Check if SELinux has been disabled in Configurtion file
   become: true
   become_user: root
   command: grep SELINUX /etc/sysconfig/selinux
   register: sevalue
 
+#
 - name: Print output of disabling SELinux
   debug:
     var: sevalue.stdout_lines
+  when: print_debug == true
 
+#
 - name: Add docker repository
   become: true
   become_user: root
@@ -100,10 +114,13 @@
     gpgcheck: "no"
   register: docker_repo_added
 
+#
 - name: Print output of adding docker repository
   debug:
     var: docker_repo_added
+  when: print_debug == true
 
+#
 - name: Install the latest version of docker-ce packages in all nodes
   become: true
   become_user: root
@@ -114,10 +131,13 @@
     - "docker-ce"
   register: docker_installed
 
+#
 - name: Print output of installing docker-ce packages
   debug:
     var: docker_installed
+  when: print_debug == true
 
+#
 - name: Install Docker-Compose using pip
   become: true
   become_user: root
@@ -132,10 +152,13 @@
   # pip3.6 is on centos or rocky8
   # pip-3.6 is on /usr/local/bin installed manually
 
+#
 - name: Print output of installing docker-compose by pip
   debug:
     var: docker_installed
+  when: print_debug == true
 
+#
 - name: Enable and start docker
   become: true
   become_user: root
@@ -150,21 +173,26 @@
   delay: 10
 #  failed_when: docker_enabled is failure
 
+#
 - name: Print output of enabling and starting docker
   debug:
     var: docker_enabled
+  when: print_debug == true
 
+#
 - name: Verify that docker is installed correctly by running the hello-world image.
   become: true
   become_user: root
   shell: |
     docker run hello-world
   ignore_errors: yes
-  register: docker_run_helloo
+  register: docker_run_hello
 
+#
 - name: Print output of hello-world run by docker
   debug:
-    var: docker_run_hellow
+    var: docker_run_hello
+  when: print_debug == true
 
 # Previous certs
 # openssl req -x509 -new -nodes -sha512 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/ca.key -out /root/certs/ca.crt
@@ -179,20 +207,26 @@
     openssl req -sha512 -new -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/{{ ansible_fqdn }}.key -out /root/certs/{{ ansible_fqdn }}.csr
   register: certs_generated
 
+#
 - name: Print output of generating SSL certificates
   debug:
     var: certs_generated
+  when: print_debug == true
 
+#
 - name: Copy an x509 v3 extension file.
   become: true
   become_user: root
   template: src=v3.ext.j2 dest=/root/certs/v3.ext  owner=root group=root mode=644 force=yes
   register: v3_ext_copied
 
+#
 - name: Print output of copying x509 v3 extension
   debug:
     var: v3_ext_copied
+  when: print_debug == true
 
+#
 - name: Generate an x509 v3 extension file.
   become: true
   become_user: root
@@ -200,10 +234,13 @@
     openssl x509 -req -sha512 -days 3650 -extfile /root/certs/v3.ext -CA /root/certs/ca.crt -CAkey /root/certs/ca.key -CAcreateserial -in /root/certs/{{ ansible_fqdn }}.csr -out /root/certs/{{ ansible_fqdn }}.crt
   register: v3_ext_generated
 
+#
 - name: Print output of generating a x509 v3 extension file
   debug:
     var: v3_ext_generated
+  when: print_debug == true
 
+#
 - name: Generate an x509 v3 extension file.
   become: true
   become_user: root
@@ -217,20 +254,26 @@
     cp -f /root/certs/ca.crt /etc/docker/certs.d/{{ ansible_fqdn }}:443/
   register: certs_generated
 
+#
 - name: Print output of copying SSL certificate files
   debug:
     var: certs_generated
+  when: print_debug == true
 
+#
 - name: Configure the docker daemon to use systemd for the management of the cotainer's cgroups and repository
   become: true
   become_user: root
   template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root group=root mode=644 force=yes
   register: cgroup_docker_configured
 
+#
 - name: Print output of configuring docker daemon for systemd unit
   debug:
     var: cgroup_docker_configured
+  when: print_debug == true
 
+#
 - name: Restart Docker
   become: true
   become_user: root
@@ -242,10 +285,13 @@
   retries: 3
   delay: 10
 
+#
 - name: Print output of restarting docker
   debug:
     var: docker_restarted
+  when: print_debug == true
 
+#
 - name: Alternative python2 version
   become: true
   become_user: root
@@ -254,11 +300,13 @@
   register: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
+#
 - name: Print output of alternative python2 version
   debug:
     var: python_version_alternative
-  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8 and print_debug == true
 
+#
 - name: Enable and start firewalld
   become: true
   become_user: root
@@ -269,10 +317,13 @@
     daemon-reload: yes
   register: firewalld_enabled
 
+#
 - name: Print output of enabling and starting firewalld
   debug:
     var: firewalld_enabled
+  when: print_debug == true
 
+#
 - name: Allow port 80 through the firewalld.
   become: true
   become_user: root
@@ -282,7 +333,8 @@
     firewall-cmd --reload
   register: firewalld_port_allowed
 
+#
 - name: Print output of allowing port 22 and 80 though the firewalld
   debug:
     var: firewalld_port_allowed
-
+  when: print_debug == true

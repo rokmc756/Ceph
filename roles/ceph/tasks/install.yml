@@ -7,6 +7,7 @@
   register: install_ceph
 
 - debug: msg={{ install_ceph }}
+  when: print_debug == true
 
 #
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
@@ -18,6 +19,7 @@
   ignore_errors: true
 
 - debug: msg={{ init_ceph }}
+  when: print_debug == true
 
 #
 - name: Check created containers
@@ -28,6 +30,7 @@
   register: check_containers
 
 - debug: msg={{ check_containers }}
+  when: print_debug == true
 
 #
 - name: List the containers if using podman
@@ -38,6 +41,7 @@
   register: list_podman
 
 - debug: msg={{ list_podman }}
+  when: print_debug == true
 
 #
 - name: List the containers if using podman
@@ -48,6 +52,7 @@
   register: list_containers
 
 - debug: msg={{ list_containers }}
+  when: print_debug == true
 
 #
 - name: Get fsid for setting fact
@@ -58,6 +63,7 @@
   register: get_fsid
 
 - debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
 
 #
 - name: Set fact for fsid
@@ -78,6 +84,7 @@
   register: enable_ceph_cli
 
 - debug: msg={{ enable_ceph_cli }}
+  when: print_debug == true
 
 #
 - name: Copy SSH Keys to Other Ceph Nodes
@@ -96,6 +103,7 @@
   with_items: "{{ groups['mon'] }}"
 
 - debug: msg={{ add_nodes }}
+  when: print_debug == true
 
 #
 - name: Label the nodes with its role
@@ -107,6 +115,7 @@
   with_items: "{{ groups['mon'] }}"
 
 - debug: msg={{ label_nodes }}
+  when: print_debug == true
 
 #
 - name:  Confirm the labelling
@@ -117,6 +126,7 @@
   register: confirm_label
 
 - debug: msg={{ confirm_label }}
+  when: print_debug == true
 
 #
 - name: Manually add monitors and disable automated monitor deployment
@@ -127,6 +137,7 @@
   register: add_monitors
 
 - debug: msg={{ add_monitors }}
+  when: print_debug == true
 
 #- name: Deploy each additional monitor:
 #  become: true
@@ -147,6 +158,7 @@
   with_items: "{{ groups['osd'] }}"
 
 - debug: msg={{ add_osd_nodes }}
+  when: print_debug == true
 
 #
 - name: Label the OSD nodes with its role
@@ -158,6 +170,7 @@
   with_items: "{{ groups['osd'] }}"
 
 - debug: msg={{ label_osd_nodes }}
+  when: print_debug == true
 
 #
 - name: List Ceph Cluster Nodes
@@ -168,6 +181,7 @@
   register: list_ceph_nodes
 
 - debug: msg={{ list_ceph_nodes }}
+  when: print_debug == true
 
 #
 - name: List the devices that are available on the OSD nodes for creating OSDs using the command below;
@@ -178,6 +192,7 @@
   register: list_devices
 
 - debug: msg={{ list_devices }}
+  when: print_debug == true
 
 #
 - name: Attach all devices at once
@@ -186,9 +201,10 @@
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
   register: attach_all_devices
-  #--method {raw|lvm}
+  # --method {raw|lvm}
 
 - debug: msg={{ attach_all_devices }}
+  when: print_debug == true
 
 #
 - name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
@@ -197,9 +213,9 @@
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
   register: disable_auto_create_osds
-  #--method {raw|lvm}
 
 - debug: msg={{ disable_auto_create_osds }}
+  when: print_debug == true
 
 # To manually create an OSD from a specific device on a specific host:
 # ceph orch daemon add osd <host>:<device-path>
@@ -213,6 +229,7 @@
   register: check_ceph_health
 
 - debug: msg={{ check_ceph_health }}
+  when: print_debug == true
 
 #
 - name: Check OSDs
@@ -221,9 +238,9 @@
   shell: |
     {{ cephadm_cmd }} ceph osd tree
   register: check_osd_tree
-  #--method {raw|lvm}
 
 - debug: msg={{ check_osd_tree }}
+  when: print_debug == true
 
 #
 - name: Get a list of Ceph services
@@ -234,6 +251,7 @@
   register: check_ceph_services
 
 - debug: msg={{ check_ceph_services }}
+  when: print_debug == true
 
 #
 - name: Check created containers
@@ -244,6 +262,7 @@
   register: check_containers
 
 - debug: msg={{ check_containers }}
+  when: print_debug == true
 
 #
 - name: List the containers if using podman
@@ -254,6 +273,7 @@
   register: list_containers
 
 - debug: msg={{ list_containers }}
+  when: print_debug == true
 
 #
 - name: Activate the telemetry module
@@ -265,6 +285,7 @@
   # ceph telemetry off
 
 - debug: msg={{ activate_telemetry_module }}
+  when: print_debug == true
 
 #
 - name: Change admin password for Ceph Dashboard
@@ -276,3 +297,4 @@
   # ceph telemetry off
 
 - debug: msg={{ change_admin_password }}
+  when: print_debug == true
