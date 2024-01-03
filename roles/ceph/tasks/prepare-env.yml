@@ -92,7 +92,7 @@
     - "podman"
 
 #
-- name: Install Ceph CLI tools on the host;
+- name: Install Ceph CLI tools on the host
   become: true
   become_user: root
   shell: |
