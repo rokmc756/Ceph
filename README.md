@@ -18,8 +18,7 @@ Manages metadata for the Ceph File System (CephFS). Coordinates metadata access 
 Also called “Ceph Object Gateway” is a component of the Ceph storage system that provides object storage services with a RESTful interface. RGW allows applications and users to interact with Ceph storage using industry-standard APIs, such as the S3 (Simple Storage Service) API (compatible with Amazon S3) and the Swift API (compatible with OpenStack Swift).
 
 ### Ceph Storage Cluster Deployment Methods:
-There are different methods you can use to deploy Ceph storage cluster.\
-The cephadm leverages container technology (specifically, Docker containers) to deploy and manage Ceph services on a cluster of machines.\
+There are different methods you can use to deploy Ceph storage cluster. The cephadm leverages container technology (specifically, Docker containers) to deploy and manage Ceph services on a cluster of machines.\
 Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs.\
 ceph-ansible deploys and manages Ceph clusters using Ansible. ceph-salt installs Ceph using Salt and cephadm. jaas.ai/ceph-mon installs Ceph using Juju.\
 Installs Ceph via Puppet. Ceph can also be installed manually. Use of cephadm and rooks are the recommended methods for deploying Ceph storage cluster.
