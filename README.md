@@ -19,10 +19,12 @@ Also called “Ceph Object Gateway” is a component of the Ceph storage system 
 
 ### Ceph Storage Cluster Deployment Methods
 There are different methods you can use to deploy Ceph storage cluster. The cephadm leverages container technology (specifically, Docker containers) to deploy and manage Ceph services on a cluster of machines. Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs.\
+\
 ceph-ansible deploys and manages Ceph clusters using Ansible. ceph-salt installs Ceph using Salt and cephadm. jaas.ai/ceph-mon installs Ceph using Juju. Installs Ceph via Puppet. Ceph can also be installed manually. Use of cephadm and rooks are the recommended methods for deploying Ceph storage cluster.
 
 ### Ceph Deployment Requirements
 Depending on the deployment method you choose, there are different requirements for deploying Ceph storage cluster. In this tutorial, we will use cephadm to deploy Ceph storage cluster on Rocky Linux Below are the requirements for deploying Ceph storage cluster via cephadm; Python 3 (installed by default on Rocky Linux) Systemd Podman or Docker for running containers (we use docker in this setup) Time synchronization (such as chrony or NTP) LVM2 for provisioning storage devices.\
+\
 We are using raw devices without any filesystem in this guide. All the required dependencies are installed automatically by the bootstrap process.
 
 ## Supported Ceph version
