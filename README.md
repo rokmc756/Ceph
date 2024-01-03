@@ -1,6 +1,6 @@
 ## The Ceph Storage Cluster Architecture
 <table width="100%">
-<tr><td><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp" width="100%" height="100%" align="center"></img></td></tr>
+<tr><td><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp" width="120%" height="100%" align="center"></img></td></tr>
 </table>
 
 ## Terminologies of Ceph Storage
