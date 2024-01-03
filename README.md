@@ -49,9 +49,94 @@ Python 3 (installed by default on Rocky Linux) Systemd Podman or Docker for runn
 We are using raw devices without any filesystem in this guide. All the required dependencies are installed automatically by the bootstrap process.
 ~~~
 
-## The Archiecture example to deploy Ceph Storage Cluster
+
+## How to deploy Ceph Cluster by ansible playbook
+#### 1) The Archiecture example to deploy Ceph Storage Cluster
 ![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png)
 
+#### 2) Configure inventory for Ceph
+```
+$ vi ansible-hosts
+[all:vars]
+ssh_key_filename="id_rsa"
+remote_machine_username="jomoon"
+remote_machine_password="changeme"
+
+[mon]
+rk9-ceph-mon01 ansible_ssh_host=192.168.0.221
+rk9-ceph-mon02 ansible_ssh_host=192.168.0.222
+rk9-ceph-mon03 ansible_ssh_host=192.168.0.223
+
+[osd]
+rk9-ceph-osd01 ansible_ssh_host=192.168.0.224
+rk9-ceph-osd02 ansible_ssh_host=192.168.0.225
+rk9-ceph-osd03 ansible_ssh_host=192.168.0.226
+```
+#### 3) Configure variables for deploying Ceph
+```
+$ vi roles/init-hosts/vars/main.yml
+ansible_ssh_pass: "changeme"
+ansible_become_pass: "changeme"
+sudo_user: "ceph"
+sudo_group: "ceph"
+local_sudo_user: "moonja"
+wheel_group: "wheel"     # RHEL / CentOS / Rocky
+# wheel_group: "sudo"    # Debian / Ubuntu
+root_user_pass: "changeme"
+sudo_user_pass: "changeme"
+sudo_user_home_dir: "/home/{{ sudo_user }}"
+domain_name: "jtest.pivotal.io"
+
+$ vi roles/docker/vars/main.yml
+cert_country: "KR"
+cert_state: "Seoul"
+cert_location: "Gangnam"
+cert_org: "Weka"
+cert_org_unit: "Weka GSS"
+cert_email_address: "rokmc756@gmail.com"
+
+$ vi roles/ceph/vars/main.yml
+cephadm:
+  major_version: 18
+  minor_version: 2
+  patch_version: 0
+  bin: "/root/cephadm"
+
+server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
+download_cephadm: false
+```
+
+#### 4) Deploy Ceph Storage Cluster
+```
+$ vi install-hosts.yml
+---
+- hosts: all
+  become: yes
+  vars:
+    print_debug: true
+    install_cephadm: true
+  roles:
+    - { role: init-hosts }
+    - { role: docker }
+    - { role: ceph }
+
+$ make install
+```
+#### 5) Destroy Ceph Storage Cluster
+```
+$ vi uninstall-hosts.yml
+- hosts: all
+  become: yes
+  vars:
+    print_debug: true
+    uninstall_pkgs: true
+  roles:
+    - { role: ceph }
+    - { role: docker }
+    - { role: init-hosts }
+
+$ make uninstall
+```
 
 ## How to change admin password for Ceph Dashboard
 ```
@@ -66,4 +151,3 @@ $ ceph dashboard ac-user-set-password admin -i ./dashboard_password.yml
 - https://kifarunix.com/install-docker-on-rocky-linux/?expand_article=1
 - https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
 - https://gist.github.com/fmount/6203013d1c423dd831e3717b9986551b
-
