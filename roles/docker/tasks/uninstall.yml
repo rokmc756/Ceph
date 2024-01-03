@@ -1,6 +1,6 @@
 ---
-# Uninstall Docker for Ceph in Rocky 9.x
-
+# Uninstall Docker for Ceph in Rocky 8.x and Rocky 9.x
+#
 - name: Down all docker containers for harbor by docker-compose down -v
   become: true
   become_user: root
@@ -9,11 +9,11 @@
   ignore_errors: yes
   register: docker_compose_down
 
-- name: X
+- name: Print output of down all docker containers
   debug:
     var: docker_compose_down
 
-- name: Verify that docker is uninstalled correctly by removing the hello-world image.
+- name: Verify that docker is uninstalled correctly by removing the hello-world image
   become: true
   become_user: root
   shell: |
@@ -21,7 +21,7 @@
   ignore_errors: yes
   register: docker_rm_hello
 
-- name: X
+- name: Print output of uninstalling hello-world docker image
   debug:
     var: docker_rm_hello
 
@@ -36,7 +36,7 @@
   register: docker_compose_uninstalled
   # pip2 install docker-compose
 
-- name: X
+- name: Print output of uninstalling docker-comose by pip3
   debug:
     var: docker_uninstalled
 
@@ -47,7 +47,7 @@
   ignore_errors: yes
   register: python_version_alternative
 
-- name: X
+- name: Print output of alternative python3 version
   debug:
     var: python_version_alternative
 
@@ -61,7 +61,7 @@
   ignore_errors: yes
   register: docker_disabled
 
-- name: X
+- name: Print output of disabling and stopping docker
   debug:
     var: docker_disabled
 
@@ -75,7 +75,7 @@
   ignore_errors: yes
   register: docker_repo_removed
 
-- name: X
+- name: Print output of removing repository
   debug:
     var: docker_repo_removed
 
@@ -97,7 +97,7 @@
     - "docker-ce"
   register: docker_uninstalled
 
-- name: X
+- name: Print output of uninstalling docker-ce package
   debug:
     var: docker_uninstalled
 
@@ -113,7 +113,7 @@
     - wget
     - yum-utils
 
-- name: X
+- name: Print output of uninstalling EPEL repo and other required packages
   debug:
     var: epel_uninstalled
 
@@ -125,10 +125,10 @@
   register: selinux_enabled
   ignore_errors: yes
   notify:
-    - restart system
-    - waiting for server to come back after reboot
+    - Restart system
+    - Waiting for server to come back after reboot
 
-- name: X
+- name: Print output of enabling SELinux
   debug:
     var: selinux_enabled.stdout_lines
 
@@ -139,11 +139,11 @@
   ignore_errors: yes
   register: sevalue
 
-- name: X
+- name: Print output of checking SELinux eanbled
   debug:
     var: sevalue.stdout_lines
 
-- name: Remnove certs and harbor files and directories
+- name: Remove certs/docker files and directories
   become: true
   become_user: root
   shell: |
@@ -154,6 +154,6 @@
   ignore_errors: yes
   register: certs_removed
 
-- name: X
+- name: Print output of removing certs/docker files and directories
   debug:
     var: certs_removed

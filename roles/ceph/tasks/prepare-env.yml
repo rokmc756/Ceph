@@ -1,0 +1,100 @@
+#
+- name: Define filename of cephadm
+  set_fact:
+    cephadm_file_name: cephadm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}
+
+#
+- name: Check if cephadm binary is already existed
+  stat: path={{ cephadm.bin }}
+  register: cephadm_bin_exists
+
+#
+- name: Print cephadm existence
+  debug: msg={{ cephadm_bin_exists }}
+
+#
+- name: Copy cephadm binary from local directory, roles/ceph/files
+  copy: src={{ cephadm_file_name }}.gz dest=/tmp/{{ cephadm_file_name }}.gz mode=0644 owner=root group=root
+  register: local_copy_cephadm
+  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#
+- name: Gunzip cephadm gz file
+  become: yes
+  shell: ( gunzip -c {{ item }} > /root/cephadm )
+  register: gunzip_cephadm
+  with_items:
+    - "/tmp/{{ cephadm_file_name }}.gz"
+  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+- name: Change executable permisssion for cephadm
+  become: yes
+  file:
+    path: "/root/cephadm"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+
+#
+#- name: Unarchive cephadm gz file
+#  unarchive:
+#    src: "/tmp/{{ cephadm_file_name }}.gz"
+#    dest: "/root"
+#    owner: "root"
+#    group: "root"
+#    mode: "0755"
+#    remote_src: yes
+#  register: unarchive_cephadm
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#- name: Hard link the file into directory
+#  file:
+#    src: "/root/{{ cephadm_file_name }}"
+#    dest: "/root/cephadm"
+#    owner: "root"
+#    group: "root"
+#    mode: "0755"
+#    state: hard
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#
+- name: Download cephadm
+  become: true
+  become_user: root
+  get_url:
+    url: "{{ server_url }}"
+    dest: "{{ cephadm.bin }}"
+    owner: root
+    group: root
+    mode: 0755
+  when: cephadm_bin_exists.stat.exists == false and download_cephadm == true
+
+#
+- name: Add repo for Ceph Reef for all hosts
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm add-repo --release reef
+  register: add_repo
+
+- debug: msg={{ add_repo }}
+
+#
+- name: Install Podman
+  become: true
+  become_user: root
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "podman"
+
+#
+- name: Install Ceph CLI tools on the host;
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm install ceph-common
+  register: install_ceph_cli_tools
+
+- debug: msg={{ install_ceph_cli_tools }}

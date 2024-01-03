@@ -1,0 +1,30 @@
+- name: Disable Firewalld Port Policy for Name nodes
+  firewalld: port={{ item }}/tcp permanent=true state=disabled zone=public immediate=yes
+  loop: "{{ nn_firewall_ports }}"
+  ignore_errors: yes
+  when: inventory_hostname in groups['master'] or inventory_hostname in groups['standby']
+  notify: firewall restart
+
+- name: Disable Firewalld Port Policy for Data nodes
+  firewalld: port={{ item }}/tcp permanent=true state=disabled zone=public immediate=yes
+  loop: "{{ dn_firewall_ports }}"
+  ignore_errors: yes
+  when: inventory_hostname in groups['workers']
+  notify: firewall restart
+
+- name: Disable Firewalld Port Policy for Common
+  firewalld: port={{ item }}/tcp permanent=true state=disabled zone=public immediate=yes
+  loop: "{{ common_firewall_ports }}"
+  ignore_errors: yes
+  when: inventory_hostname in groups['master'] or inventory_hostname in groups['standby'] or inventory_hostname in groups['workers']
+  notify: firewall restart
+
+- name: Reset ruleset for public zone in firewalld
+  shell: |
+    firewall-cmd --load-zone-defaults=public --permanent
+    firewall-cmd --reload
+  when: inventory_hostname in groups['master'] or inventory_hostname in groups['standby'] or inventory_hostname in groups['workers']
+
+- name: Disable and Stop Firewalld
+  service: name=firewalld state=stopped
+  when: inventory_hostname in groups['master'] or inventory_hostname in groups['standby'] or inventory_hostname in groups['workers']

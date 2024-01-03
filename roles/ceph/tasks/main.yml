@@ -7,11 +7,17 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
-- name: Install Docker
-  import_tasks: install.yml
+- name: Prepare environment to lanuch ceph installation
+  import_tasks: prepare-env.yml
   tags: install
 
 #
-- name: Uninstall Docker
+- name: Install Ceph
+  import_tasks: install.yml
+  tags: install
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Uninstall Ceph
   import_tasks: uninstall.yml
   tags: uninstall

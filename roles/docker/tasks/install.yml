@@ -1,6 +1,6 @@
 ---
-# Install Docker for Ceph in Rocky 9.x
-
+# Install Docker for Ceph in Rocky 8.x and 9.x
+#
 - name: Alternative python version to python2
   become: true
   become_user: root
@@ -9,7 +9,7 @@
   register: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
-- name: X
+- name: Print output of alternative python
   debug:
     var: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
@@ -43,11 +43,10 @@
     - "wget"
     - "yum-utils"
 
-- name: X
+- name: Print output of installing dependency packages
   debug:
     var: dependency_packages_installed
 
-#
 - name: Install the EPEL repo and other required packages to your system
   become: true
   become_user: root
@@ -62,12 +61,11 @@
     - "libselinux-python2"
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
-#
-- debug:
+- name: Print output of installing EPEL and required packages
+  debug:
     var: epel_installed
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
-#
 - name: Disabling SELinux to be required
   become: true
   become_user: root
@@ -78,7 +76,7 @@
     - Restart system
     - Waiting for server to come back after reboot
 
-- name: X
+- name: Print output of disabling SELinux
   debug:
     var: selinux_disabled.stdout_lines
 
@@ -88,7 +86,7 @@
   command: grep SELINUX /etc/sysconfig/selinux
   register: sevalue
 
-- name: X
+- name: Print output of disabling SELinux
   debug:
     var: sevalue.stdout_lines
 
@@ -102,7 +100,7 @@
     gpgcheck: "no"
   register: docker_repo_added
 
-- name: X
+- name: Print output of adding docker repository
   debug:
     var: docker_repo_added
 
@@ -116,7 +114,7 @@
     - "docker-ce"
   register: docker_installed
 
-- name: X
+- name: Print output of installing docker-ce packages
   debug:
     var: docker_installed
 
@@ -134,7 +132,7 @@
   # pip3.6 is on centos or rocky8
   # pip-3.6 is on /usr/local/bin installed manually
 
-- name:
+- name: Print output of installing docker-compose by pip
   debug:
     var: docker_installed
 
@@ -152,7 +150,7 @@
   delay: 10
 #  failed_when: docker_enabled is failure
 
-- name:
+- name: Print output of enabling and starting docker
   debug:
     var: docker_enabled
 
@@ -164,11 +162,11 @@
   ignore_errors: yes
   register: docker_run_helloo
 
-- debug:
+- name: Print output of hello-world run by docker
+  debug:
     var: docker_run_hellow
 
-
-# previous certs
+# Previous certs
 # openssl req -x509 -new -nodes -sha512 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/ca.key -out /root/certs/ca.crt
 - name: Generate your own SSL certificate
   become: true
@@ -181,7 +179,8 @@
     openssl req -sha512 -new -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_location }}/O={{ cert_org }}/OU={{ cert_org_unit }}/CN={{ ansible_fqdn }}" -key /root/certs/{{ ansible_fqdn }}.key -out /root/certs/{{ ansible_fqdn }}.csr
   register: certs_generated
 
-- debug:
+- name: Print output of generating SSL certificates
+  debug:
     var: certs_generated
 
 - name: Copy an x509 v3 extension file.
@@ -190,7 +189,8 @@
   template: src=v3.ext.j2 dest=/root/certs/v3.ext  owner=root group=root mode=644 force=yes
   register: v3_ext_copied
 
-- debug:
+- name: Print output of copying x509 v3 extension
+  debug:
     var: v3_ext_copied
 
 - name: Generate an x509 v3 extension file.
@@ -200,7 +200,8 @@
     openssl x509 -req -sha512 -days 3650 -extfile /root/certs/v3.ext -CA /root/certs/ca.crt -CAkey /root/certs/ca.key -CAcreateserial -in /root/certs/{{ ansible_fqdn }}.csr -out /root/certs/{{ ansible_fqdn }}.crt
   register: v3_ext_generated
 
-- debug:
+- name: Print output of generating a x509 v3 extension file
+  debug:
     var: v3_ext_generated
 
 - name: Generate an x509 v3 extension file.
@@ -216,10 +217,9 @@
     cp -f /root/certs/ca.crt /etc/docker/certs.d/{{ ansible_fqdn }}:443/
   register: certs_generated
 
-- name: X
+- name: Print output of copying SSL certificate files
   debug:
     var: certs_generated
-
 
 - name: Configure the docker daemon to use systemd for the management of the cotainer's cgroups and repository
   become: true
@@ -227,7 +227,7 @@
   template: src=daemon.json.j2 dest=/etc/docker/daemon.json owner=root group=root mode=644 force=yes
   register: cgroup_docker_configured
 
-- name: X
+- name: Print output of configuring docker daemon for systemd unit
   debug:
     var: cgroup_docker_configured
 
@@ -242,11 +242,11 @@
   retries: 3
   delay: 10
 
-- name: X
+- name: Print output of restarting docker
   debug:
     var: docker_restarted
 
-- name: Alternative python version to python2
+- name: Alternative python2 version
   become: true
   become_user: root
   command: alternatives --set python /usr/bin/python2
@@ -254,8 +254,7 @@
   register: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
-
-- name: X
+- name: Print output of alternative python2 version
   debug:
     var: python_version_alternative
   when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
@@ -270,6 +269,10 @@
     daemon-reload: yes
   register: firewalld_enabled
 
+- name: Print output of enabling and starting firewalld
+  debug:
+    var: firewalld_enabled
+
 - name: Allow port 80 through the firewalld.
   become: true
   become_user: root
@@ -279,6 +282,7 @@
     firewall-cmd --reload
   register: firewalld_port_allowed
 
-- name:
+- name: Print output of allowing port 22 and 80 though the firewalld
   debug:
     var: firewalld_port_allowed
+

@@ -5,3 +5,4 @@ cephadm:
   bin: "/root/cephadm"
 
 server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
+download_cephadm: false
