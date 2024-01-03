@@ -1,3 +1,9 @@
+## The Ceph Storage Cluster Architecture
+![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp)
+
+## The Archiecture example to deploy Ceph Storage Cluster
+![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png)
+
 
 ## How to change admin password for Ceph Dashboard
 ```
