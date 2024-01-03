@@ -49,6 +49,38 @@ Python 3 (installed by default on Rocky Linux) Systemd Podman or Docker for runn
 We are using raw devices without any filesystem in this guide. All the required dependencies are installed automatically by the bootstrap process.
 ~~~
 
+## Supported Ceph version
+* Ceph 18.x and higher versions
+## Supported Platform and OS
+* Virtual Machines
+* Baremetal
+* CentOS/Rocky Linux 9.x
+## Prerequisite
+* MacOS or Fedora/CentOS/RHEL should have installed ansible as ansible host.
+* Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt
+## Prepare ansible host to run vmware-postgres ansible playbook
+* MacOS
+```
+$ xcode-select --install
+$ brew install ansible
+$ brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
+```
+* Fedora/CentOS/RHEL
+```
+$ sudo yum install ansible
+```
+## Prepareing OS
+* Configure Yum / Local & EPEL Repostiory
+## Download / configure / run VMware Postgres
+```
+$ git clone https://github.com/rokmc756/Ceph
+$ cd Ceph
+$ vi Makefile
+~~ snip
+ANSIBLE_HOST_PASS="changeme"    # It should be changed with password of user in ansible host that vmware-postgres would be run.
+ANSIBLE_TARGET_PASS="changeme"  # It should be changed with password of sudo user in managed nodes that vmware-postgres would be installed.
+~~ snip
+```
 
 ## How to deploy Ceph Cluster by ansible playbook
 #### 1) The Archiecture example to deploy Ceph Storage Cluster
