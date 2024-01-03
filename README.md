@@ -3,7 +3,9 @@
 
 ## Terminologies of Ceph Storage
 ### Ceph Object Storage Daemon (OSD, ceph-osd)
+```
 It provides ceph object data store. It also performs data replication, data recovery, rebalancing and provides storage information to Ceph Monitor. At least an OSD is required per storage device.
+```
 
 ### Ceph Monitor (ceph-mon)
 It maintains maps of the entire Ceph cluster state including monitor map, manager map, the OSD map, and the CRUSH map. Manages authentication between daemons and clients. A Ceph cluster must contain a minimum of three running monitors in order to be both redundant and highly-available.
