@@ -1,5 +1,7 @@
 ## The Ceph Storage Cluster Architecture
-<img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp" width="100%" height="100%" align="center"></img>
+<table border='0'>
+<tr><td align='center' border='0'><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp" width="100%" height="100%" align="center"></img></td></tr>
+</table>
 
 ## Terminologies of Ceph Storage
 ### Ceph Object Storage Daemon (OSD, ceph-osd)
