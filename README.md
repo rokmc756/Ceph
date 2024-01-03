@@ -1,5 +1,5 @@
 ## The Ceph Storage Cluster Architecture
-![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp)
+![alt text](<img src='https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp' width='100%' height="100%'></img>)
 
 ## Terminologies of Ceph Storage
 ### Ceph Object Storage Daemon (OSD, ceph-osd)
@@ -62,7 +62,9 @@ ANSIBLE_TARGET_PASS="changeme"  # It should be changed with password of sudo use
 
 ## How to deploy Ceph Cluster by ansible playbook
 #### 1) The Archiecture example to deploy Ceph Storage Cluster
-![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png)
+![alt text](<img src='https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png' width='100%' height="100%'></img>)
+
+
 
 #### 2) Configure inventory for Ceph
 ```
