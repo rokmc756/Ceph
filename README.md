@@ -1,6 +1,67 @@
 ## The Ceph Storage Cluster Architecture
 ![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_architecture.webp)
 
+## Terminology
+### Ceph Object Storage Daemon (OSD, ceph-osd):
+```
+It provides ceph object data store.
+It also performs data replication , data recovery, rebalancing and provides storage information to Ceph Monitor.
+At least an OSD is required per storage device.
+```
+
+### Ceph Monitor (ceph-mon):
+```
+It maintains maps of the entire Ceph cluster state including monitor map, manager map, the OSD map, and the CRUSH map.
+manages authentication between daemons and clients.
+A Ceph cluster must contain a minimum of three running monitors in order to be both redundant and highly-available.
+```
+
+### Ceph Maanger (ceph-mgr):
+```
+keeps track of runtime metrics and the current state of the Ceph cluster, including storage utilization, current performance metrics, and system load.
+manages and exposes Ceph cluster web dashboard and API.
+At least two managers are required for HA.
+```
+
+### Ceph Metadata Server (MDS):
+```
+Manages metadata for the Ceph File System (CephFS). Coordinates metadata access and ensures consistency across clients.
+One or more, depending on the requirements of the CephFS.
+```
+
+### RADOS Gateway (RGW):
+```
+Also called “Ceph Object Gateway”
+is a component of the Ceph storage system that provides object storage services with a RESTful interface. RGW allows applications and users to interact with Ceph storage using industry-standard APIs, such as the S3 (Simple Storage Service) API (compatible with Amazon S3) and the Swift API (compatible with OpenStack Swift).
+```
+
+### Ceph Storage Cluster Deployment Methods:
+```
+There are different methods you can use to deploy Ceph storage cluster.
+cephadm leverages container technology (specifically, Docker containers) to deploy and manage Ceph services on a cluster of machines.
+Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs.
+ceph-ansible deploys and manages Ceph clusters using Ansible.
+ceph-salt installs Ceph using Salt and cephadm.
+jaas.ai/ceph-mon installs Ceph using Juju.
+Installs Ceph via Puppet.
+Ceph can also be installed manually.
+
+Use of cephadm and rooks are the recommended methods for deploying Ceph storage cluster.
+```
+
+### Ceph Deployment Requirements:
+```
+Depending on the deployment method you choose, there are different requirements for deploying Ceph storage cluster
+In this tutorial, we will use cephadm to deploy Ceph storage cluster on Rocky Linux
+Below are the requirements for deploying Ceph storage cluster via cephadm;
+Python 3 (installed by default on Rocky Linux)
+Systemd
+Podman or Docker for running containers (we use docker in this setup)
+Time synchronization (such as chrony or NTP)
+LVM2 for provisioning storage devices. We are using raw devices without any filesystem in this guide.
+All the required dependencies are installed automatically by the bootstrap process.
+```
+
 ## The Archiecture example to deploy Ceph Storage Cluster
 ![alt text](https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png)
 
