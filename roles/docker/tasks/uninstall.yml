@@ -1,24 +1,10 @@
 ---
 # Uninstall Docker for Ceph in Rocky 8.x and Rocky 9.x
 #
-#- name: Down all docker containers for harbor by docker-compose down -v
-#  become: true
-#  become_user: root
-#  shell: |
-#    docker-compose down -v
-#  ignore_errors: yes
-#  register: docker_compose_down
-#
-#- name: Print output of down all docker containers
-#  debug:
-#    var: docker_compose_down
-#  when: print_debug == true
-
-#
 - name: Verify that docker is uninstalled correctly by removing the hello-world image
   become: true
   become_user: root
-  shell: docker image rm $(docker images | grep hello-world | awk '{print $3}')
+  shell: docker image rm -f $(docker images | grep hello-world | awk '{print $3}')
   ignore_errors: yes
   register: docker_rm_hello
 
@@ -54,12 +40,13 @@
   command: alternatives --set python /usr/bin/python3
   ignore_errors: yes
   register: python_version_alternative
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8
 
 #
 - name: Print output of alternative python3 version
   debug:
     var: python_version_alternative
-  when: print_debug == true
+  when: hostvars[inventory_hostname].ansible_distribution_major_version|int <= 8 and print_debug == true
 
 #
 - name: Disable and Stop docker
@@ -145,6 +132,7 @@
   become: true
   become_user: root
   selinux:
+    policy: targeted
     state: permissive
   register: selinux_enabled
   ignore_errors: yes
@@ -163,7 +151,6 @@
   become: true
   become_user: root
   command: grep SELINUX /etc/sysconfig/selinux
-  ignore_errors: yes
   register: sevalue
 
 #
