@@ -158,8 +158,22 @@ changeme
 $ ceph dashboard ac-user-set-password admin -i ./dashboard_password.yml
 ```
 
+## Enable RDW
+$ cephadm shell -- ceph orch apply rgw foo
+$ ceph orch host label add rk9-ceph-mon01 rgw
+$ ceph orch host label add rk9-ceph-mon02 rgw
+$ ceph orch apply rgw foo
+$ ceph orch apply rgw foo "--placement=label:rgw count-per-host:2" --port=8000
+$ ceph orch ls
+$ ceph orch ps --daemon_type=rgw
+
+## High Availability service for RGW
+<img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/haroxy_for_rgw.svg" width="80%" height="80%" align="center"></img>
+
 ## References
 - https://kifarunix.com/how-to-deploy-ceph-storage-cluster-on-rocky-linux/?expand_article=1
 - https://kifarunix.com/install-docker-on-rocky-linux/?expand_article=1
 - https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
 - https://gist.github.com/fmount/6203013d1c423dd831e3717b9986551b
+- https://www.ibm.com/docs/en/storage-ceph/5?topic=mcog-deploying-ceph-object-gateway-using-command-line-interface
+

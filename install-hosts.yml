@@ -5,6 +5,6 @@
     print_debug: true
     install_cephadm: true
   roles:
-    - { role: docker }
+    - { role: ceph }
+#    - { role: docker }
 #    - { role: init-hosts }
-#    - { role: ceph }
