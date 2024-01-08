@@ -7,15 +7,26 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
-- name: Prepare environment to lanuch ceph installation
+- name: Prepare environment to lanuch Ceph Installation
   import_tasks: prepare-env.yml
-  tags: install
+  tags: uninstall
 
 #
 - name: Install Ceph
   import_tasks: install.yml
-  tags: install
+  tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Create Pool
+  import_tasks: create-pool.yml
+  tags: uninstall
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Enable Rados Gateway
+  import_tasks: enable-radosgw.yml
+  tags: install
 
 #
 - name: Uninstall Ceph

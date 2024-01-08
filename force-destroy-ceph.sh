@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
 ### Check the pools, images and OSDs
 # ceph osd tree
@@ -40,7 +40,7 @@ do
 done
 
 ### Remove the cluster hosts and check if there is ceph daemon running
-for i in {01..03}
+for i in `echo "01 02 03"`
 do
 
     cephadm shell -- ceph orch host rm rk9-ceph-mon$i
@@ -63,21 +63,25 @@ rm -rf /var/lib/ceph*
 ### Cleanup the ceph block devices
 lsblk
 
-for i in {01..03}
+# for i in {01..03}
+for i in `echo "01 02 03"`
 do
 
     ssh root@rk9-ceph-osd$i "for j in \$(echo 'vdb vdc vdd'); do dd if=/dev/zero of=/dev/\$j bs=1M count=1000; done"
     killall conmon
     killall podman
-    ssh root@rk9-ceph-osd$i "yum remove conmon -y"
+    ssh root@rk9-ceph-osd$i "dnf -y remove conmon *podman* ceph-radosgw"
     ssh root@rk9-ceph-osd$i "reboot"
 
 done
 
-for i in {01..03}
+# for i in {01..03}
+for i in `echo "01 02 03"`
 do
 
-    ssh root@rk9-ceph-mon$i "yum remove conmon -y"
+    killall conmon
+    killall podman
+    ssh root@rk9-ceph-mon$i "dnf -y remove conmon *podman* ceph-radosgw"
     ssh root@rk9-ceph-mon$i "reboot"
 
 done

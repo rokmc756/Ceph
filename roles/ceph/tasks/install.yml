@@ -1,4 +1,11 @@
 #
+# https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
+- set_fact:
+    all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+
+- debug: msg={{ all_nodes_hostname }}
+
+#
 - name: Install Ceph Reef
   become: true
   become_user: root
@@ -22,11 +29,23 @@
   when: print_debug == true
 
 #
+- name: Install ceph-common
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm install ceph-common
+  register: install_ceph_common
+  ignore_errors: true
+
+- debug: msg={{ install_ceph_common }}
+  when: print_debug == true
+
+#
 - name: Check created containers
   become: true
   become_user: root
   shell: |
-    docker ps
+    podman ps
   register: check_containers
 
 - debug: msg={{ check_containers }}
@@ -76,15 +95,15 @@
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 #
-- name: Enable Ceph CLI
-  become: true
-  become_user: root
-  shell: |
-    {{ cephadm_cmd }} ceph -s
-  register: enable_ceph_cli
-
-- debug: msg={{ enable_ceph_cli }}
-  when: print_debug == true
+#- name: Enable Ceph CLI
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph -s
+#  register: enable_ceph_cli
+#
+#- debug: msg={{ enable_ceph_cli }}
+#  when: print_debug == true
 
 #
 - name: Copy SSH Keys to Other Ceph Nodes
@@ -94,6 +113,8 @@
   with_items: "{{ groups['all'] }}"
 
 #
+# {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
+# {{ cephadm_cmd }} ceph orch host add {{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
 - name: Allow deployment of monitor daemons on arbitrary hosts to add the nodes to the cluster
   become: true
   become_user: root
@@ -101,6 +122,7 @@
     {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
   register: add_nodes
   with_items: "{{ groups['mon'] }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ add_nodes }}
   when: print_debug == true
@@ -129,16 +151,79 @@
   when: print_debug == true
 
 #
-- name: Manually add monitors and disable automated monitor deployment
+#- name: Manually add monitors and disable automated monitor deployment
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch apply mon --unmanaged
+#  register: add_monitors
+#
+#- debug: msg={{ add_monitors }}
+#  when: print_debug == true
+
+# Ceph Monitor 데몬은 클러스터 구성원 자격, 구성 및 상태에 대한 매우 안정적이고 지속적인 저장을 제공하기 위하여 모든 노드에 MON 역할을 부여합니다.
+# 역시 모든 노드에 MON 역할을 부여합니다.
+- name: Apply the role of monitor for all nodes
   become: true
   become_user: root
   shell: |
-    {{ cephadm_cmd }} ceph orch apply mon --unmanaged
-  register: add_monitors
+    {{ cephadm_cmd }} ceph orch apply mon --placement={{ all_nodes_hostname }}
+  register: apply_monitors
 
-- debug: msg={{ add_monitors }}
+- debug: msg={{ apply_monitors }}
   when: print_debug == true
 
+# Ceph Manager 데몬은 모니터 데몬과 함께 실행되어 외부 모니터링 및 관리 시스템에 추가적인 모니터링 및 인터페이스를 제공합니다.
+# 역시 모든 노드에 MGR 역할을 부여합니다.
+- name: Apply the role of mgr for all nodes
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mgr --placement={{ all_nodes_hostname }}
+  register: apply_mgr
+
+- debug: msg={{ apply_mgr }}
+  when: print_debug == true
+
+# CephRBD 뿐 아니라 CephFS 도 사용하기 위해 MDS 를 생성합니다. 미리 모든 노드에 MDS 역할을 부여 합니다.
+# 여기에서는 파일시스템을 식별하기 위해 myfs 라는 이름으로 생성 하였습니다.
+- name: Apply the role of mds for all nodes
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mds myfs --placement={{ all_nodes_hostname }}
+  register: apply_mds
+
+- debug: msg={{ apply_mds }}
+  when: print_debug == true
+
+#
+- name: Label the nodes with its role
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
+  register: label_mgr
+  with_items: "{{ groups['mon'] }}"
+
+- debug: msg={{ label_mgr }}
+  when: print_debug == true
+
+
+#
+- name:  Confirm the labelling
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host ls
+  register: confirm_label
+
+- debug: msg={{ confirm_label }}
+  when: print_debug == true
+
+
+
+#
 #- name: Deploy each additional monitor:
 #  become: true
 #  become_user: root
@@ -149,7 +234,7 @@
 #- debug: msg={{ deploy_additional_monitor }}
 
 #
-- name: Add the OSD Nodes to the cluster;
+- name: Add the OSD Nodes to the cluster
   become: true
   become_user: root
   shell: |
@@ -159,6 +244,9 @@
 
 - debug: msg={{ add_osd_nodes }}
   when: print_debug == true
+  #  {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb
+  #  {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdc
+  #  {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdd
 
 #
 - name: Label the OSD nodes with its role
@@ -207,18 +295,28 @@
   when: print_debug == true
 
 #
-- name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
-  become: true
-  become_user: root
-  shell: |
-    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
-  register: disable_auto_create_osds
+#- name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
+#  register: disable_auto_create_osds
+#
+#- debug: msg={{ disable_auto_create_osds }}
+#  when: print_debug == true
 
-- debug: msg={{ disable_auto_create_osds }}
-  when: print_debug == true
-
-# To manually create an OSD from a specific device on a specific host:
-# ceph orch daemon add osd <host>:<device-path>
+#- name: Ceate manullay an OSD from a specific device on a specific host
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb
+#    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/vdc
+#    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/vdd
+#  register: create_osd_host
+#  with_items: "{{ groups['osd'] }}"
+#
+#- debug: msg={{ create_osd_host }}
+#  when: print_debug == true
 
 #
 - name: Check Ceph cluster health
@@ -258,7 +356,7 @@
   become: true
   become_user: root
   shell: |
-    docker ps
+    podman ps
   register: check_containers
 
 - debug: msg={{ check_containers }}

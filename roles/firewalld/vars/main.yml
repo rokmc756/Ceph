@@ -6,3 +6,6 @@ monitor_ports:
 
 osd_ports:
   - "6800-7300"
+
+radosgw_ports:
+  - "7480"

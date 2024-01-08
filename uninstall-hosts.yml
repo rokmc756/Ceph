@@ -7,4 +7,3 @@
     - { role: ceph }
 #    - { role: docker }
 #    - { role: init-hosts }
-

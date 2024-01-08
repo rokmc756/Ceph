@@ -82,7 +82,7 @@
   when: print_debug == true
 
 #
-- name: Install Podman
+- name: Install Podman and Civetweb
   become: true
   become_user: root
   yum:
@@ -90,6 +90,9 @@
     state: present
   with_items:
     - "podman"
+    - "civetweb"
+    - "util-linux"
+    - "ceph-radosgw"
 
 #
 - name: Install Ceph CLI tools on the host

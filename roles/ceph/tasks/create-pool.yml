@@ -1,0 +1,106 @@
+#
+- name: Create OSDs
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph osd create
+  register: create_osds
+
+- debug: msg={{ create_osds }}
+  when: print_debug == true
+
+#############################################################################################################################################################################################
+# Prerequiste when deleting
+# All of volumes created in the pool would be deleted when pool is deleted
+# In order to prevent deleting volume mistakenly, the name of pool should be written twice and options to indicate command should be specified. Additionally delete command should be performed applying the following option as prerequiste job.
+# ceph config set mon mon_allow_pool_delete true
+# After deleting delete command should be disabled to prevent mistakely deleting it.
+# ceph config set mon mon_allow_pool_delete false
+
+- name: Enable pool monitor
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph config set mon mon_allow_pool_delete true
+  register: enable_pool_monitor
+  # {{ cephadm_cmd }} ceph config set mon mon_allow_pool_delete false
+
+- debug: msg={{ enable_pool_monitor }}
+  when: print_debug == true
+
+# The followings are recommented when pool is created for the basis number of pg_num
+# FYI, referenence written in 2016
+#- the value of pg_num should be 128 in case that the number of OSD is less than 5
+#- the value of pg_num should be 512 in caes that the number of OSD is between 5 ~ 10
+#- the value of pg_num should be 4096 properly in caes that the number of OSD is between 10 ~ 50
+#- pgcalc calcuation should be referred and set up in case that of more than 50 of pg_number
+- name: Create pool
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool create sysdocu 128
+  register: create_pool
+
+- debug: msg={{ create_pool }}
+  when: print_debug == true
+
+#
+- name: Create CephRBD storage image of block level
+  become: true
+  become_user: root
+  shell: |
+    rbd create sysdocu/volume01 --size 1G --image-feature layering
+  register: create_rdb_image
+
+- debug: msg={{ create_rdb_image }}
+  when: print_debug == true
+
+#
+- name: Check list of RDB volume created
+  become: true
+  become_user: root
+  shell: |
+    rbd ls sysdocu
+  register: check_rdb_volume
+
+- debug: msg={{ check_rdb_volume }}
+  when: print_debug == true
+
+# FYI, the following commnad is for deleting rdb volume
+# rbd rm {pool-name}/{volume-name}
+
+# Check individual rdb volume information
+# rbd info sysdocu/volume01
+# rbd image 'volume01':
+#
+- name: Create CephFS
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph fs volume create myfs
+  register: create_cephfs
+
+- debug: msg={{ create_cephfs }}
+  when: print_debug == true
+
+#
+- name: Check the status of MDS
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch ls # or ceph -s to check the status of MDS
+  register: check_mds
+
+- debug: msg={{ check_mds }}
+  when: print_debug == true
+
+#
+- name: Check list of cephfs
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph mds stat # or ceph fs ls
+  register: list_cephfs
+
+- debug: msg={{ list_cephfs }}
+  when: print_debug == true

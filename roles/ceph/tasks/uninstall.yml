@@ -147,8 +147,15 @@
   become: true
   become_user: root
   yum:
-    name: conmon
+    name: "{{ item }}"
     state: absent
+  with_items:
+    - cephadm
+    - ceph-common
+    - ceph-base
+    - ceph-radosgw
+    - conmon
+    - podman
   when: inventory_hostname in groups['all']
 
 #
