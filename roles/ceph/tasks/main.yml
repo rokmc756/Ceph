@@ -1,6 +1,4 @@
 ---
-# Initialize Linux Hosts
-
 # For now fail if it's not suppoted OS
 - name: Check OS
   fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
@@ -26,9 +24,22 @@
 #
 - name: Enable Rados Gateway
   import_tasks: enable-radosgw.yml
+  tags: uninstall
+
+#
+- name: Enable NFS
+  import_tasks: enable-nfs.yml
   tags: install
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Create Rados Block Device
+  import_tasks: create_rbd_pool.yml
+  tags: install
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Uninstall Ceph
   import_tasks: uninstall.yml
   tags: uninstall
+

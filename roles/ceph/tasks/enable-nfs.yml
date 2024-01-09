@@ -1,0 +1,79 @@
+#
+- name: Create NFS
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs cluster create jnfsclu01
+  register: create_nfs
+
+- debug: msg={{ create_nfs }}
+  when: print_debug == true
+
+#
+- name: Check the status of the creation nfs by ls
+  become: true
+  become_user: root
+  shell: |
+    ceph orch ls --service_name=nfs.jnfsclu01
+  register: check_nfs_ls
+
+- debug: msg={{ check_nfs_ls }}
+  when: print_debug == true
+
+#
+- name: Check the status of the creation nfs by ps
+  become: true
+  become_user: root
+  shell: |
+    ceph orch ps --service_name=nfs.jnfsclu01
+  register: check_nfs_ps
+
+- debug: msg={{ check_nfs_ps }}
+  when: print_debug == true
+
+#
+- name: Check the status of the creation nfs by cluster info
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs cluster info jnfsclu01
+  register: check_nfs_clu_info
+
+- debug: msg={{ check_nfs_clu_info }}
+  when: print_debug == true
+
+# Exporting a Ceph File System
+- name: Create a nfs filesystem volume named cephfs-nfs
+  become: true
+  become_user: root
+  shell: |
+    ceph fs volume create cephfs-nfs
+  register: create_nfs_vol
+
+- debug: msg={{ create_nfs_vol }}
+  when: print_debug == true
+
+#
+- name: Create a user named nfsclient to expose CephFS though the nfs server
+  become: true
+  become_user: root
+  shell: |
+    ceph auth get-or-create client.nfsclient mon 'allow r' \
+    osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+    mds 'allow rw path=/' > /root/nfsclient.key
+  register: create_nfs_auth
+
+- debug: msg={{ create_nfs_auth }}
+  when: print_debug == true
+
+#
+- name: Create a configuration file and apply it to the nfs cluster
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs cluster config set singletest -i /root/nfs.conf
+  register: create_nfs_config
+
+- debug: msg={{ create_nfs_config }}
+  when: print_debug == true
+

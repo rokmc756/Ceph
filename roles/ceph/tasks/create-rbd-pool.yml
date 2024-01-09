@@ -1,0 +1,104 @@
+#
+- name: Create a pool named tpool01 with placement groups count of 100
+  become: true
+  become_user: root
+  shell: |
+    ceph osd pool create tpool01 100
+  register: create_rbd_pool
+
+- debug: msg={{ create_rbd_pool }}
+  when: print_debug == true
+
+#
+- name: List available pools to confirm it was created
+  become: true
+  become_user: root
+  shell: |
+    ceph osd lspools
+  register: list_ceph_pool
+
+- debug: msg={{ list_ceph_pool }}
+  when: print_debug == true
+
+
+# Pools need to be associated with an application before use.
+# Pools that will be used with CephFS or pools that are automatically
+# created by RGW are automatically associated
+- name: Enable Pool for Ceph Filesystem
+  become: true
+  become_user: root
+  shell: |
+    ceph osd pool application enable tpool01 cephfs
+  register: enable_cephfs_pool
+
+- debug: msg={{ enable_cephfs_pool }}
+  when: print_debug == true
+
+#
+- name: Enable Pool for Rados Block Device
+  become: true
+  become_user: root
+  shell: |
+    ceph osd pool application enable tpool01 rbd --yes-i-really-mean-it
+  register: enable_rbd_pool
+
+- debug: msg={{ enable_rbd_pool }}
+  when: print_debug == true
+
+#
+- name: Enable Pool for Rados Gateway
+  become: true
+  become_user: root
+  shell: |
+    ceph osd pool application enable tpool01 rgw --yes-i-really-mean-it
+  register: enable_rgw_pool
+
+- debug: msg={{ enable_rgw_pool }}
+  when: print_debug == true
+
+#
+- name: Initialize Pool for Rados Block Device
+  become: true
+  become_user: root
+  shell: |
+    rbd pool init tpool01
+  register: init_rbd_pool
+
+- debug: msg={{ init_rbd_pool }}
+  when: print_debug == true
+
+#
+- name: Obtain I/O information for a specific pool or all
+  become: true
+  become_user: root
+  shell: |
+    ceph osd pool stats tpool01
+  register: obtain_pool_io
+
+- debug: msg={{ obtain_pool_io }}
+  when: print_debug == true
+
+#
+- name: Create Rados Block Device in Pool
+  become: true
+  become_user: root
+  shell: |
+    rbd create trbd01 --size 1000 --pool tpool01
+  register: create_rbd
+
+- debug: msg={{ create_rbd }}
+  when: print_debug == true
+
+#
+#- name: Disable and Delete Pool
+#  become: true
+#  become_user: root
+#  shell: |
+#    ceph osd pool delete tpool01 --yes-i-really-really-mean-it
+#    ceph osd pool application disable tpool01 <app> {--yes-i-really-mean-it}
+#  register: disable_ceph_pool
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#
+#- debug: msg={{ disable_ceph_pool }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
