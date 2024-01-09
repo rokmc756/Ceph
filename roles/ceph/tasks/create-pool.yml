@@ -3,7 +3,7 @@
   become: true
   become_user: root
   shell: |
-    {{ cephadm_cmd }} ceph osd create
+    {{ cephadm_cmd }} ceph osd create $(uuid)
   register: create_osds
 
 - debug: msg={{ create_osds }}
@@ -104,3 +104,7 @@
 
 - debug: msg={{ list_cephfs }}
   when: print_debug == true
+
+# ceph osd out osd.0
+# ceph osd out osd.0
+# ceph osd purge 0 --yes-i-really-mean-it

@@ -93,6 +93,7 @@
     - "civetweb"
     - "util-linux"
     - "ceph-radosgw"
+    - "uuid"
 
 #
 - name: Install Ceph CLI tools on the host

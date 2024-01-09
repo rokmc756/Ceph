@@ -7,24 +7,24 @@
 #
 - name: Prepare environment to lanuch Ceph Installation
   import_tasks: prepare-env.yml
-  tags: uninstall
+  tags: install
 
 #
 - name: Install Ceph
   import_tasks: install.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Create Pool
   import_tasks: create-pool.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Enable Rados Gateway
   import_tasks: enable-radosgw.yml
-  tags: uninstall
+  tags: install
 
 #
 - name: Enable NFS
@@ -34,7 +34,7 @@
 
 #
 - name: Create Rados Block Device
-  import_tasks: create_rbd_pool.yml
+  import_tasks: create-rbd-pool.yml
   tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -42,4 +42,3 @@
 - name: Uninstall Ceph
   import_tasks: uninstall.yml
   tags: uninstall
-

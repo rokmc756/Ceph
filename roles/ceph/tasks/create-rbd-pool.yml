@@ -89,6 +89,18 @@
 - debug: msg={{ create_rbd }}
   when: print_debug == true
 
+# Need to investigate why OSD id 0 got down
+- name: Purge OSD id 0
+  become: true
+  become_user: root
+  shell: |
+    ceph osd out osd.0
+    ceph osd purge 0 --yes-i-really-mean-it
+  register: purge_osd_zero
+
+- debug: msg={{ purge_osd_zero }}
+  when: print_debug == true
+
 #
 #- name: Disable and Delete Pool
 #  become: true
@@ -101,4 +113,3 @@
 #
 #- debug: msg={{ disable_ceph_pool }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-

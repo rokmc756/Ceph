@@ -72,8 +72,79 @@
   become_user: root
   shell: |
     ceph nfs cluster config set singletest -i /root/nfs.conf
+  ignore_errors: true
   register: create_nfs_config
 
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true
+
+# In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
+- name: Create a CephFS export
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs export create cephfs jnfsclu01 /ceph cephfs-nfs --path=/
+  register: create_cephfs_export
+
+- debug: msg={{ create_cephfs_export }}
+  when: print_debug == true
+
+#
+- name: View the export block based on the pseudo root name
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs export get jnfsclu01 /ceph
+  register: view_nfs_export
+
+- debug: msg={{ view_nfs_export }}
+  when: print_debug == true
+
+#
+- name: List the NFS exports
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs export ls jnfsclu01
+  register: list_nfs_export
+
+- debug: msg={{ list_nfs_export }}
+  when: print_debug == true
+
+# Note: CLUSTER_NAME is optional. If the CLUSTER_NAME is not specified, information of all nfs clusters present will be displayed.
+- name: Get the information of the NFS export
+  become: true
+  become_user: root
+  shell: |
+    ceph nfs cluster info jnfsclu01
+  register: get_nfs_export
+
+- debug: msg={{ get_nfs_export }}
+  when: print_debug == true
+
+#
+#- name: Mount the exported Ceph File System on a client
+#  become: true
+#  become_user: root
+#  shell: |
+#    mount -t nfs -o port=2049 rk9-ceph-mon01:/ceph/ /mnt/nfs-cephfs
+#  register: mount_exported_cephfs
+#
+#- debug: msg={{ mount_exported_cephfs }}
+#  when: print_debug == true
+
+# On a client host, to mount a exported NFS Ceph File System created with an ingress service:
+# Replace VIRTUAL_IP_ADDRESS with --ingress --virtual-ip IP address used to create the NFS cluster.
+# Replace BINDING with the pseudo root path.
+# eplace LOCAL_MOUNT_POINT with the mount point to mount the export on.
+# This example mounts the export nfs-cephfs that exists on a NFS cluster created with --ingress --virtual-ip 10.10.128.75 on the mount point /mnt.
+#- name: Create a configuration file and apply it to the nfs cluster
+#  become: true
+#  become_user: root
+#  shell: |
+#    mount -t nfs 10.10.128.75:/nfs-cephfs /mnt
+#  register: create_nfs_config
+#
+#- debug: msg={{ create_nfs_config }}
+#  when: print_debug == true
 
