@@ -99,23 +99,34 @@ sudo_user_pass: "changeme"
 sudo_user_home_dir: "/home/{{ sudo_user }}"
 domain_name: "jtest.pivotal.io"
 
-$ vi roles/docker/vars/main.yml
-cert_country: "KR"
-cert_state: "Seoul"
-cert_location: "Gangnam"
-cert_org: "Weka"
-cert_org_unit: "Weka GSS"
-cert_email_address: "rokmc756@gmail.com"
-
 $ vi roles/ceph/vars/main.yml
+server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
+download_cephadm: false
+
 cephadm:
   major_version: 18
   minor_version: 2
-  patch_version: 0
+  patch_version: 1
   bin: "/root/cephadm"
-
-server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
-download_cephadm: false
+pool:
+  pg_name: sysdocu
+  pg_number: 128
+  pg_custom_volume_name: volume01
+  pg_custom_volume_size: 1G
+  cephfs_name: myfs
+rgw:
+  user_name: "jmoon"
+  display_name: "jack.moon"
+  email: "rokmc756@gmail.com"
+nfs:
+  cluster_name: jtest_nfs_clu
+  cephfs_name: jtest_nfs_cephfs
+  user_name: nfsclient
+  namespace: singletest
+rbd:
+  pool_name: jtest_pool
+  pg_count: 100
+  custom_size: 1000
 ```
 
 #### 4) Deploy Ceph Storage Cluster
@@ -129,7 +140,6 @@ $ vi install-hosts.yml
     install_cephadm: true
   roles:
     - { role: init-hosts }
-    - { role: docker }
     - { role: ceph }
 
 $ make install
@@ -144,28 +154,10 @@ $ vi uninstall-hosts.yml
     uninstall_pkgs: true
   roles:
     - { role: ceph }
-    - { role: docker }
     - { role: init-hosts }
 
 $ make uninstall
 ```
-
-## How to change admin password for Ceph Dashboard
-```
-$ cephadm shell
-$ vi dashboard_password.yml
-changeme
-$ ceph dashboard ac-user-set-password admin -i ./dashboard_password.yml
-```
-
-## Enable RDW
-$ cephadm shell -- ceph orch apply rgw foo
-$ ceph orch host label add rk9-ceph-mon01 rgw
-$ ceph orch host label add rk9-ceph-mon02 rgw
-$ ceph orch apply rgw foo
-$ ceph orch apply rgw foo "--placement=label:rgw count-per-host:2" --port=8000
-$ ceph orch ls
-$ ceph orch ps --daemon_type=rgw
 
 ## High Availability service for RGW
 <img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/haroxy_for_rgw.svg" width="80%" height="80%" align="center"></img>
