@@ -5,40 +5,68 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
-- name: Prepare environment to lanuch Ceph Installation
-  import_tasks: prepare-env.yml
-  tags: install
+- name: Deploy cephadm to lanuch Ceph Installation
+  import_tasks: 01-deploy-cephadm.yml
+  tags: uninstall
 
 #
-- name: Install Ceph
-  import_tasks: install.yml
-  tags: install
+- name: Initialize Ceph
+  import_tasks: 02-init-ceph.yml
+  tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Create Pool
-  import_tasks: create-pool.yml
-  tags: install
+- name: Check Containers
+  import_tasks: 03-check-containers.yml
+  tags: uninstall
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Add Monitor Nodes
+  import_tasks: 04-add-monitor-nodes.yml
+  tags: uninstall
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Add OSD Nodes
+  import_tasks: 05-add-osd-nodes.yml
+  tags: uninstall
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Apply Additionaly features such as enabling telemetries and changing admin password for Dashboard
+  import_tasks: 06-apply-additional-features.yml
+  tags: uninstall
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Enable Custom Pool
+  import_tasks: 07-enable-custom-pool.yml
+  tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Enable Rados Gateway
-  import_tasks: enable-radosgw.yml
+  import_tasks: 08-enable-radosgw.yml
   tags: install
 
 #
 - name: Enable NFS
-  import_tasks: enable-nfs.yml
-  tags: install
+  import_tasks: 09-enable-nfs.yml
+  tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Create Rados Block Device
-  import_tasks: create-rbd-pool.yml
-  tags: install
+- name: Enable Custom Rados Block Device Pool
+  import_tasks: 10-enable-rbd-pool.yml
+  tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Uninstall Ceph
   import_tasks: uninstall.yml
   tags: uninstall
+
+# main.yml
+# install.yml
+# uninstall.yml

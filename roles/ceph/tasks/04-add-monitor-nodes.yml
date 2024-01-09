@@ -1,0 +1,154 @@
+#
+- name: Get fsid for setting fact
+  become: true
+  become_user: root
+  shell: |
+    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+  register: get_fsid
+
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+#
+- name: Set fact for fsid
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#
+#- name: Enable Ceph CLI
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph -s
+#  register: enable_ceph_cli
+#
+#- debug: msg={{ enable_ceph_cli }}
+#  when: print_debug == true
+
+#
+- name: Copy SSH Keys to Other Ceph Nodes
+  shell: |
+    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
+  register: copy_ssh_keys
+  with_items: "{{ groups['all'] }}"
+
+#
+- name: Allow deployment of monitor daemons on arbitrary hosts to add the nodes to the cluster
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
+  register: add_nodes
+  with_items: "{{ groups['mon'] }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+- debug: msg={{ add_nodes }}
+  when: print_debug == true
+
+#
+- name: Label the nodes with its role
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
+  register: label_nodes
+  with_items: "{{ groups['mon'] }}"
+
+- debug: msg={{ label_nodes }}
+  when: print_debug == true
+
+#
+- name:  Confirm the label
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host ls
+  register: confirm_label
+
+- debug: msg={{ confirm_label }}
+  when: print_debug == true
+
+#
+#- name: Manually add monitors and disable automated monitor deployment
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch apply mon --unmanaged
+#  register: add_monitors
+#
+#- debug: msg={{ add_monitors }}
+#  when: print_debug == true
+
+# Ceph Monitor 데몬은 클러스터 구성원 자격, 구성 및 상태에 대한 매우 안정적이고 지속적인 저장을 제공하기 위하여 모든 노드에 MON 역할을 부여합니다.
+# 역시 모든 노드에 MON 역할을 부여합니다.
+- name: Apply the role of monitor for all nodes
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mon --placement={{ all_nodes_hostname }}
+  register: apply_monitors
+
+- debug: msg={{ apply_monitors }}
+  when: print_debug == true
+
+# Ceph Manager 데몬은 모니터 데몬과 함께 실행되어 외부 모니터링 및 관리 시스템에 추가적인 모니터링 및 인터페이스를 제공합니다.
+# 역시 모든 노드에 MGR 역할을 부여합니다.
+- name: Apply the role of mgr for all nodes
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mgr --placement={{ all_nodes_hostname }}
+  register: apply_mgr
+
+- debug: msg={{ apply_mgr }}
+  when: print_debug == true
+
+# CephRBD 뿐 아니라 CephFS 도 사용하기 위해 MDS 를 생성합니다. 미리 모든 노드에 MDS 역할을 부여 합니다.
+# 여기에서는 파일시스템을 식별하기 위해 myfs 라는 이름으로 생성 하였습니다.
+- name: Apply the role of mds for all nodes
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement={{ all_nodes_hostname }}
+  register: apply_mds
+
+- debug: msg={{ apply_mds }}
+  when: print_debug == true
+
+#
+- name: Label the nodes with its role
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
+  register: label_mgr
+  with_items: "{{ groups['mon'] }}"
+
+- debug: msg={{ label_mgr }}
+  when: print_debug == true
+
+#
+- name:  Confirm the label
+  become: true
+  become_user: root
+  shell: |
+    {{ cephadm_cmd }} ceph orch host ls
+  register: confirm_label
+
+- debug: msg={{ confirm_label }}
+  when: print_debug == true
+
+#
+#- name: Deploy each additional monitor:
+#  become: true
+#  become_user: root
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch daemon add mon *<host1:ip>
+#  register: deploy_additional_monitor
+#
+#- debug: msg={{ deploy_additional_monitor }}

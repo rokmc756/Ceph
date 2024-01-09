@@ -3,7 +3,7 @@
   become: true
   become_user: root
   shell: |
-    ceph osd pool create tpool01 100
+    ceph osd pool create {{ rbd.pool_name }} {{ rbd.pg_count }}
   register: create_rbd_pool
 
 - debug: msg={{ create_rbd_pool }}
@@ -28,7 +28,7 @@
   become: true
   become_user: root
   shell: |
-    ceph osd pool application enable tpool01 cephfs
+    ceph osd pool application enable {{ rbd.pool_name }} cephfs
   register: enable_cephfs_pool
 
 - debug: msg={{ enable_cephfs_pool }}
@@ -39,7 +39,7 @@
   become: true
   become_user: root
   shell: |
-    ceph osd pool application enable tpool01 rbd --yes-i-really-mean-it
+    ceph osd pool application enable {{ rbd.pool_name }} rbd --yes-i-really-mean-it
   register: enable_rbd_pool
 
 - debug: msg={{ enable_rbd_pool }}
@@ -50,7 +50,7 @@
   become: true
   become_user: root
   shell: |
-    ceph osd pool application enable tpool01 rgw --yes-i-really-mean-it
+    ceph osd pool application enable {{ rbd.pool_name }} rgw --yes-i-really-mean-it
   register: enable_rgw_pool
 
 - debug: msg={{ enable_rgw_pool }}
@@ -61,7 +61,7 @@
   become: true
   become_user: root
   shell: |
-    rbd pool init tpool01
+    rbd pool init {{ rbd.pool_name }}
   register: init_rbd_pool
 
 - debug: msg={{ init_rbd_pool }}
@@ -72,7 +72,7 @@
   become: true
   become_user: root
   shell: |
-    ceph osd pool stats tpool01
+    ceph osd pool stats {{ rbd.pool_name }}
   register: obtain_pool_io
 
 - debug: msg={{ obtain_pool_io }}
@@ -83,7 +83,7 @@
   become: true
   become_user: root
   shell: |
-    rbd create trbd01 --size 1000 --pool tpool01
+    rbd create trbd01 --size {{ rbd.custom_size }} --pool {{ rbd.pool_name }}
   register: create_rbd
 
 - debug: msg={{ create_rbd }}

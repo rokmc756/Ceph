@@ -3,7 +3,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs cluster create jnfsclu01
+    ceph nfs cluster create {{ nfs.cluster_name }}
   register: create_nfs
 
 - debug: msg={{ create_nfs }}
@@ -14,7 +14,7 @@
   become: true
   become_user: root
   shell: |
-    ceph orch ls --service_name=nfs.jnfsclu01
+    ceph orch ls --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ls
 
 - debug: msg={{ check_nfs_ls }}
@@ -25,7 +25,7 @@
   become: true
   become_user: root
   shell: |
-    ceph orch ps --service_name=nfs.jnfsclu01
+    ceph orch ps --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ps
 
 - debug: msg={{ check_nfs_ps }}
@@ -36,30 +36,30 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs cluster info jnfsclu01
+    ceph nfs cluster info {{ nfs.cluster_name }}
   register: check_nfs_clu_info
 
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true
 
 # Exporting a Ceph File System
-- name: Create a nfs filesystem volume named cephfs-nfs
+- name: Create a NFS filesystem volume named {{ nfs.cephfs_name }}
   become: true
   become_user: root
   shell: |
-    ceph fs volume create cephfs-nfs
+    ceph fs volume create {{ nfs.cephfs_name }}
   register: create_nfs_vol
 
 - debug: msg={{ create_nfs_vol }}
   when: print_debug == true
 
 #
-- name: Create a user named nfsclient to expose CephFS though the nfs server
+- name: Create a user named nfsclient to expose CephFS though the NFS server
   become: true
   become_user: root
   shell: |
-    ceph auth get-or-create client.nfsclient mon 'allow r' \
-    osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+    ceph auth get-or-create client.{{ nfs_user_name }} 'allow r' \
+    osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
     mds 'allow rw path=/' > /root/nfsclient.key
   register: create_nfs_auth
 
@@ -71,7 +71,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs cluster config set singletest -i /root/nfs.conf
+    ceph nfs cluster config set {{ nfs.namespace }} -i /root/nfs.conf
   ignore_errors: true
   register: create_nfs_config
 
@@ -83,7 +83,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs export create cephfs jnfsclu01 /ceph cephfs-nfs --path=/
+    ceph nfs export create cephfs {{ nfs.cluster_name }} /ceph {{ nfs.cephfs_name }} --path=/
   register: create_cephfs_export
 
 - debug: msg={{ create_cephfs_export }}
@@ -94,7 +94,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs export get jnfsclu01 /ceph
+    ceph nfs export get {{ nfs.cluster_name }} /ceph
   register: view_nfs_export
 
 - debug: msg={{ view_nfs_export }}
@@ -105,7 +105,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs export ls jnfsclu01
+    ceph nfs export ls {{ nfs.cluster_name }}
   register: list_nfs_export
 
 - debug: msg={{ list_nfs_export }}
@@ -116,7 +116,7 @@
   become: true
   become_user: root
   shell: |
-    ceph nfs cluster info jnfsclu01
+    ceph nfs cluster info {{ nfs.cluster_name }}
   register: get_nfs_export
 
 - debug: msg={{ get_nfs_export }}

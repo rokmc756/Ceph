@@ -79,7 +79,7 @@
   become_user: root
   shell: |
     ssh root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} "mkdir /etc/ceph"
-    scp /etc/ceph/ceph.conf root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph
+    scp /etc/ceph/ceph.conf root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph/
     scp /etc/ceph/ceph.client.admin.keyring root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph/
   register: transfer_ceph_config
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -150,9 +150,9 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Pause for 7 minutes to wait for compleiting initializaion of radosgw
+- name: Pause for 5 minutes to wait for compleiting initializaion of radosgw
   pause:
-    minutes: 7
+    minutes: 5
 
 
 # Verify status
@@ -166,7 +166,7 @@
   become: true
   become_user: root
   shell: |
-    radosgw-admin user create --uid=jmoon --display-name="Jack Moon" --email=rokmc756@gmail.com
+    radosgw-admin user create --uid={{ rgw.user_name }} --display-name={{ rgw.display_name }} --email={{ rgw.email }}
   register: create_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -190,7 +190,7 @@
   become: true
   become_user: root
   shell: |
-    radosgw-admin user info --uid=jmoon
+    radosgw-admin user info --uid={{ rgw.user_name }}
   register: show_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -213,7 +213,7 @@
 - name: Copy python s3 script
   become: true
   become_user: root
-  template: src=s3-test.py.j2 dest=/root/s3-test.py  owner=root group=root mode=755 force=yes
+  template: src=s3-test.py.j2 dest=/root/s3-test.py owner=root group=root mode=755 force=yes
   register: copy_s3_py_script
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -232,3 +232,4 @@
 
 - debug: msg={{ run_pip_boto3  }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+

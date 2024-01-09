@@ -1,0 +1,33 @@
+#
+- name: Check created containers
+  become: true
+  become_user: root
+  shell: |
+    podman images
+  register: check_containers
+
+- debug: msg={{ check_containers }}
+  when: print_debug == true
+
+#
+- name: List the containers if using podman
+  become: true
+  become_user: root
+  shell: |
+    podman ps
+  register: list_podman
+
+- debug: msg={{ list_podman }}
+  when: print_debug == true
+
+#
+- name: List the containers if using podman
+  become: true
+  become_user: root
+  shell: |
+    systemctl list-units 'ceph*'
+  register: list_containers
+
+- debug: msg={{ list_containers }}
+  when: print_debug == true
+
