@@ -7,42 +7,42 @@
 #
 - name: Deploy cephadm to lanuch Ceph Installation
   import_tasks: 01-deploy-cephadm.yml
-  tags: uninstall
+  tags: install
 
 #
 - name: Initialize Ceph
   import_tasks: 02-init-ceph.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Check Containers
   import_tasks: 03-check-containers.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Add Monitor Nodes
   import_tasks: 04-add-monitor-nodes.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Add OSD Nodes
   import_tasks: 05-add-osd-nodes.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Apply Additionaly features such as enabling telemetries and changing admin password for Dashboard
   import_tasks: 06-apply-additional-features.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Enable Custom Pool
   import_tasks: 07-enable-custom-pool.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
@@ -53,20 +53,16 @@
 #
 - name: Enable NFS
   import_tasks: 09-enable-nfs.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Enable Custom Rados Block Device Pool
   import_tasks: 10-enable-rbd-pool.yml
-  tags: uninstall
+  tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Uninstall Ceph
   import_tasks: uninstall.yml
   tags: uninstall
-
-# main.yml
-# install.yml
-# uninstall.yml

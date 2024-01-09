@@ -58,9 +58,10 @@
   become: true
   become_user: root
   shell: |
-    ceph auth get-or-create client.{{ nfs_user_name }} 'allow r' \
+    ceph auth get-or-create client.{{ nfs.user_name }} 'allow r' \
     osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
     mds 'allow rw path=/' > /root/nfsclient.key
+  ignore_errors: true
   register: create_nfs_auth
 
 - debug: msg={{ create_nfs_auth }}
