@@ -1,59 +1,24 @@
-# vi force-destroy-ceph.sh
-# https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
-#
-# Check the pools, images and OSDs
-# $ ceph osd tree
-# $ ceph osd lspools
-# 1 device_health_metrics
-# 2 datapool
-
-# $ rbd showmapped
-# id  pool      namespace  image    snap  device
-# 0   datapool             rbdvol1  -     /dev/rbd0
-# 1   datapool             rbdvol2  -     /dev/rbd1
-# 2   datapool             rbdvol3  -     /dev/rbd2
-# 3   datapool             rbdvol4  -     /dev/rbd3
-
-# Remove the images and pools
-# rbd unmap /dev/rbd0
-# rbd unmap /dev/rbd1
-# rbd unmap /dev/rbd2
-# rbd unmap /dev/rbd3
-
-# rbd showmapped
-# rbd rm datapool/rbdvol1
-# rbd rm datapool/rbdvol2
-# rbd rm datapool/rbdvol3
-# rbd rm datapool/rbdvol4
-
-# ceph osd pool rm datapool datapool --yes-i-really-really-mean-it
-# Error EPERM: pool deletion is disabled; you must first set the mon_allow_pool_delete config option to true before you can destroy a pool
-
-# ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
-# ceph osd pool rm datapool datapool --yes-i-really-really-mean-it
-
 #
 - name: Get fsid for setting fact
-  become: true
-  become_user: root
   shell: |
-    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+    cat /etc/ceph/ceph.conf  | grep fsid | awk '{print $3}'
   register: get_fsid
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ get_fsid.stdout }}
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
+  when: print_debug == true
 
 #
 - name: Set fact for fsid
   set_fact:
-    fsid01: "{{ get_fsid.stdout }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 #
 - name:  Remove OSDs
-  become: true
-  become_user: root
   shell: |
     cephadm shell -- ceph osd down {{ item }} && cephadm shell -- ceph osd destroy {{ item }} --force
   register: remove_osd
@@ -66,8 +31,6 @@
 
 #
 - name: Remove the cluster hosts and check if there is ceph daemon running
-  become: true
-  become_user: root
   shell: |
     cephadm shell -- ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
     cephadm shell -- ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
@@ -82,8 +45,6 @@
 
 #
 - name: Remove the ceph storage cluster
-  become: true
-  become_user: root
   shell: |
     cephadm rm-cluster --fsid {{ fsid01 }} --force
     cephadm ls
@@ -105,8 +66,6 @@
   when: print_debug == true
 
 - name: Cleanup the ceph configuration files
-  become: true
-  become_user: root
   shell: |
     rm -rf /var/log/ceph /var/run/ceph /var/lib/ceph /run/ceph /etc/ceph
   register: cleanup_ceph_config
@@ -117,8 +76,6 @@
 
 #
 - name: Cleanup the ceph block devices
-  become: true
-  become_user: root
   shell: |
     lsblk
     for j in $(echo 'vdb vdc vdd'); do dd if=/dev/zero of=/dev/$j bs=1M count=1000; done
@@ -130,8 +87,6 @@
 
 #
 - name: Kill processes of conmon and podman
-  become: true
-  become_user: root
   shell: |
     killall conmon
     killall podman
@@ -144,8 +99,6 @@
 
 #
 - name: Uninstall conmon package
-  become: true
-  become_user: root
   yum:
     name: "{{ item }}"
     state: absent
@@ -173,4 +126,3 @@
   notify:
     - Waiting for server to come back after restart
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and reboot_required.rc == 1
-

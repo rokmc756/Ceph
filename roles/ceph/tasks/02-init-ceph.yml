@@ -7,8 +7,6 @@
 
 #
 - name: Install Ceph Reef
-  become: true
-  become_user: root
   shell: |
     /root/cephadm install
   register: install_ceph
@@ -18,8 +16,6 @@
 
 #
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
-  become: true
-  become_user: root
   shell: |
     /root/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_eth0']['ipv4']['address'] }} --allow-overwrite
   register: init_ceph
@@ -27,16 +23,3 @@
 
 - debug: msg={{ init_ceph }}
   when: print_debug == true
-
-#
-#- name: Install ceph-common
-#  become: true
-#  become_user: root
-#  shell: |
-#    /root/cephadm install ceph-common
-#  register: install_ceph_common
-#  ignore_errors: true
-#
-#- debug: msg={{ install_ceph_common }}
-#  when: print_debug == true
-#

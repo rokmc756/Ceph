@@ -1,7 +1,5 @@
 #
 - name: Activate the telemetry module
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph telemetry on --license sharing-1-0
   register: activate_telemetry_module
@@ -12,8 +10,6 @@
 
 #
 - name: Change admin password for Ceph Dashboard
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} echo changeme > /tmp/dashboard_password.yml ; ceph dashboard ac-user-set-password admin -i /tmp/dashboard_password.yml
   register: change_admin_password

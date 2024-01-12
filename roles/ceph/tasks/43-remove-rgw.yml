@@ -1,0 +1,17 @@
+# Remove Rados Gateway
+- name: Remove user in the Ceph Object Gateway
+  shell: |
+    radosgw-admin user rm --uid=jmoon --purge-data
+  register: remove_rgw_user
+  ignore_errors: true
+
+- debug: msg={{ remove_rgw_user }}
+  when: print_debug == true
+
+#- name: Remove zone in the Ceph Object Gateway
+#  shell: |
+#    cephadm shell -- ceph orch rm rgw.test_realm.test_zone_bb
+#  register: remove_rgw
+#
+#- debug: msg={{ remove_rgw }}
+#  when: print_debug == true

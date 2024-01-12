@@ -21,7 +21,6 @@
 
 #
 - name: Gunzip cephadm gz file
-  become: yes
   shell: ( gunzip -c {{ item }} > /root/cephadm )
   register: gunzip_cephadm
   with_items:
@@ -29,7 +28,6 @@
   when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
 
 - name: Change executable permisssion for cephadm
-  become: yes
   file:
     path: "/root/cephadm"
     owner: "root"
@@ -60,8 +58,6 @@
 
 #
 - name: Download cephadm
-  become: true
-  become_user: root
   get_url:
     url: "{{ server_url }}"
     dest: "{{ cephadm.bin }}"
@@ -72,8 +68,6 @@
 
 #
 - name: Add repo for Ceph Reef for all hosts
-  become: true
-  become_user: root
   shell: |
     /root/cephadm add-repo --release reef
   register: add_repo
@@ -83,8 +77,6 @@
 
 #
 - name: Install Podman and Civetweb
-  become: true
-  become_user: root
   yum:
     name: "{{ item }}"
     state: present
@@ -97,8 +89,6 @@
 
 #
 - name: Install Ceph CLI tools on the host
-  become: true
-  become_user: root
   shell: |
     /root/cephadm install ceph-common
   register: install_ceph_cli_tools

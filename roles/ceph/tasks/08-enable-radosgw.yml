@@ -10,23 +10,37 @@
 # This example is based on the environment like follows.
 #
 #
-#                                         |
-#        +--------------------+           |                 +-------------------------------------+
-#        |   [dlp.srv.world]  |10.0.0.30  |   192.168.0.223 |  [rk9-ceph-mon03.jtest.pivotal.io]  |
-#        |     Ceph Client    +-----------+-----------------+              RADOSGW                |
-#        |                    |           |                 |                                     |
-#        +--------------------+           |                 +-------------------------------------+
-#            +----------------------------+----------------------------+
+#                                            |
+#        +--------------------+              |                +--------------------+
+#        |                    |              |                |                    |
+#        |   [dlp.srv.world]  |              |                |  [rk9-ceph-mon03]  |
+#        |                    | 192.168.0.x  | 192.168.0.223  |                    |
+#        |     Ceph Client    +--------------+----------------+      RADOSGW       |
+#        |                    |              |                |                    |
+#        +--------------------+              |                +--------------------+
+#                                            |
+#                                            |
+#            +-------------------------------+----------------------------+
+#            |                               |                            |
+#            | 192.168.0.221                 | 192.168.0.222              | 192.168.0.223
+#+-----------+-----------+        +----------+-----------+    +-----------+-----------+
+#|                       +        |                      |    |                       |
+#|   [rk9-ceph-mon01]    |        |   [rk9-ceph-mon02]   |    |   [rk9-ceph-mon03]    |
+#|                       +--------+                      +----+                       |
+#|    Monitor Daemon     |        |    Monitor Daemon    |    |    Monitor Daemon     |
+#|    Manager Daemon     +--------+    Manager Daemon    +----+    Manager Daemon     |
+#|                       |        |                      |    |                       |
+#+-----------------------+        +----------------------+    +-----------------------+
 #            |                            |                            |
-#            |10.0.0.51                   |10.0.0.52                   |10.0.0.53
+#            |                            |                            |
+#            | 192.168.0.224              | 192.168.0.225              | 192.168.0.226
 #+-----------+-----------+    +-----------+-----------+    +-----------+-----------+
-#|   [node01.srv.world]  |    |   [node02.srv.world]  |    |   [node03.srv.world]  |
-#|     Object Storage    +----+     Object Storage    +----+     Object Storage    |
-#|     Monitor Daemon    |    |                       |    |                       |
-#|     Manager Daemon    |    |                       |    |                       |
+#|                       |    |                       |    |                       |
+#|   [rk9-ceph-osd01]    |    |   [rk9-ceph-osd02]    |    |   [rk9-ceph-osd03]    |
+#|    Object Storage     +----+    Object Storage     +----+    Object Storage     |
+#|                       |    |                       |    |                       |
 #+-----------------------+    +-----------------------+    +-----------------------+
 #
-
 #
 - name: Tansfer required files to RADOSGW Node and Configure it from Admin Node
   become: true
@@ -39,9 +53,7 @@
 - debug: msg={{ copy_ssh_public_keys }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-# - name: Install required packages for RADOSGW
-#  become: true
-#  become_user: root
+#- name: Install required packages for RADOSGW
 #  yum:
 #    name: "{{ item }}"
 #    state: present
@@ -55,8 +67,6 @@
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 - name: Add lines for setting radosgw in /etc/ceph/ceph.conf
-  become: true
-  become_user: root
   lineinfile:
     path: /etc/ceph/ceph.conf
     line: "{{ item }}"
@@ -75,8 +85,6 @@
 
 #
 - name: Transfer ceph configuration to Rados Gateway host
-  become: true
-  become_user: root
   shell: |
     ssh root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} "mkdir /etc/ceph"
     scp /etc/ceph/ceph.conf root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph/
@@ -89,8 +97,6 @@
 
 #
 - name: Create directory for Rados Gateway
-  become: true
-  become_user: root
   shell: |
     mkdir -p /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: mkdir_rgw_ceph
@@ -101,8 +107,6 @@
 
 #
 - name: Create authentication for Rados Gateway
-  become: true
-  become_user: root
   shell: |
     ceph auth get-or-create client.rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring
   register: create_rgw_auth
@@ -113,8 +117,6 @@
 
 #
 - name: Change owership of ceph config and directories
-  become: true
-  become_user: root
   shell: |
     chown ceph:ceph /etc/ceph/ceph.*
     chown -R ceph:ceph /var/lib/ceph/radosgw
@@ -126,8 +128,6 @@
 
 #
 - name: Enable systemd service for Rados Gateway
-  become: true
-  become_user: root
   shell: |
     systemctl enable --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: enable_rgw_systemd
@@ -138,8 +138,6 @@
 
 #
 - name: Open a port in firewalld for Rados Gateway
-  become: true
-  become_user: root
   shell: |
     firewall-cmd --add-port=7480/tcp
     firewall-cmd --runtime-to-permanent
@@ -150,9 +148,9 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Pause for 5 minutes to wait for compleiting initializaion of radosgw
+- name: Pause for 3 minutes to wait for compleiting initializaion of radosgw
   pause:
-    minutes: 5
+    minutes: 3
 
 
 # Verify status
@@ -163,8 +161,6 @@
 # for example, create [serverworld] user
 #
 - name:  Transfer ceph configuration to Rados Gateway host
-  become: true
-  become_user: root
   shell: |
     radosgw-admin user create --uid={{ rgw.user_name }} --display-name={{ rgw.display_name }} --email={{ rgw.email }}
   register: create_rgw_user
@@ -175,8 +171,6 @@
 
 #
 - name: Show user list
-  become: true
-  become_user: root
   shell: |
     radosgw-admin user list
   register: show_rgw_users
@@ -187,8 +181,6 @@
 
 #
 - name: Show specific user information
-  become: true
-  become_user: root
   shell: |
     radosgw-admin user info --uid={{ rgw.user_name }}
   register: show_rgw_user
@@ -199,8 +191,6 @@
 
 #
 - name: Upgrade boto3 pip module for testing s3 connection and protocols
-  become: true
-  become_user: root
   shell: |
     pip3 install --upgrade boto3
   register: install_pip_boto3
@@ -211,8 +201,6 @@
 
 #
 - name: Copy python s3 script
-  become: true
-  become_user: root
   template: src=s3-test.py.j2 dest=/root/s3-test.py owner=root group=root mode=755 force=yes
   register: copy_s3_py_script
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -222,8 +210,6 @@
 
 #
 - name: Verify accessing with S3 interface to create Python test script on a Computer with a common user
-  become: true
-  become_user: root
   shell: |
     python3 /root/s3-test.py
   register: run_pip_boto3
@@ -232,4 +218,3 @@
 
 - debug: msg={{ run_pip_boto3  }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-

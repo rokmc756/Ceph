@@ -1,7 +1,5 @@
 #
 - name: Create a pool named tpool01 with placement groups count of 100
-  become: true
-  become_user: root
   shell: |
     ceph osd pool create {{ rbd.pool_name }} {{ rbd.pg_count }}
   register: create_rbd_pool
@@ -11,8 +9,6 @@
 
 #
 - name: List available pools to confirm it was created
-  become: true
-  become_user: root
   shell: |
     ceph osd lspools
   register: list_ceph_pool
@@ -25,8 +21,6 @@
 # Pools that will be used with CephFS or pools that are automatically
 # created by RGW are automatically associated
 - name: Enable Pool for Ceph Filesystem
-  become: true
-  become_user: root
   shell: |
     ceph osd pool application enable {{ rbd.pool_name }} cephfs
   register: enable_cephfs_pool
@@ -36,8 +30,6 @@
 
 #
 - name: Enable Pool for Rados Block Device
-  become: true
-  become_user: root
   shell: |
     ceph osd pool application enable {{ rbd.pool_name }} rbd --yes-i-really-mean-it
   register: enable_rbd_pool
@@ -47,8 +39,6 @@
 
 #
 - name: Enable Pool for Rados Gateway
-  become: true
-  become_user: root
   shell: |
     ceph osd pool application enable {{ rbd.pool_name }} rgw --yes-i-really-mean-it
   register: enable_rgw_pool
@@ -58,8 +48,6 @@
 
 #
 - name: Initialize Pool for Rados Block Device
-  become: true
-  become_user: root
   shell: |
     rbd pool init {{ rbd.pool_name }}
   register: init_rbd_pool
@@ -69,8 +57,6 @@
 
 #
 - name: Obtain I/O information for a specific pool or all
-  become: true
-  become_user: root
   shell: |
     ceph osd pool stats {{ rbd.pool_name }}
   register: obtain_pool_io
@@ -80,8 +66,6 @@
 
 #
 - name: Create Rados Block Device in Pool
-  become: true
-  become_user: root
   shell: |
     rbd create trbd01 --size {{ rbd.custom_size }} --pool {{ rbd.pool_name }}
   register: create_rbd
@@ -91,8 +75,6 @@
 
 # Need to investigate why OSD id 0 got down
 - name: Purge OSD id 0
-  become: true
-  become_user: root
   shell: |
     ceph osd out osd.0
     ceph osd purge 0 --yes-i-really-mean-it
@@ -103,8 +85,6 @@
 
 #
 #- name: Disable and Delete Pool
-#  become: true
-#  become_user: root
 #  shell: |
 #    ceph osd pool delete tpool01 --yes-i-really-really-mean-it
 #    ceph osd pool application disable tpool01 <app> {--yes-i-really-mean-it}

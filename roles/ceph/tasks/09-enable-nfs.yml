@@ -1,7 +1,6 @@
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
 #
 - name: Create NFS
-  become: true
-  become_user: root
   shell: |
     ceph nfs cluster create {{ nfs.cluster_name }}
   register: create_nfs
@@ -11,8 +10,6 @@
 
 #
 - name: Check the status of the creation nfs by ls
-  become: true
-  become_user: root
   shell: |
     ceph orch ls --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ls
@@ -22,8 +19,6 @@
 
 #
 - name: Check the status of the creation nfs by ps
-  become: true
-  become_user: root
   shell: |
     ceph orch ps --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ps
@@ -33,8 +28,6 @@
 
 #
 - name: Check the status of the creation nfs by cluster info
-  become: true
-  become_user: root
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: check_nfs_clu_info
@@ -44,8 +37,6 @@
 
 # Exporting a Ceph File System
 - name: Create a NFS filesystem volume named {{ nfs.cephfs_name }}
-  become: true
-  become_user: root
   shell: |
     ceph fs volume create {{ nfs.cephfs_name }}
   register: create_nfs_vol
@@ -55,12 +46,8 @@
 
 #
 - name: Create a user named nfsclient to expose CephFS though the NFS server
-  become: true
-  become_user: root
   shell: |
-    ceph auth get-or-create client.{{ nfs.user_name }} 'allow r' \
-    osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
-    mds 'allow rw path=/' > /root/nfsclient.key
+    ceph auth get-or-create client.{{ nfs.user_name }} 'allow r' osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' mds 'allow rw path=/' > /root/nfsclient.key
   ignore_errors: true
   register: create_nfs_auth
 
@@ -69,8 +56,6 @@
 
 #
 - name: Create a configuration file and apply it to the nfs cluster
-  become: true
-  become_user: root
   shell: |
     ceph nfs cluster config set {{ nfs.namespace }} -i /root/nfs.conf
   ignore_errors: true
@@ -81,8 +66,6 @@
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
 - name: Create a CephFS export
-  become: true
-  become_user: root
   shell: |
     ceph nfs export create cephfs {{ nfs.cluster_name }} /ceph {{ nfs.cephfs_name }} --path=/
   register: create_cephfs_export
@@ -92,8 +75,6 @@
 
 #
 - name: View the export block based on the pseudo root name
-  become: true
-  become_user: root
   shell: |
     ceph nfs export get {{ nfs.cluster_name }} /ceph
   register: view_nfs_export
@@ -103,8 +84,6 @@
 
 #
 - name: List the NFS exports
-  become: true
-  become_user: root
   shell: |
     ceph nfs export ls {{ nfs.cluster_name }}
   register: list_nfs_export
@@ -114,8 +93,6 @@
 
 # Note: CLUSTER_NAME is optional. If the CLUSTER_NAME is not specified, information of all nfs clusters present will be displayed.
 - name: Get the information of the NFS export
-  become: true
-  become_user: root
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: get_nfs_export
@@ -125,8 +102,6 @@
 
 #
 #- name: Mount the exported Ceph File System on a client
-#  become: true
-#  become_user: root
 #  shell: |
 #    mount -t nfs -o port=2049 rk9-ceph-mon01:/ceph/ /mnt/nfs-cephfs
 #  register: mount_exported_cephfs
@@ -140,8 +115,6 @@
 # eplace LOCAL_MOUNT_POINT with the mount point to mount the export on.
 # This example mounts the export nfs-cephfs that exists on a NFS cluster created with --ingress --virtual-ip 10.10.128.75 on the mount point /mnt.
 #- name: Create a configuration file and apply it to the nfs cluster
-#  become: true
-#  become_user: root
 #  shell: |
 #    mount -t nfs 10.10.128.75:/nfs-cephfs /mnt
 #  register: create_nfs_config

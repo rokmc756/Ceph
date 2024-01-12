@@ -1,0 +1,35 @@
+#
+- name: Delete CephFS in Pool
+  shell: |
+    ceph fs volume rm {{ pool.cephfs_name }} --yes-i-really-mean-it
+    # cephadm shell -- ceph fs volume rm {{ pool.cephfs_name }} --yes-i-really-mean-it
+  register: delete_cephfs_pool
+  ignore_errors: true
+
+- debug: msg={{ delete_cephfs_pool }}
+  when: print_debug == true
+
+#
+- name: Delete volume in Pool
+  shell: |
+    rbd -p {{ pool.pg_name }} rm {{ pool.pg_custom_volume_name }}
+    # rbd rm {{ pool.pg_name }}/{{ pool.pg_custom_volume_name }}
+  register: remove_rgw
+  ignore_errors: true
+
+#
+- debug: msg={{ remove_rgw }}
+  when: print_debug == true
+
+#
+- name: Delete Pool
+  shell: |
+    ceph tell mon.* injectargs --mon_allow_pool_delete true
+    ceph osd pool delete {{ pool.pg_name }} {{ pool.pg_name }} --yes-i-really-really-mean-it
+    # cephadm shell -- ceph tell mon.* injectargs --mon_allow_pool_delete true
+    # cephadm shell -- ceph osd pool delete {{ pool.pg_name }} {{ pool.pg_name }} --yes-i-really-really-mean-it
+  register: delete_pool
+  ignore_errors: true
+
+- debug: msg={{ delete_pool }}
+  when: print_debug == true

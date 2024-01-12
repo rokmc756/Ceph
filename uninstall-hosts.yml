@@ -2,7 +2,11 @@
   become: yes
   vars:
     print_debug: true
-    uninstall_pkgs: true
+    remove_block_device_image: true
+    remove_nfs_cluster: true
+    remove_rgw: true
+    remove_custom_pool: true
+    destroy_ceph_cluster: false
   roles:
     - { role: ceph }
 #    - { role: docker }

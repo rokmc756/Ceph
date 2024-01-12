@@ -1,7 +1,5 @@
 #
 - name: Add the OSD Nodes to the cluster
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
   register: add_osd_nodes
@@ -15,8 +13,6 @@
 
 #
 - name: Label the OSD nodes with its role
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
   register: label_osd_nodes
@@ -27,8 +23,6 @@
 
 #
 - name: List Ceph Cluster Nodes
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch host ls
   register: list_ceph_nodes
@@ -38,8 +32,6 @@
 
 #
 - name: List the devices that are available on the OSD nodes for creating OSDs using the command below;
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch device ls
   register: list_devices
@@ -49,8 +41,6 @@
 
 #
 - name: Attach all devices at once
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
   register: attach_all_devices
@@ -61,8 +51,6 @@
 
 #
 #- name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
-#  become: true
-#  become_user: root
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
 #  register: disable_auto_create_osds
@@ -71,8 +59,6 @@
 #  when: print_debug == true
 
 #- name: Ceate manullay an OSD from a specific device on a specific host
-#  become: true
-#  become_user: root
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb,/dev/vdc,/dev/vdd
 #  register: create_osd_host
@@ -83,8 +69,6 @@
 
 #
 - name: Check Ceph cluster health
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph -s
   register: check_ceph_health
@@ -94,8 +78,6 @@
 
 #
 - name: Check OSDs
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph osd tree
   register: check_osd_tree
@@ -105,8 +87,6 @@
 
 #
 - name: Get a list of Ceph services
-  become: true
-  become_user: root
   shell: |
     {{ cephadm_cmd }} ceph orch ps
   register: check_ceph_services
@@ -116,8 +96,6 @@
 
 #
 - name: Check created containers
-  become: true
-  become_user: root
   shell: |
     podman ps
   register: check_containers
@@ -127,8 +105,6 @@
 
 #
 - name: List the containers if using podman
-  become: true
-  become_user: root
   shell: |
     systemctl list-units 'ceph*'
   register: list_containers
