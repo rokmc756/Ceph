@@ -74,14 +74,14 @@
   when: print_debug == true
 
 # Need to investigate why OSD id 0 got down
-- name: Purge OSD id 0
-  shell: |
-    ceph osd out osd.0
-    ceph osd purge 0 --yes-i-really-mean-it
-  register: purge_osd_zero
+#- name: Purge OSD id 0
+#  shell: |
+#    ceph osd out osd.0
+#    ceph osd purge 0 --yes-i-really-mean-it
+#  register: purge_osd_zero
 
-- debug: msg={{ purge_osd_zero }}
-  when: print_debug == true
+#- debug: msg={{ purge_osd_zero }}
+#  when: print_debug == true
 
 #
 #- name: Disable and Delete Pool

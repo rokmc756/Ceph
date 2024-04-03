@@ -1,2 +1,64 @@
-ansible_ssh_pass: changeme
+ansible_ssh_pass: "changeme"
 ansible_become_pass: "changeme"
+ceph:
+  cluster_name: jack-kr-ceph
+  major_version: "4"
+  minor_version: "2"
+  build_version: "7"
+  patch_version: ".64"
+  download_url: "get.weka.io/dist/v1/pkg"
+  download: false
+  base_path: /root
+  admin_user: cephadm
+  admin_default_pass: cephadm
+  admin_change_pass: "Changeme12!@"
+  bin_type: tar
+  host_num: "{{ groups['all'] | length }}"
+  net:
+    conn: "udp"                    # dpdk or udp
+    gateway: "192.168.0.1"
+    ha1: 1
+    ha2: 2
+    type: "virtual"               # or physical
+    ipaddr0: "192.168.0.7"
+    ipaddr1: "192.168.1.7"
+    ipaddr2: "192.168.2.7"
+    data_plane: netdev2
+  backend:
+    scb: true
+    mcb: false
+    net:
+      type: "virtual"               # or physical
+      ipaddr0: "192.168.0.7"
+      ipaddr1: "192.168.1.7"
+      ipaddr2: "192.168.2.7"
+      data_plane: netdev2
+  obs: false
+  fs: false
+  protocol:
+    s3: false
+    nfs: false
+    smb: false
+  client:
+    cephfs: false
+    smb: false
+    nfs: false
+    s3: false
+    net:
+      type: "virtual"               # or physical
+      cores: 1
+      ipaddr0: "192.168.0.6"
+      ipaddr1: "192.168.1.6"
+      ipaddr2: "192.168.2.6"
+  ext_storage:
+    net:
+      ipaddr0: "192.168.0."
+      ipaddr1: "192.168.1."
+      ipaddr2: "192.168.2."
+  tools:                            # git clone https://github.com/weka/tools; cd tools ; git checkout v1.3.8
+    name: tools
+    major_version: 1
+    minor_version: 3
+    patch_version: 8
+    download: false
+    bin_type: tar.gz

@@ -14,19 +14,32 @@
   when: print_debug == true
 
 #
-- name: Copy cephadm binary from local directory, roles/ceph/files
-  copy: src={{ cephadm_file_name }}.gz dest=/tmp/{{ cephadm_file_name }}.gz mode=0644 owner=root group=root
-  register: local_copy_cephadm
-  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+#- name: Copy cephadm binary from local directory, roles/ceph/files
+#  copy: src={{ cephadm_file_name }}.gz dest=/tmp/{{ cephadm_file_name }}.gz mode=0644 owner=root group=root
+#  register: local_copy_cephadm
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
 
 #
-- name: Gunzip cephadm gz file
-  shell: ( gunzip -c {{ item }} > /root/cephadm )
-  register: gunzip_cephadm
-  with_items:
-    - "/tmp/{{ cephadm_file_name }}.gz"
-  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+#- name: Gunzip cephadm gz file
+#  shell: ( gunzip -c {{ item }} > /root/cephadm )
+#  register: gunzip_cephadm
+#  with_items:
+#    - "/tmp/{{ cephadm_file_name }}.gz"
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
 
+
+#
+# omitt --silent --remote-name
+- name: Download Ceph CLI tools on the host
+  shell: |
+    curl --location https://download.ceph.com/rpm-reef/el9/noarch/cephadm -o /root/cephadm
+  async: 60
+  poll: 5
+  register: download_ceph_cli_tools
+- debug: msg={{ download_ceph_cli_tools }}
+  when: print_debug == true
+
+#
 - name: Change executable permisssion for cephadm
   file:
     path: "/root/cephadm"
@@ -57,14 +70,14 @@
 #  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
 
 #
-- name: Download cephadm
-  get_url:
-    url: "{{ server_url }}"
-    dest: "{{ cephadm.bin }}"
-    owner: root
-    group: root
-    mode: 0755
-  when: cephadm_bin_exists.stat.exists == false and download_cephadm == true
+#- name: Download cephadm
+#  get_url:
+#    url: "{{ server_url }}"
+#    dest: "{{ cephadm.bin }}"
+#    owner: root
+#    group: root
+#    mode: 0755
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == true
 
 #
 - name: Add repo for Ceph Reef for all hosts
@@ -95,3 +108,4 @@
 
 - debug: msg={{ install_ceph_cli_tools }}
   when: print_debug == true
+

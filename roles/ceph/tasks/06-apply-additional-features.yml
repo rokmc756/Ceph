@@ -1,4 +1,22 @@
 #
+- name: Get fsid for setting fact
+  shell: |
+    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+#
+- name: Set fact for fsid
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set fact for cephadm command location
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#
 - name: Activate the telemetry module
   shell: |
     {{ cephadm_cmd }} ceph telemetry on --license sharing-1-0

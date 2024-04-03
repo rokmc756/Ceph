@@ -168,4 +168,4 @@ $ make uninstall
 - https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
 - https://gist.github.com/fmount/6203013d1c423dd831e3717b9986551b
 - https://www.ibm.com/docs/en/storage-ceph/5?topic=mcog-deploying-ceph-object-gateway-using-command-line-interface
-
+- https://docs.ceph.com/en/latest/install/get-packages/

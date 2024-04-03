@@ -10,11 +10,11 @@
     add_monitor_nodes: false
     add_osd_nodes: false
     apply_additional_features: false
-    enable_custom_pool: true
-    enable_radosgw: true
+    enable_rbd_pool: false
+    enable_custom_pool: false
+    enable_radosgw: false
     enable_nfs: true
-    enable_rbd_pool: true
   roles:
     - { role: ceph }
-#    - { role: docker }
 #    - { role: init-hosts }
+#    - { role: docker }

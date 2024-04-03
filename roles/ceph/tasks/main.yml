@@ -5,6 +5,13 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
+- name: Set facts for network and packages informations for Linux Distribution
+  import_tasks: set-ceph-facts.yml
+  tags:
+    - install
+    - uninstall
+
+#
 - name: Deploy cephadm to lanuch Ceph Installation
   import_tasks: 01-deploy-cephadm.yml
   tags: install

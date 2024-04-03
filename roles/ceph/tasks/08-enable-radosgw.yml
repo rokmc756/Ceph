@@ -74,7 +74,7 @@
   with_items:
     - ""
     - "[client.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}]"
-    - "host = {{ hostvars[groups['mon'][2]]['ansible_eth0']['ipv4']['address'] }}"
+    - "host = {{ hostvars[groups['mon'][2]]['ansible_'~netdev0]['ipv4']['address'] }}"
     - "rgw dns name = {{ hostvars[groups['mon'][2]]['ansible_hostname'] }}.jtest.pivotal.io"
     - "keyring = /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring"
     - "log file = /var/log/ceph/radosgw.gateway.log"
@@ -176,6 +176,7 @@
   register: show_rgw_users
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
+#
 - debug: msg={{ show_rgw_users }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -186,6 +187,7 @@
   register: show_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
+#
 - debug: msg={{ show_rgw_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -216,5 +218,7 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+#
 - debug: msg={{ run_pip_boto3  }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+

@@ -12,7 +12,7 @@ all:
 	@echo "[ Available targets ]"
 	@echo ""
 	@echo "init:            will install basic requirements (will ask several times for a password)"
-	@echo "install:         will install the host with what is defined in install-host.yml"
+	@echo "install:         will install the host with what is defined in install.yml"
 	@echo "update:          run OS updates"
 	@echo "ssh:             jump ssh to host"
 	@echo "role-update:     update all downloades roles"
@@ -48,11 +48,11 @@ init:	setup-hosts.yml update-hosts.yml
 	ansible-playbook -i ansible-hosts -u ${USERNAME} --ssh-common-args='-o UserKnownHostsFile=./known_hosts -o VerifyHostKeyDNS=true' install-ansible-prereqs.yml
 
 # - https://ansible-tutorial.schoolofdevops.com/control_structures/
-install: role-update install-hosts.yml
-	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} install-hosts.yml --tags="install"
+install: role-update install.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} install.yml --tags="install"
 
-uninstall: role-update uninstall-hosts.yml
-	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} uninstall-hosts.yml --tags="uninstall"
+uninstall: role-update uninstall.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} uninstall.yml --tags="uninstall"
 
 upgrade: role-update upgrade-hosts.yml
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} upgrade-hosts.yml --tags="upgrade"
@@ -69,13 +69,13 @@ role-update:
 ssh:
 	ssh -o UserKnownHostsFile=./known_hosts ${USERNAME}@${IP}
 
-install-host.yml:
-	cp -a install-host.template install-host.yml
+install.yml:
+	cp -a install.template install.yml
 
-update-hosts.yml:
-	cp -a update-hosts.template update-hosts.yml
+update.yml:
+	cp -a update-hosts.template update.yml
 
 clean:
-	rm -rf ./known_hosts install-host.yml update-hosts.yml
+	rm -rf ./known_hosts install.yml update.yml
 
 .PHONY:	all init install update ssh common clean no_targets__ role-update

@@ -9,5 +9,5 @@
     destroy_ceph_cluster: false
   roles:
     - { role: ceph }
-#    - { role: docker }
 #    - { role: init-hosts }
+#    - { role: docker }

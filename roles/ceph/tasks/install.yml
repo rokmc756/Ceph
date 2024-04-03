@@ -1,11 +1,4 @@
 #
-# https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
-- set_fact:
-    all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
-
-- debug: msg={{ all_nodes_hostname }}
-
-#
 - name: Install Ceph Reef
   shell: |
     /root/cephadm install
@@ -17,7 +10,7 @@
 #
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    /root/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_eth0']['ipv4']['address'] }} --allow-overwrite
+    /root/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev0]['ipv4']['address'] }} --allow-overwrite
   register: init_ceph
   ignore_errors: true
 
