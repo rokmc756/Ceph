@@ -60,7 +60,7 @@
   when: enable_radosgw == true
 
 #
-- name: Enable NFS
+- name: Enable NFS Cluster
   import_tasks: 09-enable-nfs.yml
   tags: install
   when: enable_nfs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -71,25 +71,25 @@
   tags: install
   when: enable_rbd_pool == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #
-- name: Uninstall Ceph
+- name: Remove Block Device Images
   import_tasks: 41-remove-block-device-image.yml
   tags: uninstall
   when: remove_block_device_image == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Uninstall Ceph
+- name: Remove NFS Cluster
   import_tasks: 42-remove-nfs-cluster.yml
   tags: uninstall
   when: remove_nfs_cluster == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Uninstall Ceph
+- name: Uninstall Rados Gateway
   import_tasks: 43-remove-rgw.yml
   tags: uninstall
-  when: remove_rgw == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: remove_rgw == true
 
 #
-- name: Uninstall Ceph
+- name: Remove Custom Pool
   import_tasks: 44-remove-custom-pool.yml
   tags: uninstall
   when: remove_custom_pool == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

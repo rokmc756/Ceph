@@ -1,5 +1,5 @@
 #
-- name: Check created containers
+- name: Check if Container is Created
   shell: |
     podman images
   register: check_containers
@@ -8,7 +8,7 @@
   when: print_debug == true
 
 #
-- name: List the containers if using podman
+- name: List the Containers If Using Podman
   shell: |
     podman ps
   register: list_podman
@@ -17,10 +17,11 @@
   when: print_debug == true
 
 #
-- name: List the containers if using podman
+- name: List the Containers If Using Podman
   shell: |
     systemctl list-units 'ceph*'
   register: list_containers
 
 - debug: msg={{ list_containers }}
   when: print_debug == true
+

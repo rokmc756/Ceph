@@ -42,7 +42,7 @@
 #+-----------------------+    +-----------------------+    +-----------------------+
 #
 #
-- name: Tansfer required files to RADOSGW Node and Configure it from Admin Node
+- name: Tansfer Required Files to RADOSGW Node and Configure it from Admin Node
   become: true
   become_user: root
   shell: |
@@ -66,7 +66,7 @@
 #- debug: msg={{ install_required_pkgs }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
-- name: Add lines for setting radosgw in /etc/ceph/ceph.conf
+- name: Add Lines for Setting Radosgw in /etc/ceph/ceph.conf
   lineinfile:
     path: /etc/ceph/ceph.conf
     line: "{{ item }}"
@@ -84,7 +84,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Transfer ceph configuration to Rados Gateway host
+- name: Transfer Ceph Configuration to Rados Gateway Host
   shell: |
     ssh root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} "mkdir /etc/ceph"
     scp /etc/ceph/ceph.conf root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph/
@@ -96,7 +96,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Create directory for Rados Gateway
+- name: Create Directory for Rados Gateway
   shell: |
     mkdir -p /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: mkdir_rgw_ceph
@@ -106,7 +106,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Create authentication for Rados Gateway
+- name: Create Authentication for Rados Gateway
   shell: |
     ceph auth get-or-create client.rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring
   register: create_rgw_auth
@@ -116,7 +116,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Change owership of ceph config and directories
+- name: Change Owership of Ceph Config and Directories
   shell: |
     chown ceph:ceph /etc/ceph/ceph.*
     chown -R ceph:ceph /var/lib/ceph/radosgw
@@ -127,7 +127,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Enable systemd service for Rados Gateway
+- name: Enable Systemd Service for Rados Gateway
   shell: |
     systemctl enable --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: enable_rgw_systemd
@@ -136,19 +136,18 @@
 - debug: msg={{ enable_rgw_systemd }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
+#- name: Open a port in firewalld for Rados Gateway
+#  shell: |
+#    firewall-cmd --add-port=7480/tcp
+#    firewall-cmd --runtime-to-permanent
+#  register: open_rgw_port
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 #
-- name: Open a port in firewalld for Rados Gateway
-  shell: |
-    firewall-cmd --add-port=7480/tcp
-    firewall-cmd --runtime-to-permanent
-  register: open_rgw_port
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
-- debug: msg={{ open_rgw_port }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ open_rgw_port }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Pause for 3 minutes to wait for compleiting initializaion of radosgw
+- name: Pause for 3 minutes to Wait for Compleiting Initializaion of Rados Gateway
   pause:
     minutes: 3
 
@@ -159,18 +158,20 @@
 #
 # On Object Gateway Node, Create a S3 compatible user who can authenticate to Object Gateway.
 # for example, create [serverworld] user
+
 #
-- name:  Transfer ceph configuration to Rados Gateway host
+- name: Transfer Ceph Configuration to Rados Gateway Host
   shell: |
-    radosgw-admin user create --uid={{ rgw.user_name }} --display-name={{ rgw.display_name }} --email={{ rgw.email }}
+    radosgw-admin user create --uid={{ rgw.user_name }} --display-name={{ rgw.display_name }} --email={{ rgw.email }} --access-key=jomoon --secret-key=changeme
   register: create_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+  # --no-mon-config
 
 - debug: msg={{ create_rgw_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Show user list
+- name: Show User List
   shell: |
     radosgw-admin user list
   register: show_rgw_users
@@ -181,7 +182,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Show specific user information
+- name: Show Specific User Information
   shell: |
     radosgw-admin user info --uid={{ rgw.user_name }}
   register: show_rgw_user
@@ -192,7 +193,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Upgrade boto3 pip module for testing s3 connection and protocols
+- name: Upgrade Boto3 Pip Module for Testing S3 Connection and Protocols
   shell: |
     pip3 install --upgrade boto3
   register: install_pip_boto3
@@ -202,7 +203,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Copy python s3 script
+- name: Copy Python S3 Script
   template: src=s3-test.py.j2 dest=/root/s3-test.py owner=root group=root mode=755 force=yes
   register: copy_s3_py_script
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -211,7 +212,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Verify accessing with S3 interface to create Python test script on a Computer with a common user
+- name: Verify Accessing with S3 Interface to Create Python Test Script on a Computer with a Common User
   shell: |
     python3 /root/s3-test.py
   register: run_pip_boto3

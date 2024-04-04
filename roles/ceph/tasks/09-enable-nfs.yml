@@ -9,7 +9,7 @@
   when: print_debug == true
 
 #
-- name: Check the status of the creation nfs by ls
+- name: Check the LS Status in Creating NFS
   shell: |
     ceph orch ls --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ls
@@ -18,7 +18,7 @@
   when: print_debug == true
 
 #
-- name: Check the status of the creation nfs by ps
+- name: Check the PS Status in Creating NFS
   shell: |
     ceph orch ps --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ps
@@ -27,7 +27,7 @@
   when: print_debug == true
 
 #
-- name: Check the status of the creation nfs by cluster info
+- name: Check the Cluster Info Status in Creating NFS
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: check_nfs_clu_info
@@ -36,7 +36,7 @@
   when: print_debug == true
 
 # Exporting a Ceph File System
-- name: Create a NFS filesystem volume named {{ nfs.cephfs_name }}
+- name: Create a NFS filesystem Volume named {{ nfs.cephfs_name }}
   shell: |
     ceph fs volume create {{ nfs.cephfs_name }}
   register: create_nfs_vol
@@ -45,7 +45,7 @@
   when: print_debug == true
 
 #
-- name: Create a user named nfsclient to expose CephFS though the NFS server
+- name: Create a User named nfsclient to Expose CephFS though the NFS server
   shell: |
     ceph auth get-or-create client.{{ nfs.user_name }} 'allow r' osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' mds 'allow rw path=/' > /root/nfsclient.key
   ignore_errors: true

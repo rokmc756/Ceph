@@ -45,7 +45,7 @@
   when: print_debug == true
 
 #
-- name: Label the Nodes with Its Role
+- name: Label the Nodes with It's Role
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
   register: label_nodes
@@ -63,7 +63,7 @@
 - debug: msg={{ confirm_label }}
   when: print_debug == true
 
-#- name: Manually add monitors and disable automated monitor deployment
+#- name: Manually add Monitors and Disable Automated Monitor Deployment
 #  become: true
 #  become_user: root
 #  shell: |

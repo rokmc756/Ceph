@@ -2,9 +2,9 @@
   become: yes
   vars:
     print_debug: true
+    remove_rgw: true
     remove_nfs_cluster: false
-    remove_rgw: false
-    remove_custom_pool: true
+    remove_custom_pool: false
     remove_block_device_image: false
     destroy_ceph_cluster: false
   roles:
