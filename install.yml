@@ -8,13 +8,16 @@
     init_ceph: false
     check_containers: false
     add_monitor_nodes: false
-    add_osd_nodes: false
+    add_osd_nodes: false                          # --> Need to check if it works
     apply_additional_features: false
+    # create_osd: true
     enable_rbd_pool: false
-    enable_custom_pool: false
+    enable_custom_pool: true
     enable_radosgw: false
-    enable_nfs: true
+    enable_nfs: false
   roles:
     - { role: ceph }
+
 #    - { role: init-hosts }
 #    - { role: docker }
+

@@ -169,3 +169,9 @@ $ make uninstall
 - https://gist.github.com/fmount/6203013d1c423dd831e3717b9986551b
 - https://www.ibm.com/docs/en/storage-ceph/5?topic=mcog-deploying-ceph-object-gateway-using-command-line-interface
 - https://docs.ceph.com/en/latest/install/get-packages/
+- https://vineetcic.medium.com/how-to-remove-add-osd-from-ceph-cluster-1c038eefe522
+- https://www.ibm.com/docs/en/storage-ceph/5?topic=osds-deploying-ceph-all-available-devices
+- https://serverfault.com/questions/1117213/why-is-ceph-is-not-detecting-ssd-device-on-a-new-node
+- https://docs.huihoo.com/ceph/v0.80.5/rados/operations/add-or-rm-osds/index.html
+- https://www.ibm.com/docs/en/storage-ceph/5?topic=crush-adding-osd
+- https://docs.ceph.com/en/latest/rados/operations/add-or-rm-osds/

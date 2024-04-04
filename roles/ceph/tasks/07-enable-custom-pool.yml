@@ -1,5 +1,5 @@
 #
-- name: Get fsid for setting fact
+- name: Get FSID
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
@@ -8,12 +8,12 @@
   when: print_debug == true
 
 #
-- name: Set fact for fsid
+- name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
 
 #
-- name: Set fact for cephadm_cmd command
+- name: Set Fact for cephadm_cmd command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
@@ -35,13 +35,15 @@
 # After deleting delete command should be disabled to prevent mistakely deleting it.
 # ceph config set mon mon_allow_pool_delete false
 
-- name: Enable pool monitor
+#
+- name: Enable Pool Monitor
   shell: |
     ceph config set mon mon_allow_pool_delete true
     # {{ cephadm_cmd }} ceph config set mon mon_allow_pool_delete true
   register: enable_pool_monitor
   # {{ cephadm_cmd }} ceph config set mon mon_allow_pool_delete false
 
+#
 - debug: msg={{ enable_pool_monitor }}
   when: print_debug == true
 
@@ -51,7 +53,7 @@
 #- the value of pg_num should be 512 in caes that the number of OSD is between 5 ~ 10
 #- the value of pg_num should be 4096 properly in caes that the number of OSD is between 10 ~ 50
 #- pgcalc calcuation should be referred and set up in case that of more than 50 of pg_number
-- name: Create pool
+- name: Create Pool
   shell: |
     ceph osd pool create {{ pool.pg_name }} {{ pool.pg_number }}
     # {{ cephadm_cmd }} ceph osd pool create {{ pool.pg_name }} {{ pool.pg_number }}
@@ -61,7 +63,7 @@
   when: print_debug == true
 
 #
-- name: Create CephRBD storage image of block level
+- name: Create CephRBD Storage Image of Block Level
   shell: |
     rbd create {{ pool.pg_name }}/{{ pool.pg_custom_volume_name }} --size {{ pool.pg_custom_volume_size }} --image-feature layering
   register: create_rdb_image
@@ -70,7 +72,7 @@
   when: print_debug == true
 
 #
-- name: Check list of RDB volume created
+- name: Check List of RDB Volume Created
   shell: |
     rbd ls {{ pool.pg_name }}
   register: check_rdb_volume
@@ -95,7 +97,7 @@
   when: print_debug == true
 
 #
-- name: Check the status of MDS
+- name: Check the Status of MDS
   shell: |
     ceph orch ls # or ceph -s to check the status of MDS
     # {{ cephadm_cmd }} ceph orch ls # or ceph -s to check the status of MDS
@@ -105,7 +107,7 @@
   when: print_debug == true
 
 #
-- name: Check list of cephfs
+- name: Check List of CephFS
   shell: |
     ceph mds stat # or ceph fs ls
     # {{ cephadm_cmd }} ceph mds stat # or ceph fs ls
@@ -117,3 +119,4 @@
 # ceph osd out osd.0
 # ceph osd out osd.0
 # ceph osd purge 0 --yes-i-really-mean-it
+

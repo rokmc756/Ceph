@@ -1,5 +1,5 @@
 #
-- name: Get fsid for setting fact
+- name: Get FSID
   shell: |
     /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
   register: get_fsid
@@ -7,17 +7,17 @@
   when: print_debug == true
 
 #
-- name: Set fact for fsid
+- name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
 
 #
-- name: Set fact for cephadm command location
+- name: Set Fact for cephadm command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 #
-- name: Activate the telemetry module
+- name: Activate the Telemetry Module
   shell: |
     {{ cephadm_cmd }} ceph telemetry on --license sharing-1-0
   register: activate_telemetry_module
@@ -27,7 +27,7 @@
   when: print_debug == true
 
 #
-- name: Change admin password for Ceph Dashboard
+- name: Change Admin Password for Ceph Dashboard
   shell: |
     {{ cephadm_cmd }} echo changeme > /tmp/dashboard_password.yml ; ceph dashboard ac-user-set-password admin -i /tmp/dashboard_password.yml
   register: change_admin_password

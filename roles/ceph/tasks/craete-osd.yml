@@ -23,14 +23,12 @@
   register: add_osd_nodes
   with_items: "{{ groups['osd'] }}"
 # when: print_debug == true
-  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1
-  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n2
-  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n3
-  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n4
-  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4
 
 - debug: msg={{ add_osd_nodes }}
   when: print_debug == true
+  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb
+  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdc
+  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdd
 
 #
 - name: Label the OSD Nodes with Its Role
@@ -66,9 +64,7 @@
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
   register: attach_all_devices
-  with_items: "{{ groups['osd'] }}"
   # --method {raw|lvm}
-  # {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4
 
 #
 - debug: msg={{ attach_all_devices }}
@@ -77,7 +73,7 @@
 # {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
 #
 #- name: Ceate manullay an OSD from a specific device on a specific host
-# {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4
+#    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb,/dev/vdc,/dev/vdd
 
 #
 - name: Check Ceph Cluster Health

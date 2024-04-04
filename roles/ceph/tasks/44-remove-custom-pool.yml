@@ -33,3 +33,4 @@
 
 - debug: msg={{ delete_pool }}
   when: print_debug == true
+

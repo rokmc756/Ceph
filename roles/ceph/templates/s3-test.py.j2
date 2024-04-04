@@ -11,7 +11,7 @@ session = boto3.session.Session(
 # Object Gateway URL
 s3client = session.client(
     's3',
-    endpoint_url = 'http://{{ hostvars[groups['mon'][2]]['ansible_eth0']['ipv4']['address'] }}:7480',
+    endpoint_url = 'http://{{ hostvars[groups['mon'][2]]['ansible_'~netdev0]['ipv4']['address'] }}:7480',
     config = Config()
 )
 
@@ -23,3 +23,4 @@ print(s3client.list_buckets())
 
 # Remove [jtest-bucket01]
 s3client.delete_bucket(Bucket = 'jtest-bucket01')
+

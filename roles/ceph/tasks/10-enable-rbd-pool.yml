@@ -1,5 +1,5 @@
 #
-- name: Create a pool named tpool01 with placement groups count of 100
+- name: Create a Pool Named tpool01 with Placement Groups Count 100
   shell: |
     ceph osd pool create {{ rbd.pool_name }} {{ rbd.pg_count }}
   register: create_rbd_pool
@@ -8,7 +8,7 @@
   when: print_debug == true
 
 #
-- name: List available pools to confirm it was created
+- name: List Available Pools to Confirm It was Created
   shell: |
     ceph osd lspools
   register: list_ceph_pool
@@ -20,7 +20,7 @@
 # Pools need to be associated with an application before use.
 # Pools that will be used with CephFS or pools that are automatically
 # created by RGW are automatically associated
-- name: Enable Pool for Ceph Filesystem
+- name: Enable Pool for CephFS Filesystem
   shell: |
     ceph osd pool application enable {{ rbd.pool_name }} cephfs
   register: enable_cephfs_pool
@@ -56,7 +56,7 @@
   when: print_debug == true
 
 #
-- name: Obtain I/O information for a specific pool or all
+- name: Obtain I/O Information for a Specific Pool or All
   shell: |
     ceph osd pool stats {{ rbd.pool_name }}
   register: obtain_pool_io
@@ -93,3 +93,4 @@
 #
 #- debug: msg={{ disable_ceph_pool }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
