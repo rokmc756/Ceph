@@ -36,14 +36,16 @@
   when: print_debug == true
 
 #
-#- name: Attach All Devices at Once
-#  shell: |
-#    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
-#  register: attach_all_devices
-  # with_items: "{{ groups['osd'] }}"
+- name: Attach All Devices at Once
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
+  register: attach_all_devices
+   
+  #  {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
   # --method {raw|lvm}
   # {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4
-  #  {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
+  # {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
+  # with_items: "{{ groups['osd'] }}"
 
 #
 #- debug: msg={{ attach_all_devices }}
@@ -69,11 +71,10 @@
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
   register: label_osd_nodes
+  ignore_errors: true
   with_items: "{{ groups['osd'] }}"
-
 - debug: msg={{ label_osd_nodes }}
   when: print_debug == true
-
 
 #
 - name: Check Ceph Cluster Health

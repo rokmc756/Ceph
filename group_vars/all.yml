@@ -14,6 +14,9 @@ ceph:
   admin_change_pass: "Changeme12!@"
   bin_type: tar
   host_num: "{{ groups['all'] | length }}"
+  osd:
+  pool:
+  block:
   net:
     conn: "udp"                    # dpdk or udp
     gateway: "192.168.0.1"
@@ -25,8 +28,6 @@ ceph:
     ipaddr2: "192.168.2.7"
     data_plane: netdev2
   backend:
-    scb: true
-    mcb: false
     net:
       type: "virtual"               # or physical
       ipaddr0: "192.168.0.7"
@@ -55,10 +56,3 @@ ceph:
       ipaddr0: "192.168.0."
       ipaddr1: "192.168.1."
       ipaddr2: "192.168.2."
-  tools:                            # git clone https://github.com/weka/tools; cd tools ; git checkout v1.3.8
-    name: tools
-    major_version: 1
-    minor_version: 3
-    patch_version: 8
-    download: false
-    bin_type: tar.gz

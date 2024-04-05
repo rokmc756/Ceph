@@ -33,3 +33,4 @@
 - debug: msg={{ remove_nfs_cluster }}
   when: print_debug == true
 
+# Need to remove Pool, .nfs

@@ -2,12 +2,15 @@
   become: yes
   vars:
     print_debug: true
+    remove_osd_nodes: true
+    destroy_ceph: false
   roles:
-    - { role: custom }
-  # - { role: radosgw }
+    - { role: ceph }
+  #  - { role: rbd }
+  #  - { role: custom }
+  #  - { role: radosgw }
   #  - { role: nfs }
-  # - { role: rbd }
-  # - { role: ceph }
-  # - { role: init-hosts }
-  # - { role: docker }
+  #  - { role: init-hosts }
+  #  - { role: docker }
+
 

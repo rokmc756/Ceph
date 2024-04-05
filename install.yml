@@ -9,12 +9,13 @@
     check_containers: false
     add_monitor_nodes: false
     apply_additional_features: false
-    add_osd_nodes: false                          # --> Need to check if it works
+    add_osd_nodes: true                       # --> Need to check if it works
   roles:
-    - { role: custom }
+    - { role: ceph }
+    # - { role: rbd }
+    # - { role: custom }
     # - { role: radosgw }
     # - { role: nfs }
-    # - { role: rbd }
-    # - { role: ceph }
     # - { role: init-hosts }
     # - { role: docker }
+

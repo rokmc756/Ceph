@@ -90,3 +90,11 @@
 # systemctl stop --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
 # systemctl disable --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
 
+
+# Need to Remove Pool For Rados Gateway
+# .rgw.root
+# default.rgw.buckets.index
+# default.rgw.control
+# default.rgw.log
+# default.rgw.meta
+
