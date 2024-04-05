@@ -1,0 +1,60 @@
+# apt -y install nfs-ganesha-ceph
+# mv /etc/ganesha/ganesha.conf /etc/ganesha/ganesha.conf.org
+# vi /etc/ganesha/ganesha.conf
+
+# create new
+#NFS_CORE_PARAM {
+#    # disable NLM
+#    Enable_NLM = false;
+#    # disable RQUOTA (not suported on CephFS)
+#    Enable_RQUOTA = false;
+#    # NFS protocol
+#    Protocols = 4;
+#}
+#EXPORT_DEFAULTS {
+#    # default access mode
+#    Access_Type = RW;
+#}
+#EXPORT {
+#    # uniq ID
+#    Export_Id = 101;
+#    # mount path of CephFS
+#    Path = "/";
+#    FSAL {
+#        name = CEPH;
+#        # hostname or IP address of this Node
+#        hostname="10.0.0.51";
+#    }
+#    # setting for root Squash
+#    Squash="No_root_squash";
+#    # NFSv4 Pseudo path
+#    Pseudo="/vfs_ceph";
+#    # allowed security options
+#    SecType = "sys";
+#}
+#LOG {
+#    # default log level
+#    Default_Log_Level = WARN;
+#}
+
+#
+# systemctl restart nfs-ganesha
+#
+# centos-release-nfs-ganesha4                                noarch                              1.0-2.el9                                 devel                              7.7 k
+# centos-release-nfs-ganesha5                                noarch                              1.0-1.el9                                 devel                              7.6 k
+# centos-release-storage-common                              noarch                              2-5.el9                                   devel                              8.4 k
+#
+# yum install nfs-ganesha-ceph
+# CentOS-9-stream - NFS-Ganesha 4                                                                                                                    1.5 kB/s |  16 kB     00:10
+# CentOS-9-stream - NFS-Ganesha 5                                                                                                                    3.2 kB/s |  33 kB     00:10
+# Error:
+# Problem: package nfs-ganesha-ceph-5.7-2.el9s.x86_64 from centos-nfs-ganesha-5 requires libganesha_nfsd.so.5.7()(64bit), but none of the providers can be installed
+#  - package nfs-ganesha-5.7-1.el9s.x86_64 from centos-nfs-ganesha-5 requires nfs-ganesha-selinux = 5.7-1.el9s, but none of the providers can be installed
+#  - package nfs-ganesha-5.7-2.el9s.x86_64 from centos-nfs-ganesha-5 requires nfs-ganesha-selinux = 5.7-2.el9s, but none of the providers can be installed
+#  - cannot install the best candidate for the job
+#  - nothing provides selinux-policy >= 38.1.25-1.el9 needed by nfs-ganesha-selinux-5.7-1.el9s.noarch from centos-nfs-ganesha-5
+#  - nothing provides selinux-policy-base >= 38.1.25-1.el9 needed by nfs-ganesha-selinux-5.7-1.el9s.noarch from centos-nfs-ganesha-5
+#  - nothing provides selinux-policy >= 38.1.27-1.el9 needed by nfs-ganesha-selinux-5.7-2.el9s.noarch from centos-nfs-ganesha-5
+#  - nothing provides selinux-policy-base >= 38.1.27-1.el9 needed by nfs-ganesha-selinux-5.7-2.el9s.noarch from centos-nfs-ganesha-5
+# (try to add '--skip-broken' to skip uninstallable packages or '--nobest' to use not only best candidate packages)
+

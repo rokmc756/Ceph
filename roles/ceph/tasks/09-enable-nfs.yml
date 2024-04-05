@@ -1,4 +1,22 @@
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
+- name: Get FSID
+  shell: |
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+  register: get_fsid
+
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+#
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set Fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
 #
 - name: Create NFS
   shell: |
@@ -9,7 +27,7 @@
   when: print_debug == true
 
 #
-- name: Check the LS Status in Creating NFS
+- name: Check the LS Status when Creating NFS
   shell: |
     ceph orch ls --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ls
@@ -18,7 +36,7 @@
   when: print_debug == true
 
 #
-- name: Check the PS Status in Creating NFS
+- name: Check the PS Status when Creating NFS
   shell: |
     ceph orch ps --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ps
@@ -27,7 +45,7 @@
   when: print_debug == true
 
 #
-- name: Check the Cluster Info Status in Creating NFS
+- name: Check the Cluster Info Status when Creating NFS
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: check_nfs_clu_info
@@ -47,17 +65,33 @@
 #
 - name: Create a User named nfsclient to Expose CephFS though the NFS server
   shell: |
-    ceph auth get-or-create client.{{ nfs.user_name }} 'allow r' osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' mds 'allow rw path=/' > /root/nfsclient.key
+    ceph auth get-or-create client.{{ nfs.user_name }} mon 'allow r' \
+    osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
+    mds 'allow rw path=/' > nfsclient.key
   ignore_errors: true
   register: create_nfs_auth
 
 - debug: msg={{ create_nfs_auth }}
   when: print_debug == true
 
+# ceph nfs cluster create jtest-nfs-clu01
+# ceph orch ls --service_name=nfs.jtest-nfs-clu01
+# ceph orch ps --service_name=nfs.jtest-nfs-clu01
+# ceph nfs cluster info jtest-nfs-clu01
+
+# ceph fs volume create cephfs-nfs
+# sudo ceph auth get-or-create client.nfsclient \
+#   mon 'allow r' \
+#   osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+#   mds 'allow rw path=/' > nfsclient.key
+#
+# cat nfsclient.key
+# ceph nfs cluster config set jtest-nfs-clu01 -i nfs.conf
+
 #
 - name: Create a configuration file and apply it to the nfs cluster
   shell: |
-    ceph nfs cluster config set {{ nfs.namespace }} -i /root/nfs.conf
+    ceph nfs cluster config set {{ nfs.cluster_name }} -i /root/nfs.conf
   ignore_errors: true
   register: create_nfs_config
 
@@ -122,3 +156,18 @@
 #- debug: msg={{ create_nfs_config }}
 #  when: print_debug == true
 
+
+# ceph nfs cluster create jtest-nfs-clu01
+# ceph orch ls --service_name=nfs.jtest-nfs-clu01
+# ceph orch ps --service_name=nfs.jtest-nfs-clu01
+# ceph nfs cluster info jtest-nfs-clu01
+
+# ceph fs volume create cephfs-nfs
+# sudo ceph auth get-or-create client.nfsclient \
+#   mon 'allow r' \
+#   osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+#   mds 'allow rw path=/' > nfsclient.key
+#
+# cat nfsclient.key
+# ceph nfs cluster config set jtest-nfs-clu01 -i nfs.conf
+#

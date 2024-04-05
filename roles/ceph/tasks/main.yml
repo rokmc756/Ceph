@@ -70,6 +70,7 @@
   import_tasks: 10-enable-rbd-pool.yml
   tags: install
   when: enable_rbd_pool == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
 #
 - name: Remove Block Device Images
   import_tasks: 41-remove-block-device-image.yml
@@ -99,3 +100,4 @@
   import_tasks: uninstall.yml
   tags: uninstall
   when: destroy_ceph_cluster == true
+

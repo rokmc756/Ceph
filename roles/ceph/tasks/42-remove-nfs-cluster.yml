@@ -1,24 +1,43 @@
 # Remove NFS Cluster
 #
-- name: Delete CephFS Volume in NFS
+- name: Get FSID
   shell: |
-    ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
-    # cephadm shell -- ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
-  register: delete_cephfs_volume_nfs
-  ignore_errors: true
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+  register: get_fsid
 
-- debug: msg={{ delete_cephfs_volume_nfs }}
+- debug: msg={{ get_fsid.stdout }}
   when: print_debug == true
+
+#
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set Fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 #
 - name: Delete Ceph File System NFS Exports
   shell: |
-    ceph nfs export rm {{ nfs.cephfs_name }} /ceph
-    # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
+    ceph nfs export rm {{ nfs.cluster_name }} /ceph
   register: delete_cephfs_nfs_exports
   ignore_errors: true
+  # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
 
 - debug: msg={{ delete_cephfs_nfs_exports }}
+  when: print_debug == true
+
+#
+- name: Delete CephFS Volume in NFS
+  shell: |
+    ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
+  register: delete_cephfs_volume_nfs
+  ignore_errors: true
+  # cephadm shell -- ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
+
+- debug: msg={{ delete_cephfs_volume_nfs }}
   when: print_debug == true
 
 #
@@ -32,3 +51,4 @@
 
 - debug: msg={{ remove_nfs_cluster }}
   when: print_debug == true
+

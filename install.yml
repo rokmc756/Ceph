@@ -13,8 +13,8 @@
     # create_osd: true
     enable_custom_pool: false
     enable_rbd_pool: false
-    enable_radosgw: true
-    enable_nfs: false
+    enable_radosgw: false
+    enable_nfs: true
   roles:
     - { role: ceph }
 

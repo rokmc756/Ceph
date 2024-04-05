@@ -163,6 +163,7 @@ $ make uninstall
 <img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/haroxy_for_rgw.svg" width="80%" height="80%" align="center"></img>
 
 ## References
+- https://www.server-world.info/en/note?os=Ubuntu_20.04&p=ceph15&f=1
 - https://kifarunix.com/how-to-deploy-ceph-storage-cluster-on-rocky-linux/?expand_article=1
 - https://kifarunix.com/install-docker-on-rocky-linux/?expand_article=1
 - https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
