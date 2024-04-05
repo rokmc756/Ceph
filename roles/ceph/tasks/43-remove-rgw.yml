@@ -6,6 +6,7 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 - debug: msg={{ get_fsid.stdout }}
+  ignore_errors: true
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
@@ -37,6 +38,7 @@
 
 #
 - debug: msg={{ remove_rgw_user }}
+  ignore_errors: true
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
@@ -44,35 +46,33 @@
   shell: |
     {{ cephadm_cmd }} ceph orch rm rgw.test_realm.test_zone_bb
   ignore_errors: true
-  register: remove_rgw
+  register: remove_rgw_zone
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-#- name: Stop and Disable Rados Gateway
-#  shell: |
-#    systemctl stop --now ceph-radosgw@rgw.{{ inventory_hostname }}
-#    systemctl disable --now ceph-radosgw@rgw.{{ inventory_hostname }}
-#  ignore_errors: true
-#  register: remove_ceph_config
-#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
+- name: Stop and Disable Rados Gateway
+  shell: |
+    systemctl stop --now ceph-radosgw@rgw.{{ inventory_hostname }}
+    systemctl disable --now ceph-radosgw@rgw.{{ inventory_hostname }}
+  ignore_errors: true
+  register: remove_ceph_config
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-#- name: Delete Lines for Setting Radosgw in /etc/ceph/ceph.conf
-#  lineinfile:
-#    path: /etc/ceph/ceph.conf
-#    regexp: "{{ item }}"
-#    state: absent
-#  ignore_errors: true
-#  register: del_rgw_config
-#  with_items:
-#    - "^[client."
-#    - "^host =*"
-#    - "^rgw dns name =*"
-#    - "^keyring =*"
-#    - "^log file ="
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
+- name: Delete Lines for Setting Radosgw in /etc/ceph/ceph.conf
+  lineinfile:
+    path: /etc/ceph/ceph.conf
+    regexp: "{{ item }}"
+    state: absent
+  ignore_errors: true
+  register: remove_rgw_config
+  with_items:
+    - "^\\[client."
+    - "^host =*"
+    - "^rgw dns name =*"
+    - "^keyring =*"
+    - "^log file ="
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Remove Ceph Configuration to Rados Gateway Host
@@ -82,7 +82,6 @@
   ignore_errors: true
   register: remove_ceph_config
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
 
 # mkdir -p /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
 # ceph auth get-or-create client.rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring
