@@ -1,0 +1,5 @@
+rbd:
+  pool_name: jtest_pool
+  pg_count: 100
+  custom_size: 1G
+  custom_image: trbd01

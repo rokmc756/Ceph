@@ -1,0 +1,6 @@
+rgw:
+  user_name: "jmoon"
+  display_name: "jack.moon"
+  email: "rokmc756@gmail.com"
+  access_key: "changeme"
+  secret_key: "changeme"

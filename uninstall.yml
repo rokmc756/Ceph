@@ -2,14 +2,12 @@
   become: yes
   vars:
     print_debug: true
-    remove_nfs_cluster: true
-    remove_rgw: false
-    remove_custom_pool: false
-    remove_block_device_image: false
-    destroy_ceph_cluster: false
   roles:
-    - { role: ceph }
-
-#    - { role: init-hosts }
-#    - { role: docker }
+    - { role: custom }
+  # - { role: radosgw }
+  #  - { role: nfs }
+  # - { role: rbd }
+  # - { role: ceph }
+  # - { role: init-hosts }
+  # - { role: docker }
 

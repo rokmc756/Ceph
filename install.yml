@@ -10,14 +10,11 @@
     add_monitor_nodes: false
     apply_additional_features: false
     add_osd_nodes: false                          # --> Need to check if it works
-    # create_osd: true
-    enable_custom_pool: false
-    enable_rbd_pool: false
-    enable_radosgw: false
-    enable_nfs: true
   roles:
-    - { role: ceph }
-
-#    - { role: init-hosts }
-#    - { role: docker }
-
+    - { role: custom }
+    # - { role: radosgw }
+    # - { role: nfs }
+    # - { role: rbd }
+    # - { role: ceph }
+    # - { role: init-hosts }
+    # - { role: docker }

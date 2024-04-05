@@ -1,24 +1,5 @@
 # Remove NFS Cluster
 #
-- name: Get FSID
-  shell: |
-    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-  register: get_fsid
-
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true
-
-#
-- name: Set Fact for FSID
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
-
-#
-- name: Set Fact for cephadm_cmd command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-
-#
 - name: Delete Ceph File System NFS Exports
   shell: |
     ceph nfs export rm {{ nfs.cluster_name }} /ceph

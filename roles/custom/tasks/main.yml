@@ -6,19 +6,19 @@
 
 #
 - name: Set facts for network and packages informations for Linux Distribution
-  import_tasks: set-nfs-facts.yml
+  import_tasks: set-custom-facts.yml
   tags:
     - install
     - uninstall
 
 #
-- name: Enable NFS Cluster
+- name: Enable Custom Pool
   import_tasks: install.yml
   tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Remove NFS Cluster
+- name: Remove Custom Pool
   import_tasks: uninstall.yml
   tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

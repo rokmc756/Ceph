@@ -1,0 +1,5 @@
+nfs:
+  cluster_name: jtest-nfs-clu01
+  cephfs_name: cephfs-nfs
+  user_name: nfsclient
+  namespace: singletest

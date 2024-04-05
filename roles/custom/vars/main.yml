@@ -1,0 +1,6 @@
+pool:
+  pg_name: sysdocu
+  pg_number: 128
+  pg_custom_volume_name: volume01
+  pg_custom_volume_size: 1G
+  cephfs_name: myfs

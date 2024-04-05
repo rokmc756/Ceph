@@ -49,7 +49,6 @@
     ssh-copy-id root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: copy_ssh_public_keys
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ copy_ssh_public_keys }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -62,7 +61,6 @@
 #    - "centos-release-ceph-reef"
 #    - "epel-release"
 #    - "ceph-radosgw"
-#
 #- debug: msg={{ install_required_pkgs }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -79,7 +77,6 @@
     - "keyring = /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring"
     - "log file = /var/log/ceph/radosgw.gateway.log"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ add_rgw_config }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -91,7 +88,6 @@
     scp /etc/ceph/ceph.client.admin.keyring root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}:/etc/ceph/
   register: transfer_ceph_config
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ transfer_ceph_config }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -101,7 +97,6 @@
     mkdir -p /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: mkdir_rgw_ceph
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
 - debug: msg={{ mkdir_rgw_ceph }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -111,7 +106,6 @@
     ceph auth get-or-create client.rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring
   register: create_rgw_auth
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
 - debug: msg={{ create_rgw_auth }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -122,7 +116,6 @@
     chown -R ceph:ceph /var/lib/ceph/radosgw
   register: chown_ceph_config_dir
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
 - debug: msg={{ chown_ceph_config_dir }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -132,7 +125,6 @@
     systemctl enable --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: enable_rgw_systemd
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
 - debug: msg={{ enable_rgw_systemd }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -147,9 +139,9 @@
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 #
-- name: Pause for 3 minutes to Wait for Compleiting Initializaion of Rados Gateway
+- name: Pause for 1 minutes to Wait for Compleiting Initializaion of Rados Gateway
   pause:
-    minutes: 3
+    minutes: 1
 
 #[root@rk9-node01 rgw]# radosgw-admin sync status
 #          realm  ()
@@ -173,8 +165,6 @@
     radosgw-admin user create --uid={{ rgw.user_name }} --display-name={{ rgw.display_name }} --email={{ rgw.email }} --access-key=changeme --secret-key=changeme
   register: create_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-  # --no-mon-config
-
 - debug: msg={{ create_rgw_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -184,8 +174,6 @@
     radosgw-admin user list
   register: show_rgw_users
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
-#
 - debug: msg={{ show_rgw_users }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -195,8 +183,6 @@
     radosgw-admin user info --uid={{ rgw.user_name }}
   register: show_rgw_user
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-
-#
 - debug: msg={{ show_rgw_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
@@ -209,8 +195,6 @@
     ceph dashboard set-rest-requests-timeout 30
   register: enable_obj_gw_mtmt_fe
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - debug: msg={{ enable_obj_gw_mtmt_fe }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -220,7 +204,6 @@
     pip3 install --upgrade boto3
   register: install_pip_boto3
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ install_pip_boto3 }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -229,7 +212,6 @@
   template: src=s3-test.py.j2 dest=/root/s3-test.py owner=root group=root mode=755 force=yes
   register: copy_s3_py_script
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ copy_s3_py_script }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
@@ -240,8 +222,6 @@
   register: run_pip_boto3
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - debug: msg={{ run_pip_boto3  }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

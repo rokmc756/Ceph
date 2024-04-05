@@ -66,18 +66,6 @@
   when: enable_nfs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Enable Custom Rados Block Device Pool
-  import_tasks: 10-enable-rbd-pool.yml
-  tags: install
-  when: enable_rbd_pool == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-- name: Remove Block Device Images
-  import_tasks: 41-remove-block-device-image.yml
-  tags: uninstall
-  when: remove_block_device_image == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Remove NFS Cluster
   import_tasks: 42-remove-nfs-cluster.yml
   tags: uninstall
