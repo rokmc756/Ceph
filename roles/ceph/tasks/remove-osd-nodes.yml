@@ -39,13 +39,14 @@
 #
 - name: Unlabel the OSD Nodes with Its Role
   shell: |
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
+    {{ cephadm_cmd }} ceph orch host label rm {{ item }} {{ item }}-osd
   register: osd_nodes_unlabled
   ignore_errors: true
   with_items: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ osd_nodes_unlabled }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
 
 #
 - name: Out OSDs
@@ -120,15 +121,21 @@
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
 - name: Remove the Cluster Hosts and Check if There is Ceph Daemon Running
   shell: |
-    {{ cephadm_cmd }} ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch host rm {{ item }}
+    {{ cephadm_cmd }} ceph orch host drain {{ item }}
+    {{ cephadm_cmd }} ceph orch host rm --force {{ item }}
+    {{ cephadm_cmd }} ceph orch ps {{ item }}
   register: cluster_hosts_removed
   ignore_errors: true
-  with_items: "{{ groups['osd'] }}"
+  loop: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ cluster_hosts_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # {{ cephadm_cmd }} ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
+  # {{ cephadm_cmd }} ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
+  # {{ cephadm_cmd }} ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
+  # {{ cephadm_cmd }} ceph orch host ls
+  # {{ cephadm_cmd }} ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
 
 #
 - name: Clear Memory Cache
@@ -136,8 +143,7 @@
     sync && echo 3 > /proc/sys/vm/drop_caches
   delegate_to: "{{ item }}"
   register: clear_cache_memory
-  ignore_errors: true
-  with_items: "{{ groups['osd'] }}"
+  loop: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ clear_cache_memory }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

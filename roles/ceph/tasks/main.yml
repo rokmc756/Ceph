@@ -39,7 +39,8 @@
 - name: Add OSD Nodes
   import_tasks: add-osd-nodes.yml
   tags: install
-  when: add_osd_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: add_osd_nodes == true
+  # and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Apply Additionaly features such as enabling telemetries and changing admin password for Dashboard
