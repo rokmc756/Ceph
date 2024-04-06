@@ -2,8 +2,8 @@
   become: yes
   vars:
     print_debug: true
-    remove_osd_nodes: true
     destroy_ceph: false
+    remove_osd_nodes: true
   roles:
     - { role: ceph }
   #  - { role: rbd }

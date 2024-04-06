@@ -51,7 +51,7 @@
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
   tags: uninstall
-  when: remove_osd_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: remove_osd_nodes == true
 
 #
 - name: Uninstall Ceph
