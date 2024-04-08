@@ -1,0 +1,60 @@
+#
+- name: Disable Cephadm to stop all orchestration operations (so we avoid deploying new daemons)
+  shell: |
+    ceph mgr module disable cephadm
+  register: all_ops_stopped
+- debug: msg={{ all_ops_stopped.stdout }}
+  when: print_debug == true
+
+#
+- name: Get fsid for setting fact
+  shell: |
+    ceph fsid
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+#
+- name: Set fact for fsid
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+#- name: Set fact for cephadm_cmd command
+#  set_fact:
+#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#[root@rk9-node01 ~]# ceph mgr module disable cephadm
+#[root@rk9-node01 ~]# ceph fsid
+#fbba1d40-f56a-11ee-a2ec-00505693d59b
+#[root@rk9-node01 ~]# cephadm rm-cluster --force --zap-osds --fsid fbba1d40-f56a-11ee-a2ec-00505693d59b
+
+#
+- name: Remove the Ceph Cluster
+  shell: |
+    cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
+  register: ceph_cluster_removed
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ ceph_cluster_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+#- name: Repeat to remove the Ceph Cluster
+#  shell: |
+#    {{ cephadm_cmd }} cephadm rm-cluster --force --zap-osds --fsid {{ fsid01 }}
+#  register: ceph_cluster_removed
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ ceph_cluster_checked }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Check the Ceph Cluster
+  shell: |
+    cephadm ls
+  register: ceph_cluster_checked
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ ceph_cluster_checked }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+

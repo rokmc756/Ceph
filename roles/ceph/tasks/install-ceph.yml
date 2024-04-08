@@ -1,0 +1,46 @@
+#
+- name: Add Repo for Ceph Reef for All Hosts
+  shell: |
+    {{ cephadm.base_path }}/cephadm add-repo --release reef
+  register: add_repo
+- debug: msg={{ add_repo }}
+  when: print_debug == true
+
+#
+- name: Install Podman and Civetweb
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "podman"
+    - "civetweb"
+    - "util-linux"
+    - "ceph-radosgw"
+    - "uuid"
+
+#
+- name: Install Ceph CLI Tools On the Host
+  shell: |
+    {{ cephadm.base_path }}/cephadm install ceph-common
+  register: install_ceph_cli_tools
+- debug: msg={{ install_ceph_cli_tools }}
+  when: print_debug == true
+
+#
+- name: Install Ceph Reef
+  shell: |
+    {{ cephadm.base_path }}/cephadm install
+  register: install_ceph
+
+- debug: msg={{ install_ceph }}
+  when: print_debug == true
+
+#
+#- name: Initialize Ceph Cluster Monitor On Ceph Admin Node
+#  shell: |
+#    {{ cephadm.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev0]['ipv4']['address'] }} --allow-overwrite
+#  register: init_ceph
+#  ignore_errors: true
+#- debug: msg={{ init_ceph }}
+#  when: print_debug == true
+

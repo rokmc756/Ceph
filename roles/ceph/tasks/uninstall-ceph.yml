@@ -1,0 +1,62 @@
+#
+- name: Remove the Ceph Software Package Repository
+  shell: |
+    cephadm rm-repo
+  register: remove_ceph_repo
+- debug: msg={{ remove_ceph_repo }}
+  when: print_debug == true
+
+#
+- name: Cleanup the Ceph Configuration Files
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: cleanup_ceph_config
+  with_items:
+    - /var/log/ceph
+    - /var/run/ceph
+    - /var/lib/ceph
+    - /run/ceph
+    - /etc/ceph
+- debug: msg={{ cleanup_ceph_config }}
+  when: print_debug == true
+
+#
+# for j in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do dd if=/dev/zero of=/dev/$j bs=1M count=1000; done
+- name: Cleanup the Ceph Block Devices
+  shell: |
+    lsblk
+    for vg in $(`vgs | grep ceph | awk '{print $1}'`); do vgremove $vg -f ;done
+    for dm in $(fdisk -l | grep mapper | grep ceph | awk '{print $2}' | cut -d : -f 1); do dmsetup remove $dm ;done
+    for nb in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do nvme format /dev/$nb --force ;done
+    for nb in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do wipefs -a /dev/$nb ;done
+    for nb in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do sgdisk --zap-all /dev/$nb ;done
+    for nb in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do dd if=/dev/zero of=/dev/$nb bs=512 count=1 ;done
+  register: cleanup_ceph_block_devices
+  when: inventory_hostname in groups['osd']
+- debug: msg={{ cleanup_ceph_block_devices }}
+  when: inventory_hostname in groups['osd'] and print_debug == true
+
+#
+#- name: Kill processes of conmon and podman
+#  shell: |
+#    killall conmon
+#    killall podman
+#  register: kill_conmon_podman
+#  ignore_errors: true
+#- debug: msg={{ kill_conmon_podman }}
+#  when: print_debug == true
+
+#
+- name: Uninstall Ceph Conmon Packages
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - cephadm
+    - ceph-common
+    - ceph-base
+    - ceph-radosgw
+    - conmon
+    - podman
+

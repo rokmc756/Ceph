@@ -3,13 +3,11 @@
   become: yes
   vars:
     print_debug: true
-    install_cephadm: false
-    deploy_cephadm: false
-    init_ceph: false
-    check_containers: false
-    add_monitor_nodes: false
-    apply_additional_features: false
-    add_osd_nodes: true                       # --> Need to check if it works
+    upload_cephadm: true
+    install_ceph: true
+    init_ceph: true
+    add_mon_nodes: false
+    add_osd_nodes: false                       # --> Need to check if it works
   roles:
     - { role: ceph }
     # - { role: rbd }

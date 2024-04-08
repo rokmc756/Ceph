@@ -12,10 +12,16 @@
     - uninstall
 
 #
-- name: Deploy cephadm to lanuch Ceph Installation
-  import_tasks: deploy-cephadm.yml
+- name: Upload Cephadm Binary
+  import_tasks: upload-cephadm-bin.yml
   tags: install
-  when: deploy_cephadm == true
+  when: upload_cephadm == true
+
+#
+- name: Install Ceph Software
+  import_tasks: install-ceph.yml
+  tags: install
+  when: install_ceph == true
 
 #
 - name: Initialize Ceph
@@ -24,16 +30,10 @@
   when: init_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Check Containers
-  import_tasks: check-containers.yml
-  tags: install
-  when: check_containers == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Add Monitor Nodes
-  import_tasks: add-monitor-nodes.yml
+  import_tasks: add-mon-nodes.yml
   tags: install
-  when: add_monitor_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: add_mon_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Add OSD Nodes
@@ -43,20 +43,32 @@
   # and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Apply Additionaly features such as enabling telemetries and changing admin password for Dashboard
-  import_tasks: apply-additional-features.yml
-  tags: install
-  when: apply_additional_features == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
   tags: uninstall
   when: remove_osd_nodes == true
 
 #
-- name: Uninstall Ceph
-  import_tasks: uninstall.yml
+- name: Remove Monitor Nodes
+  import_tasks: remove-mon-nodes.yml
   tags: uninstall
-  when: destroy_ceph == true
+  when: remove_mon_nodes == true
+
+#
+- name: Purge Ceph Cluster
+  import_tasks: purge-ceph.yml
+  tags: uninstall
+  when: purge_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Uninstall Ceph Software
+  import_tasks: uninstall-ceph.yml
+  tags: uninstall
+  when: uninstall_ceph == true
+
+#
+- name: Remove Cephadm Binary
+  import_tasks: remove-cephadm-bin.yml
+  tags: uninstall
+  when: remove_cephadm_bin == true
 

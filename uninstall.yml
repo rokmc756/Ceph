@@ -2,14 +2,18 @@
   become: yes
   vars:
     print_debug: true
-    destroy_ceph: false
-    remove_osd_nodes: true
+    remove_osd_nodes: false
+    remove_mon_nodes: false
+    purge_ceph: true
+    uninstall_ceph: true
+    remove_cephadm_bin: true
   roles:
     - { role: ceph }
-  #  - { role: rbd }
-  #  - { role: custom }
-  #  - { role: radosgw }
-  #  - { role: nfs }
-  #  - { role: init-hosts }
-  #  - { role: docker }
+
+#  - { role: rbd }
+#  - { role: custom }
+#  - { role: radosgw }
+#  - { role: nfs }
+#  - { role: init-hosts }
+#  - { role: docker }
 

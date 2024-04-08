@@ -131,7 +131,7 @@ rbd:
 
 #### 4) Deploy Ceph Storage Cluster
 ```
-$ vi install-hosts.yml
+$ vi install.yml
 ---
 - hosts: all
   become: yes
@@ -146,7 +146,7 @@ $ make install
 ```
 #### 5) Destroy Ceph Storage Cluster
 ```
-$ vi uninstall-hosts.yml
+$ vi uninstall.yml
 - hosts: all
   become: yes
   vars:

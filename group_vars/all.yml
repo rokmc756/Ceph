@@ -1,17 +1,25 @@
 ansible_ssh_pass: "changeme"
 ansible_become_pass: "changeme"
+
+cephadm:
+  major_version: 18
+  minor_version: 2
+  patch_version: 1
+  base_path: /root
+  bin_type: tar.gz
+  download: false
+
 ceph:
   cluster_name: jack-kr-ceph
-  major_version: "4"
+  major_version: "18"
   minor_version: "2"
-  build_version: "7"
+  build_version: "1"
   patch_version: ".64"
   download_url: "get.weka.io/dist/v1/pkg"
   download: false
   base_path: /root
-  admin_user: cephadm
-  admin_default_pass: cephadm
-  admin_change_pass: "Changeme12!@"
+  admin_user: admin
+  admin_passwd: changeme
   bin_type: tar
   host_num: "{{ groups['all'] | length }}"
   osd:
@@ -56,3 +64,4 @@ ceph:
       ipaddr0: "192.168.0."
       ipaddr1: "192.168.1."
       ipaddr2: "192.168.2."
+

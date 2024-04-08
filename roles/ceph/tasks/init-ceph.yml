@@ -1,25 +1,55 @@
 #
-# https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
-- set_fact:
-    all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
-
-- debug: msg={{ all_nodes_hostname }}
-
-#
-- name: Install Ceph Reef
-  shell: |
-    /root/cephadm install
-  register: install_ceph
-
-- debug: msg={{ install_ceph }}
-  when: print_debug == true
-
-#
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    /root/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev0]['ipv4']['address'] }} --allow-overwrite
+    /root/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev1]['ipv4']['address'] }} \
+    --cluster-network 192.168.1.0/24 \
+    --dashboard-password-noupdate \
+    --initial-dashboard-user {{ ceph.admin_user }} \
+    --initial-dashboard-password {{ ceph.admin_passwd }} \
+    --allow-overwrite \
   register: init_ceph
-  ignore_errors: true
-
 - debug: msg={{ init_ceph }}
   when: print_debug == true
+
+# cephadm bootstrap \
+#--registry-url registry.redhat.io \
+#--registry-username '<user>' \
+#--registry-password '<passwd>' \
+#--allow-fqdn-hostname \
+#--single-host-defaults
+# cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
+
+#
+- name: Activate the Telemetry Module
+  shell: |
+    ceph telemetry on --license sharing-1-0
+    ceph telemetry enable channel perf
+  register: activate_telemetry_module
+- debug: msg={{ activate_telemetry_module }}
+  when: print_debug == true
+  # ceph telemetry off
+
+#
+- name: Check if Container is Created
+  shell: |
+    podman images
+  register: check_containers
+- debug: msg={{ check_containers }}
+  when: print_debug == true
+
+#
+- name: List the Containers If Using Podman
+  shell: |
+    podman ps
+  register: list_podman
+- debug: msg={{ list_podman }}
+  when: print_debug == true
+
+#
+- name: List the Containers If Using Podman
+  shell: |
+    systemctl list-units 'ceph*'
+  register: list_containers
+- debug: msg={{ list_containers }}
+  when: print_debug == true
+
