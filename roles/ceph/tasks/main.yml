@@ -29,23 +29,11 @@
   tags: install
   when: init_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-
+#
 - name: Add Ceph Mon/MGR/MDS Nodes
   import_tasks: add-ceph-nodes.yml
   tags: install
   when: add_ceph_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-#- name: Add MGR Nodes
-#  import_tasks: add-mgr-nodes.yml
-#  tags: install
-#  when: add_mgr_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-#- name: Add Monitor Nodes
-#  import_tasks: add-mon-nodes.yml
-#  tags: install
-#  when: add_mon_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Add OSD Nodes
@@ -61,22 +49,10 @@
   when: remove_osd_nodes == true
 
 #
-#- name: Remove Monitor Nodes
-#  import_tasks: remove-mon-nodes.yml
-#  tags: uninstall
-#  when: remove_mon_nodes == true
-
-#
-#- name: Remove MGR Nodes
-#  import_tasks: remove-mgr-nodes.yml
-#  tags: uninstall
-#  when: remove_mgr_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Remove Ceph Mon/MGR/MDS Nodes
   import_tasks: remove-ceph-nodes.yml
   tags: uninstall
-  when: remove_ceph_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: remove_ceph_nodes == true and inventory_hostname in groups['mon']
 
 #
 - name: Purge Ceph Cluster

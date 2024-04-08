@@ -1,21 +1,30 @@
 #
-- name: Disable Cephadm to stop all orchestration operations (so we avoid deploying new daemons)
-  shell: |
-    ceph mgr module disable cephadm
-  register: all_ops_stopped
-- debug: msg={{ all_ops_stopped.stdout }}
-  when: print_debug == true
+#- name: Disable Cephadm to stop all orchestration operations (so we avoid deploying new daemons)
+#  shell: |
+#    ceph mgr module disable cephadm
+#register: all_ops_stopped
+#- debug: msg={{ all_ops_stopped.stdout }}
+#  when: print_debug == true
 
 #
-- name: Get fsid for setting fact
+#- name: Get FSID for Setting Fact
+#  shell: |
+#    ceph fsid
+#  register: get_fsid
+#- debug: msg={{ get_fsid.stdout }}
+#  when: print_debug == true
+
+#
+- name: Get FSID for Setting Fact
   shell: |
-    ceph fsid
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Set fact for fsid
+- name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
 
