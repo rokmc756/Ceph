@@ -22,9 +22,8 @@ ceph:
   admin_passwd: changeme
   bin_type: tar
   host_num: "{{ groups['all'] | length }}"
-  osd:
-  pool:
-  block:
+  obs: false
+  fs: false
   net:
     conn: "udp"                    # dpdk or udp
     gateway: "192.168.0.1"
@@ -42,8 +41,6 @@ ceph:
       ipaddr1: "192.168.1.7"
       ipaddr2: "192.168.2.7"
       data_plane: netdev2
-  obs: false
-  fs: false
   protocol:
     s3: false
     nfs: false

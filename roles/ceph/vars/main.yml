@@ -1,16 +1,17 @@
 # server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
-#pool:
-#  pg_name: sysdocu
-#  pg_number: 128
-#  pg_custom_volume_name: volume01
-#  pg_custom_volume_size: 1G
-#  cephfs_name: myfs
-#rgw:
-#  user_name: "jmoon"
-#  display_name: "jack.moon"
-#  email: "rokmc756@gmail.com"
-#nfs:
-#  cluster_name: jtest-nfs-clu01
-#  cephfs_name: cephfs-nfs
-#  user_name: nfsclient
-#  namespace: singletest
+
+pool:
+  pg_name: sysdocu
+  pg_number: 128
+  pg_custom_volume_name: volume01
+  pg_custom_volume_size: 1G
+  cephfs_name: myfs
+#  rgw:
+#    user_name: "jmoon"
+#    display_name: "jack.moon"
+#    email: "rokmc756@gmail.com"
+#  nfs:
+#    cluster_name: jtest-nfs-clu01
+#    cephfs_name: cephfs-nfs
+#    user_name: nfsclient
+#    namespace: singletest

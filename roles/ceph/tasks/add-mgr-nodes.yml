@@ -1,0 +1,88 @@
+#
+- name: Get FSID
+  shell: |
+    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+#
+- name: Set Fact for FSDI
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set Fact for cephadm command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#
+- name: Enable Ceph CLI
+  shell: |
+    {{ cephadm_cmd }} ceph -s
+  register: enable_ceph_cli
+- debug: msg={{ enable_ceph_cli }}
+  when: print_debug == true
+
+#
+- name: Copy SSH Keys to Other Ceph Nodes
+  shell: |
+    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
+  register: copy_ssh_keys
+  with_items: "{{ groups['all'] }}"
+
+#
+- name: Allow Deployment of Monitor Daemons On Arbitrary Hosts to Add the Nodes to Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
+  register: add_nodes
+  with_items: "{{ groups['mon'] }}"
+- debug: msg={{ add_nodes }}
+  when: print_debug == true
+
+#
+- name: Manually add Monitors and Disable Automated Monitor Deployment
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mon --unmanaged
+  register: add_monitors
+- debug: msg={{ add_monitors }}
+  when: print_debug == true
+
+# Provide additionally external monitoring and monitoring interfaces running with Ceph Manager Daemon
+# The MGR Role is assigned into all nodes
+- name: Apply the Role of MRG for All Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mgr --placement={{ all_nodes_hostname }}
+  register: apply_mgr
+- debug: msg={{ apply_mgr }}
+  when: print_debug == true
+
+# Creaet MDS and assign the role of MDS into all nodes in order to use CephRBD and CephFS
+# In this case myfs would be created to identify filesystem
+- name: Apply the Role of MDS for All Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement={{ all_nodes_hostname }}
+  register: apply_mds
+- debug: msg={{ apply_mds }}
+  when: print_debug == true
+# converged only:
+# ceph config set mgr mgr/cephadm/autotune_memory_target_ratio 0.2
+
+#
+- name: Label the MGR Nodes with Its Role
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
+  register: label_mgr
+  with_items: "{{ groups['mon'] }}"
+- debug: msg={{ label_mgr }}
+  when: print_debug == true
+
+#
+- name:  Confirm the MGR Labels
+  shell: |
+    {{ cephadm_cmd }} ceph orch host ls
+  register: confirm_label
+
+- debug: msg={{ confirm_label }}
+  when: print_debug == true
+

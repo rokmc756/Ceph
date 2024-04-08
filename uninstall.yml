@@ -3,10 +3,12 @@
   vars:
     print_debug: true
     remove_osd_nodes: false
-    remove_mon_nodes: false
-    purge_ceph: true
-    uninstall_ceph: true
-    remove_cephadm_bin: true
+    # remove_mon_nodes: false
+    # remove_mgr_nodes: false
+    remove_ceph_nodes: true
+    purge_ceph: false
+    uninstall_ceph: false
+    remove_cephadm_bin: false
   roles:
     - { role: ceph }
 

@@ -7,6 +7,8 @@
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+# ceph osd crush remove <hostname>
+
 #
 - name: Set fact for fsid
   set_fact:

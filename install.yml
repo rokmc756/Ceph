@@ -3,13 +3,16 @@
   become: yes
   vars:
     print_debug: true
-    upload_cephadm: true
-    install_ceph: true
-    init_ceph: true
-    add_mon_nodes: false
+    upload_cephadm: false
+    install_ceph: false
+    init_ceph: false
+    # add_mgr_nodes: false
+    # add_mon_nodes: false
+    add_ceph_nodes: true
     add_osd_nodes: false                       # --> Need to check if it works
   roles:
     - { role: ceph }
+
     # - { role: rbd }
     # - { role: custom }
     # - { role: radosgw }
