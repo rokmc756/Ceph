@@ -128,8 +128,8 @@
     ceph pg stat
   register: unknown_pool_checked
   until: unknown_pool_checked.stdout.find("unknown") == -1
-  retries: 40
-  delay: 5
+  retries: 30
+  delay: 10
 - debug: msg={{ unknown_pool_checked }}
   when: print_debug == true
 
@@ -140,7 +140,7 @@
   register: scrub_pool_checked
   until: scrub_pool_checked.stdout.find("scrubbing") == -1
   retries: 20
-  delay: 10
+  delay: 15
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true
 
