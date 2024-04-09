@@ -1,36 +1,39 @@
 # Remove NFS Cluster
-#
 - name: Delete Ceph File System NFS Exports
   shell: |
     ceph nfs export rm {{ nfs.cluster_name }} /ceph
   register: delete_cephfs_nfs_exports
   ignore_errors: true
-  # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
-
 - debug: msg={{ delete_cephfs_nfs_exports }}
   when: print_debug == true
+  # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
+
+#
+#- name: Allow Pool to Delete
+#  shell: |
+#  register: pool_delete_allow
+#- debug: msg={{ pool_delete_allow }}
+#  when: print_debug == true
 
 #
 - name: Delete CephFS Volume in NFS
   shell: |
+    ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
     ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
   register: delete_cephfs_volume_nfs
   ignore_errors: true
-  # cephadm shell -- ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
-
 - debug: msg={{ delete_cephfs_volume_nfs }}
   when: print_debug == true
-
+  # cephadm shell -- ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
 #
 - name: Remove NFS Cluster
   shell: |
     ceph nfs cluster rm {{ nfs.cluster_name }}
-    # cephadm shell -- ceph nfs cluster rm {{ nfs.cluster_name }}
   register: remove_nfs_cluster
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 - debug: msg={{ remove_nfs_cluster }}
   when: print_debug == true
+  # cephadm shell -- ceph nfs cluster rm {{ nfs.cluster_name }}
+  # Need to remove Pool, .nfs
 
-# Need to remove Pool, .nfs

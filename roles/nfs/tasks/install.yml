@@ -3,7 +3,6 @@
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
-
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true
 
@@ -22,25 +21,22 @@
   shell: |
     ceph nfs cluster create {{ nfs.cluster_name }}
   register: create_nfs
-
 - debug: msg={{ create_nfs }}
   when: print_debug == true
 
 #
-- name: Check the LS Status when Creating NFS
+- name: Check the ls status when Creating NFS
   shell: |
     ceph orch ls --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ls
-
 - debug: msg={{ check_nfs_ls }}
   when: print_debug == true
 
 #
-- name: Check the PS Status when Creating NFS
+- name: Check the ps status when Creating NFS
   shell: |
     ceph orch ps --service_name=nfs.{{ nfs.cluster_name }}
   register: check_nfs_ps
-
 - debug: msg={{ check_nfs_ps }}
   when: print_debug == true
 
@@ -49,28 +45,25 @@
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: check_nfs_clu_info
-
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true
 
 # Exporting a Ceph File System
-- name: Create a NFS filesystem Volume named {{ nfs.cephfs_name }}
+- name: Create a NFS filesystem Volume, {{ nfs.cephfs_name }}
   shell: |
     ceph fs volume create {{ nfs.cephfs_name }}
   register: create_nfs_vol
-
 - debug: msg={{ create_nfs_vol }}
   when: print_debug == true
 
 #
-- name: Create a User named nfsclient to Expose CephFS though the NFS server
+- name: Create a User, nfsclient to Expose CephFS though the NFS server
   shell: |
     ceph auth get-or-create client.{{ nfs.user_name }} mon 'allow r' \
     osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
     mds 'allow rw path=/' > nfsclient.key
   ignore_errors: true
   register: create_nfs_auth
-
 - debug: msg={{ create_nfs_auth }}
   when: print_debug == true
 
@@ -89,30 +82,27 @@
 # ceph nfs cluster config set jtest-nfs-clu01 -i nfs.conf
 
 #
-- name: Create a configuration file and apply it to the nfs cluster
+- name: Create a Configuration File and Apply it to the NFS Cluster
   shell: |
     ceph nfs cluster config set {{ nfs.cluster_name }} -i /root/nfs.conf
   ignore_errors: true
   register: create_nfs_config
-
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
-- name: Create a CephFS export
+- name: Create a CephFS Export
   shell: |
     ceph nfs export create cephfs {{ nfs.cluster_name }} /ceph {{ nfs.cephfs_name }} --path=/
   register: create_cephfs_export
-
 - debug: msg={{ create_cephfs_export }}
   when: print_debug == true
 
 #
-- name: View the export block based on the pseudo root name
+- name: View the Export Block Based on the Pseudo Root Name
   shell: |
     ceph nfs export get {{ nfs.cluster_name }} /ceph
   register: view_nfs_export
-
 - debug: msg={{ view_nfs_export }}
   when: print_debug == true
 
@@ -121,16 +111,14 @@
   shell: |
     ceph nfs export ls {{ nfs.cluster_name }}
   register: list_nfs_export
-
 - debug: msg={{ list_nfs_export }}
   when: print_debug == true
 
 # Note: CLUSTER_NAME is optional. If the CLUSTER_NAME is not specified, information of all nfs clusters present will be displayed.
-- name: Get the information of the NFS export
+- name: Get the Information of the NFS Export
   shell: |
     ceph nfs cluster info {{ nfs.cluster_name }}
   register: get_nfs_export
-
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true
 
