@@ -12,13 +12,13 @@
     - uninstall
 
 #
-- name: Create NFS Cluster
+- name: Enable NFS Cluster
   import_tasks: install.yml
   tags: install
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Destroy NFS Cluster
+- name: Remove NFS Cluster
   import_tasks: uninstall.yml
   tags: uninstall
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

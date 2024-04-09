@@ -1,5 +1,25 @@
+#nfs:
+#  cluster_name: jtest-nfs-clu01
+#  cephfs_name: cephfs-nfs
+#  user_name: nfsclient
+#  namespace: singletest
+
 nfs:
-  cluster_name: jtest-nfs-clu01
-  cephfs_name: cephfs-nfs
-  user_name: nfsclient
-  namespace: singletest
+  cluster:
+    - { name: "jtest-clu01", fs: "jtest-fs01" }
+  users:
+    - { cluster: "jtest-clu01", name: "jomoon", passwd: "changeme", namespace: "jtest-ns01" }
+  auth:
+    - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
+  export:
+    - { name: "cephfs", cluster: "jtest-clu01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
+
+
+# In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
+# ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/
+
+# - name: Create a User, nfsclient to Expose CephFS though the NFS server
+# ceph auth {{ nfs.auth.action }} client.{{ nfs.users.name }} mon '{{ nfs.auth.mon }}' \
+# osd '{{ nfs.auth.osd }} pool={{ nfs.auth.pool }} namespace={{ nfs.auth.namespace }}, {{ nfs.auth.cephfs }} data={{ nfs.auth.data }}' \
+# mds '{{ nfs.auth.mds }} path={{ nfs.auth.path }}' > {{ nfs.auth.key }}
+

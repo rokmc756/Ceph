@@ -64,58 +64,99 @@
 #
 - name: Create a User, nfsclient to Expose CephFS though the NFS server
   shell: |
-    ceph auth {{ item.action }} client.{{ item.user }} mon '{{ item.mon }}' \
-    osd '{{ item.osd }} pool={{ item.pool }} namespace={{ item.namespace }}, {{ item.cephfs }} data={{ item.data }}' \
-    mds '{{ item.mds }} path={{ item.path }}' > {{ item.key }}
+    ceph auth get-or-create client.{{ nfs.user_name }} mon 'allow r' \
+    osd 'allow rw pool=.nfs namespace={{ nfs.namespace }}, allow rw tag cephfs data={{ nfs.cephfs_name }}' \
+    mds 'allow rw path=/' > nfsclient.key
+
   ignore_errors: true
   register: create_nfs_auth
-  with_items: "{{ nfs.auth }}"
 - debug: msg={{ create_nfs_auth }}
   when: print_debug == true
+
+# ceph fs volume create cephfs-nfs
+# sudo ceph auth get-or-create client.nfsclient \
+#   mon 'allow r' \
+#   osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+#   mds 'allow rw path=/' > nfsclient.key
+#
+# cat nfsclient.key
+# ceph nfs cluster config set jtest-nfs-clu01 -i nfs.conf
 
 #
 - name: Create a Configuration File and Apply it to the NFS Cluster
   shell: |
-    ceph nfs cluster config set {{ item.name }} -i /root/nfs.conf
+    ceph nfs cluster config set {{ nfs.cluster_name }} -i /root/nfs.conf
   ignore_errors: true
   register: create_nfs_config
-  with_items: "{{ nfs.cluster }}"
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
 - name: Create a CephFS Export
   shell: |
-    ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+    ceph nfs export create cephfs {{ nfs.cluster_name }} /ceph {{ nfs.cephfs_name }} --path=/
   register: create_cephfs_export
-  with_items: "{{ nfs.export }}"
 - debug: msg={{ create_cephfs_export }}
   when: print_debug == true
 
 #
 - name: View the Export Block Based on the Pseudo Root Name
   shell: |
-    ceph nfs export get {{ item.cluster }} {{ item.src }}
+    ceph nfs export get {{ nfs.cluster_name }} /ceph
   register: view_nfs_export
-  with_items: "{{ nfs.export }}"
 - debug: msg={{ view_nfs_export }}
   when: print_debug == true
 
 #
 - name: List the NFS exports
   shell: |
-    ceph nfs export ls {{ item.cluster }}
+    ceph nfs export ls {{ nfs.cluster_name }}
   register: list_nfs_export
-  with_items: "{{ nfs.export }}"
 - debug: msg={{ list_nfs_export }}
   when: print_debug == true
 
-#
+# Note: CLUSTER_NAME is optional. If the CLUSTER_NAME is not specified, information of all nfs clusters present will be displayed.
 - name: Get the Information of the NFS Export
   shell: |
-    ceph nfs cluster info {{ item.cluster }}
+    ceph nfs cluster info {{ nfs.cluster_name }}
   register: get_nfs_export
-  with_items: "{{ nfs.export }}"
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true
 
+#
+#- name: Mount the exported Ceph File System on a client
+#  shell: |
+#    mount -t nfs -o port=2049 rk9-ceph-mon01:/ceph/ /mnt/nfs-cephfs
+#  register: mount_exported_cephfs
+#
+#- debug: msg={{ mount_exported_cephfs }}
+#  when: print_debug == true
+
+# On a client host, to mount a exported NFS Ceph File System created with an ingress service:
+# Replace VIRTUAL_IP_ADDRESS with --ingress --virtual-ip IP address used to create the NFS cluster.
+# Replace BINDING with the pseudo root path.
+# eplace LOCAL_MOUNT_POINT with the mount point to mount the export on.
+# This example mounts the export nfs-cephfs that exists on a NFS cluster created with --ingress --virtual-ip 10.10.128.75 on the mount point /mnt.
+#- name: Create a configuration file and apply it to the nfs cluster
+#  shell: |
+#    mount -t nfs 10.10.128.75:/nfs-cephfs /mnt
+#  register: create_nfs_config
+#
+#- debug: msg={{ create_nfs_config }}
+#  when: print_debug == true
+
+
+# ceph nfs cluster create jtest-nfs-clu01
+# ceph orch ls --service_name=nfs.jtest-nfs-clu01
+# ceph orch ps --service_name=nfs.jtest-nfs-clu01
+# ceph nfs cluster info jtest-nfs-clu01
+
+# ceph fs volume create cephfs-nfs
+# sudo ceph auth get-or-create client.nfsclient \
+#   mon 'allow r' \
+#   osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
+#   mds 'allow rw path=/' > nfsclient.key
+#
+# cat nfsclient.key
+# ceph nfs cluster config set jtest-nfs-clu01 -i nfs.conf
+#
