@@ -59,6 +59,7 @@
 # Need to check when is possible to remove NFS Data and MetaData Pools
 - name: Remove NFS Data Pool
   shell: |
+    ceph tell mon.\* injectargs --mon-allow-pool-delete true
     ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
   register: remove_nfs_data
   ignore_errors: true
@@ -72,6 +73,7 @@
 #
 - name: Remove NFS Metadata Pool
   shell: |
+    ceph tell mon.\* injectargs --mon-allow-pool-delete true
     ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
   register: remove_nfs_metadata
   ignore_errors: true
