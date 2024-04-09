@@ -1,4 +1,4 @@
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
+#
 - name: Get FSID
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
@@ -52,7 +52,7 @@
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true
 
-# Exporting a Ceph File System
+#
 - name: Create a NFS filesystem Volume
   shell: |
     ceph fs volume create {{ item.fs }}
@@ -83,7 +83,7 @@
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true
 
-# In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
+#
 - name: Create a CephFS Export
   shell: |
     ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
@@ -118,4 +118,31 @@
   with_items: "{{ nfs.export }}"
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true
+
+- pause:
+    seconds: 40
+
+#
+- name: Check if Pools are Active+Clean
+  shell: |
+    ceph pg stat
+  register: unknown_pool_checked
+  until: unknown_pool_checked.stdout.find("unknown") == -1
+  retries: 40
+  delay: 5
+- debug: msg={{ unknown_pool_checked }}
+  when: print_debug == true
+
+#
+- name: Check if Pools are Active+Clean
+  shell: |
+    ceph pg stat
+  register: scrub_pool_checked
+  until: scrub_pool_checked.stdout.find("scrubbing") == -1
+  retries: 20
+  delay: 10
+- debug: msg={{ scrub_pool_checked }}
+  when: print_debug == true
+
+# ceph osd map cephfs.jtest-fs01.data jtest-ns01
 
