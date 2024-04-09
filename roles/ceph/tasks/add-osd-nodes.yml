@@ -63,20 +63,18 @@
 #
 - name: Maually create and OSD from Specific Devices on Specific Hosts
   shell: |
-    {{ cephadm_cmd }} ceph orch daemon add osd --method raw {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1
-    {{ cephadm_cmd }} ceph orch daemon add osd --method raw {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n2
-    {{ cephadm_cmd }} ceph orch daemon add osd --method raw {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n3
-    {{ cephadm_cmd }} ceph orch daemon add osd --method raw {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n4
+    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
   register: manual_osds_created
-  loop: "{{ groups['osd'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ manual_osds_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # {{ cephadm_cmd }} ceph orch daemon add osd --method raw {{ hostvars[item]['ansible_hostname'] }}:/dev/nvme0n1
+  # loop: "{{ groups['osd'] }}"
+  # {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method {raw|lvm}
+  # {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:data_devices=/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4,osds_per_device=1
+  # ,db_devices=/dev/nvme0n1
 
-## {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:data_devices=/dev/nvme0n1,/dev/nvme0n2,/dev/nvme0n3,/dev/nvme0n4,osds_per_device=1
-## ,db_devices=/dev/nvme0n1
-
-- meta: end_play
+#- meta: end_play
 
 #
 #- name: Up OSDs

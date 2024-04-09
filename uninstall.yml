@@ -4,13 +4,12 @@
     print_debug: true
     remove_ceph_nodes: false
     remove_osd_nodes: false
-    purge_ceph: true
+    purge_ceph: false
     uninstall_ceph: false
     remove_cephadm_bin: false
   roles:
-    - { role: ceph }
-
-#  - { role: rbd }
+    - { role: rbd }
+#    - { role: ceph }
 #  - { role: custom }
 #  - { role: radosgw }
 #  - { role: nfs }

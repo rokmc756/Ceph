@@ -1,8 +1,9 @@
 #
 - name: Create a Pool Named tpool01 with Placement Groups Count 100
   shell: |
-    ceph osd pool create {{ rbd.pool_name }} {{ rbd.pg_count }}
+    ceph osd pool create {{ item.name }} {{ item.pg_count }}
   register: rbd_pool_created
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ rbd_pool_created }}
   when: print_debug == true
 
@@ -20,40 +21,45 @@
 #
 - name: Enable Pool for CephFS Filesystem
   shell: |
-    ceph osd pool application enable {{ rbd.pool_name }} cephfs
+    ceph osd pool application enable {{ item.name }} cephfs
   register: cephfs_pool_enabled
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ cephfs_pool_enabled }}
   when: print_debug == true
 
 #
 - name: Enable Pool for Rados Block Device
   shell: |
-    ceph osd pool application enable {{ rbd.pool_name }} rbd --yes-i-really-mean-it
+    ceph osd pool application enable {{ item.name }} rbd --yes-i-really-mean-it
   register: rbd_pool_enabled
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ rbd_pool_enabled }}
   when: print_debug == true
 
 #
 - name: Enable Pool for Rados Gateway
   shell: |
-    ceph osd pool application enable {{ rbd.pool_name }} rgw --yes-i-really-mean-it
+    ceph osd pool application enable {{ item.name }} rgw --yes-i-really-mean-it
   register: rgw_pool_enabled
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ rgw_pool_enabled }}
   when: print_debug == true
 
 #
 - name: Initialize Pool for Rados Block Device
   shell: |
-    rbd pool init {{ rbd.pool_name }}
+    rbd pool init {{ item.name }}
   register: rbd_pool_inited
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ rbd_pool_inited }}
   when: print_debug == true
 
 #
 - name: Obtain I/O Information for a Specific Pool or All
   shell: |
-    ceph osd pool stats {{ rbd.pool_name }}
+    ceph osd pool stats {{ item.name }}
   register: rbd_pool_stats
+  with_items: "{{ rbd.pool }}"
 - debug: msg={{ rbd_pool_stats }}
   when: print_debug == true
 
@@ -70,8 +76,14 @@
 #
 - name: Create Rados Block Device in Pool
   shell: |
-    rbd create {{ rbd.custom_image }} --size {{ rbd.custom_size }} --pool {{ rbd.pool_name }}
+    rbd create {{ item.name }} --size {{ item.size }} --pool {{ item.pool }}
   register: rbd_device_created
+  with_items:
+    - "{{ rbd.image.default }}"
+    - "{{ rbd.image.cephfs }}"
+    - "{{ rbd.image.block }}"
+    - "{{ rbd.image.rgw }}"
+    - "{{ rbd.image.nfs }}"
 - debug: msg={{ rbd_device_created }}
   when: print_debug == true
 
