@@ -8,8 +8,9 @@
     uninstall_ceph: false
     remove_cephadm_bin: false
   roles:
-    - { role: rbd }
-#    - { role: ceph }
+    - { role: cephfs }
+#  - { role: ceph }
+#  - { role: rbd }
 #  - { role: custom }
 #  - { role: radosgw }
 #  - { role: nfs }

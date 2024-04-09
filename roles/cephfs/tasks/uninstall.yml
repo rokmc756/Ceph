@@ -1,0 +1,55 @@
+#
+- name: Mark Down for Filesystem
+  shell: |
+    ceph fs set {{ item.name }}-fs01 down true
+  register: cephfs_marked_down
+  with_items: "{{ rbd.pool }}"
+- debug: msg={{ cephfs_marked_down }}
+  when: print_debug == true
+  # ignore_errors: true
+
+#
+- name: Check Active Status
+  shell: |
+    ceph fs status
+  register: fs_status_checked
+- debug: msg={{ fs_status_checked }}
+  when: print_debug == true
+
+#
+- name: Remove Filesystems
+  shell: |
+    ceph fs rm {{ item.name }}-fs01 --yes-i-really-mean-it
+  register: pool_metadata_created
+  with_items: "{{ rbd.pool }}"
+- debug: msg={{ pool_metadata_created }}
+  when: print_debug == true
+  # ceph osd pool create {{ item.name }} {{ item.pg_count }}
+
+#
+- name: Verify Filesystem has been Removed
+  shell: |
+    ceph fs ls
+  register: fs_removed
+- debug: msg={{ fs_removed }}
+  when: print_debug == true
+
+# Error EPERM: pool deletion is disabled;
+# you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
+- name: Allow Pool to Delete
+  shell: |
+    ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
+  register: pool_delete_allow
+- debug: msg={{ pool_delete_allow }}
+  when: print_debug == true
+
+#
+- name: Delete Pool for Metadata and Data
+  shell: |
+    ceph osd pool rm {{ item.name }}_data {{ item.name }}_data --yes-i-really-really-mean-it
+    ceph osd pool rm {{ item.name }}_metadata {{ item.name }}_metadata --yes-i-really-really-mean-it
+  register: pool_metadata_deleted
+  with_items: "{{ rbd.pool }}"
+- debug: msg={{ pool_metadata_deleted }}
+  when: print_debug == true
+

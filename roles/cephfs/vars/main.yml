@@ -1,0 +1,35 @@
+#rbd:
+#  pool_name: jtest_pool
+#  pg_count: 100
+#  custom_size: 1G
+#  custom_image: trbd01
+
+rbd:
+  pool:
+    - { name: "default-p01", pg_count: 100 }
+    - { name: "cephfs-p01", pg_count: 100 }
+    - { name: "block-p01", pg_count: 100 }
+    - { name: "rgw-p01", pg_count: 100 }
+    - { name: "nfs-p01", pg_count: 100 }
+  image:
+    default:
+      - { name: "default-img01", pool: "default-p01", size: "1G" }
+      - { name: "default-img02", pool: "default-p01", size: "1G" }
+      - { name: "default-img03", pool: "default-p01", size: "1G" }
+    cephfs:
+      - { name: "cephfs-img01", pool: "cephfs-p01", size: "1G" }
+      - { name: "cephfs-img02", pool: "cephfs-p01", size: "1G" }
+      - { name: "cephfs-img03", pool: "cephfs-p01", size: "1G" }
+    block:
+      - { name: "block-img01", pool: "block-p01", size: "1G" }
+      - { name: "block-img02", pool: "block-p01", size: "1G" }
+      - { name: "block-img03", pool: "block-p01", size: "1G" }
+    rgw:
+      - { name: "rgw-img01", pool: "rgw-p01", size: "1G" }
+      - { name: "rgw-img02", pool: "rgw-p01", size: "1G" }
+      - { name: "rgw-img03", pool: "rgw-p01", size: "1G" }
+    nfs:
+      - { name: "nfs-img01", pool: "nfs-p01", size: "1G" }
+      - { name: "nfs-img02", pool: "nfs-p01", size: "1G" }
+      - { name: "nfs-img03", pool: "nfs-p01", size: "1G" }
+
