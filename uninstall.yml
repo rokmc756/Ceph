@@ -8,12 +8,12 @@
     uninstall_ceph: false
     remove_cephadm_bin: false
   roles:
-    - { role: radosgw }
-  #  - { role: nfs }
-  #  - { role: cephfs }
-  #  - { role: ceph }
-  #  - { role: rbd }
-  #  - { role: custom }
-  #  - { role: init-hosts }
-  #  - { role: docker }
+  # - { role: rbd }
+  # - { role: radosgw }
+  # - { role: nfs }
+  # - { role: cephfs }
+  # - { role: ceph }
+  # - { role: custom }
+  # - { role: init-hosts }
+  # - { role: docker }
 

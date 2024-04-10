@@ -1,9 +1,3 @@
-#rbd:
-#  pool_name: jtest_pool
-#  pg_count: 100
-#  custom_size: 1G
-#  custom_image: trbd01
-
 rbd:
   pool:
     - { name: "default-p01", pg_count: 100 }
