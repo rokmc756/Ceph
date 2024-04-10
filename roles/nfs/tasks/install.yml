@@ -119,11 +119,13 @@
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true
 
-- pause:
+#
+- name: Pause until Pools are started to Scrub
+  pause:
     seconds: 40
 
 #
-- name: Check if Pools are Active+Clean
+- name: Check if Pools are still Unknown
   shell: |
     ceph pg stat
   register: unknown_pool_checked
@@ -145,4 +147,5 @@
   when: print_debug == true
 
 # ceph osd map cephfs.jtest-fs01.data jtest-ns01
-
+# ceph health detail
+# HEALTH_WARN 1 failed cephadm daemon(s)

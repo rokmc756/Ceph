@@ -16,11 +16,7 @@
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
-#- debug: msg={{ cephadm_cmd }}
-#- meta: end_play
-
-
-# Remove NFS Cluster
+#
 - name: Delete Ceph File System NFS Exports
   shell: |
     {{ cephadm_cmd }} ceph nfs export rm {{ item.cluster }} {{ item.src }}
@@ -32,31 +28,39 @@
   # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
 
 #
-- name: Stop and Remove CephFS Metadata for NFS Service
+- name: Stop CephFS Metadata for NFS Service
   shell: |
     {{ cephadm_cmd }} ceph orch stop mds.{{ item.fs }}
-    {{ cephadm_cmd }} ceph orch rm mds.{{ item.fs }}
-  register: cephfs_metadata_deleted
+  register: cephfs_metadata_stopped
   ignore_errors: true
   with_items: "{{ nfs.cluster }}"
-- debug: msg={{ cephfs_metadata_deleted }}
+- debug: msg={{ cephfs_metadata_stopped }}
   when: print_debug == true
 
 #
-- name: Remove NFS Cluster
+- name: Remove CephFS Metadata for NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch rm mds.{{ item.fs }}
+  register: cephfs_metadata_removed
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ cephfs_metadata_removed }}
+  when: print_debug == true
+
+#
+- name: Destroy NFS Cluster
   shell: |
     {{ cephadm_cmd }} ceph nfs cluster rm {{ item.name }}
-  register: remove_nfs_cluster
+  register: nfs_cluster_destroyed
   ignore_errors: true
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ remove_nfs_cluster }}
+- debug: msg={{ nfs_cluster_destroyed }}
   when: print_debug == true
-  # cephadm shell -- ceph nfs cluster rm {{ nfs.cluster_name }}
-  # Need to remove Pool, .nfs
+  # Need to check if .nfs pool should be removebal
 
 #
-- name: Mark Down for Filesystem
+- name: Mark Filesystem Down
   shell: |
     {{ cephadm_cmd }} ceph fs set {{ item.fs }} down true
   register: cephfs_marked_down
@@ -65,27 +69,45 @@
 - debug: msg={{ cephfs_marked_down }}
   when: print_debug == true
 
+#
+- name: Unjoin Filesystem into Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph fs set {{ item.fs }} joinable false
+  register: cephfs_unjoined
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ cephfs_unjoined }}
+  when: print_debug == true
+
+#
+- name: Fail Filesystem
+  shell: |
+    {{ cephadm_cmd }} ceph fs fail {{ item.fs }}
+  register: cephfs_failed
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ cephfs_failed }}
+  when: print_debug == true
+
 # ceph mds stat                                                                                                                      rk9-node01: Wed Apr 10 05:24:57 2024
 # jtest-fs01:1 {0=jtest-fs01.rk9-node06.mgdctu=up:active} 4 up:standby
 # jtest-fs01:0 3 up:standby
+# ceph fs dump | grep mds | grep {{ item.fs }}
+# ceph mds stat | grep {{ item.fs }}
 
 #
-# ceph fs dump | grep mds | grep jtest-fs01
-#- name: Check if MDS is Active
-#  shell: |
-#    ceph mds stat | grep {{ item.fs }}
-#  register: active_mds_checked
-#  until: active_mds_checked.stdout.find("active") == -1
-#  retries: 100
-#  delay: 10
-#  with_items: "{{ nfs.cluster }}"
-#- debug: msg={{ active_mds_checked }}
-#  when: print_debug == true
+- name: Allow to Delete Pool from Mon
+  shell: |
+    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
+  register: delete_pool_allowed
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ delete_pool_allowed }}
+  when: print_debug == true
 
 #
 - name: Delete CephFS Volume in NFS
   shell: |
-    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
     {{ cephadm_cmd }} ceph fs rm {{ item.fs }} --yes-i-really-mean-it
   register: delete_cephfs_volume_nfs
   ignore_errors: true
@@ -93,25 +115,19 @@
 - debug: msg={{ delete_cephfs_volume_nfs }}
   when: print_debug == true
 
-
 # Need to check when is possible to remove NFS Data and MetaData Pools
 - name: Remove NFS Data Pool
   shell: |
-    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
     {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
   register: remove_nfs_data
   ignore_errors: true
   with_items: "{{ nfs.export }}"
 - debug: msg={{ remove_nfs_data }}
   when: print_debug == true
-  # until: remove_nfs_data is succeeded
-  # retries: 20
-  # delay: 10
 
 #
 - name: Remove NFS Metadata Pool
   shell: |
-    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
     {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
   register: remove_nfs_metadata
   ignore_errors: true

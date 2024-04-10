@@ -10,8 +10,9 @@
     add_osd_nodes: false                           # --> Need to check if it works
   roles:
     - { role: nfs }
-  #  - { role: cephfs }
-  #  - { role: rbd }
+
+  # - { role: cephfs }
+  # - { role: rbd }
   # - { role: custom }
   # - { role: radosgw }
   # - { role: ceph }

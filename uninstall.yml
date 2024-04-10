@@ -9,6 +9,7 @@
     remove_cephadm_bin: false
   roles:
     - { role: nfs }
+
   #  - { role: cephfs }
   #  - { role: ceph }
   #  - { role: rbd }
