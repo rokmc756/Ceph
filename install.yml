@@ -6,14 +6,15 @@
     upload_cephadm: false
     install_ceph: false
     init_ceph: false
-    add_ceph_nodes: false
+    add_ceph_nodes: true
     add_osd_nodes: false                           # --> Need to check if it works
   roles:
+    - { role: ceph }
   # - { role: rbd }
   # - { role: radosgw }
   # - { role: nfs }
   # - { role: cephfs }
   # - { role: custom }
-  # - { role: ceph }
   # - { role: init-hosts }
   # - { role: docker }
+

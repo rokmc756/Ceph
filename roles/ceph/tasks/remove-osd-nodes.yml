@@ -6,7 +6,6 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 # ceph osd crush remove <hostname>
 
 #
@@ -168,13 +167,14 @@
   when: print_debug == true and inventory_hostname in groups['osd']
 
 #
-- name: Run Script to Wipe CephFS
-  shell: |
-    sh /root/wipe-cephfs.sh
-  register: run_wipe_cephfs_script
-  when: inventory_hostname in groups['osd']
-- debug: msg={{ run_wipe_cephfs_script }}
-  when: print_debug == true and inventory_hostname in groups['osd']
+#- name: Run Script to Wipe CephFS
+#  shell: |
+#    sh /root/wipe-cephfs.sh
+#  register: run_wipe_cephfs_script
+#  when: inventory_hostname in groups['osd']
+#- debug: msg={{ run_wipe_cephfs_script }}
+#  when: print_debug == true and inventory_hostname in groups['osd']
+#
 
 #
 - name: Reboot Required
