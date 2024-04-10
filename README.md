@@ -177,3 +177,6 @@ $ make uninstall
 - https://docs.huihoo.com/ceph/v0.80.5/rados/operations/add-or-rm-osds/index.html
 - https://www.ibm.com/docs/en/storage-ceph/5?topic=crush-adding-osd
 - https://docs.ceph.com/en/latest/rados/operations/add-or-rm-osds/
+
+- https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
+
