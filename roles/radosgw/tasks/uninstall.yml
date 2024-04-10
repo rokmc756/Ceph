@@ -26,7 +26,7 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Remove User in the Ceph Object Gateway
+- name: Remove Users in the Ceph Object Gateway
   shell: |
     radosgw-admin user rm --uid={{ item.user_name }} --purge-data
   ignore_errors: true
@@ -89,13 +89,6 @@
 - debug: msg={{ ceph_config_removed }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-# mkdir -p /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
-# ceph auth get-or-create client.rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}/keyring
-# chown ceph:ceph /etc/ceph/ceph.*
-# chown -R ceph:ceph /var/lib/ceph/radosgw
-# systemctl stop --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
-# systemctl disable --now ceph-radosgw@rgw.{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
-
 #
 - name: Allow to Delete Pool from Mon
   shell: |
@@ -112,6 +105,9 @@
     {{ cephadm_cmd }} ceph osd pool rm {{ item }} {{ item }} --yes-i-really-really-mean-it
   ignore_errors: true
   register: rgw_pool_removed
+  until: rgw_pool_removed is succeeded
+  retries: 10
+  delay: 20
   with_items:
     - ".rgw.root"
     - "default.rgw.buckets.index"
@@ -142,7 +138,6 @@
   until: scrub_pool_checked.stdout.find("scrubbing") == -1
   retries: 20
   delay: 15
-  when: print_debug == true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
