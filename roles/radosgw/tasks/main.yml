@@ -12,7 +12,7 @@
     - uninstall
 
 #
-- name: Enable Rados Gateway
+- name: Deploy Rados Gateway
   import_tasks: install.yml
   tags: install
 

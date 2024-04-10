@@ -1,6 +1,6 @@
 rgw:
-  user_name: "jmoon"
-  display_name: "jack.moon"
-  email: "rokmc756@gmail.com"
-  access_key: "changeme"
-  secret_key: "changeme"
+  users:
+    - { user_name: "jmoon", display_name: "jack.moon", email: "rokmc756@gmail.com", access_key: "changeme", secret_key: "changeme", domain: "jtest.weka.io" }
+  auth:
+    - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
+
