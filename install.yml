@@ -6,10 +6,11 @@
     upload_cephadm: false
     install_ceph: false
     init_ceph: false
-    add_ceph_nodes: true
-    add_osd_nodes: false                           # --> Need to check if it works
+    add_ceph_nodes: false
+    add_osd_nodes: true                              # --> Need to check if it works
   roles:
     - { role: ceph }
+
   # - { role: rbd }
   # - { role: radosgw }
   # - { role: nfs }
