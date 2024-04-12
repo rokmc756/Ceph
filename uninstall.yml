@@ -1,11 +1,12 @@
+
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    remove_osd_nodes: true
+    remove_osd_nodes: false
     remove_ceph_nodes: false
     purge_ceph: false
-    uninstall_ceph: false
+    uninstall_ceph: true
     remove_cephadm_bin: false
   roles:
     - { role: ceph }

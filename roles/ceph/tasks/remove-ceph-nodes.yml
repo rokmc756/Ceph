@@ -106,9 +106,9 @@
     {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
   register: ceph_nodes_unlabeled
   with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ ceph_nodes_unlabeled }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Remove the Nodes from Ceph Cluster

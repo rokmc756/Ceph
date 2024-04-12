@@ -142,3 +142,14 @@
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+#
+- name: Delete Rados Gateway Users
+  shell: |
+    {{ cephadm_cmd }} ceph auth del client.{{ item }}
+  register: rgw_user_deleted
+  ignore_errors: true
+  with_items:
+    - "bootstrap-rgw"
+- debug: msg={{ rgw_user_deleted }}
+  when: print_debug == true
+
