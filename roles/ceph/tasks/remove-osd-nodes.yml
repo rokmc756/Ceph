@@ -1,5 +1,5 @@
 #
-- name: Get fsid for setting fact
+- name: Get FSID for Setting Fact
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
@@ -9,7 +9,7 @@
 # ceph osd crush remove <hostname>
 
 #
-- name: Set fact for fsid
+- name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -23,13 +23,13 @@
 #
 - name: Get All OSD IDs
   shell: |
-    ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+    ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
   register: all_osd_ids
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ all_osd_ids }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
   # ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-  #  ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+  #  ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
 
 #
 - set_fact:
@@ -54,6 +54,7 @@
 #
 - name: Disable Scrub for OSDs
   shell: |
+    {{ cephadm_cmd }} ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
     {{ cephadm_cmd }} ceph osd set noscrub
     {{ cephadm_cmd }} ceph osd set nodeep-scrub
   register: scrub_disabled
@@ -88,9 +89,9 @@
   # with_items: "{{ all_osd }}"
 
 #
-- name: Remove Crush OSDs
+- name: Remove OSDs
   shell: |
-    {{ cephadm_cmd }} ceph osd crush rm osd.{{ item }}
+    {{ cephadm_cmd }} ceph osd rm {{ item }}
   register: osd_removed
   ignore_errors: true
   with_items: "{{ all_osd }}"
@@ -107,17 +108,6 @@
   with_items: "{{ all_osd }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ osd_auth_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-- name: Remove OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd rm {{ item }}
-  register: osd_removed
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ osd_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
@@ -143,7 +133,37 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
   # {{ cephadm_cmd }} ceph osd purge {{ item }} --yes-i-really-mean-it
 
+#
+- name: Remove Crush OSDs
+  shell: |
+    {{ cephadm_cmd }} ceph osd crush rm osd.{{ item }}
+  register: osd_removed
+  ignore_errors: true
+  with_items: "{{ all_osd }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ osd_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+#
+- name: Remove Host Bucket in Crush Map
+  shell: |
+    {{ cephadm_cmd }} ceph osd crush rm {{ item }}
+  register: bucket_removed
+  loop: "{{ groups['osd'] }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ bucket_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Unset Scrub for OSDs
+  shell: |
+    {{ cephadm_cmd }} ceph osd unset noscrub
+    {{ cephadm_cmd }} ceph osd unset nodeep-scrub
+  register: scrub_unset
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ scrub_unset }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
 - name: Remove the Cluster Hosts and Check if There is Ceph Daemon Running
@@ -171,8 +191,22 @@
   ignore_errors: true
   register: exporter_containers_stopped
   when: inventory_hostname in groups['osd']
-- debug: msg={{ exporter_containers_stoppped }}
+- debug: msg={{ exporter_containers_stopped }}
   when: print_debug == true and inventory_hostname in groups['osd']
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
+# https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
+# podman images | awk '{print $3}'
+# podman rmi -f 1c40e0e88d74
+
+#
+#- name: Remove FSID Directory
+#  shell: |
+#    rm -rf /var/lib/ceph/{{ _fsid }}
+#  ignore_errors: true
+#  register: fsid_dir_removed
+#  when: inventory_hostname in groups['osd']
+#- debug: msg={{ fsid_dir_removed }}
+#  when: print_debug == true and inventory_hostname in groups['osd']
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
 # https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
 
@@ -205,31 +239,26 @@
   when: inventory_hostname in groups['osd']
 - debug: msg={{ run_wipe_cephfs_script }}
   when: print_debug == true and inventory_hostname in groups['osd']
-#
 
 #
 - name: Reboot Required
-  shell: ( /bin/sleep 5 ; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
   ignore_errors: true
   register: reboot_required
   async: 120
   poll: 0
   notify:
     - Waiting for server to come back after restart
-  when: inventory_hostname in groups['osd']
+  when: inventory_hostname in groups['all']
 
 #
 - meta: flush_handlers
-  when: inventory_hostname in groups['osd']
+  when: inventory_hostname in groups['all']
 
-# podman images | awk '{print $3}'
-# podman rmi -f 1c40e0e88d74
-# for i in `systemctl list-units '*ceph*' | grep running | awk '{print $1}'`; do systemctl stop $i && systemctl disable $i ; done
-
-#
+# ceph orch device ls | grep -E '{{ all_osd_nodes }}'
 - name: Validate if Devices has still filesytem and is insufficent space
   shell: |
-    ceph orch device ls | grep -E '{{ all_osd_nodes }}'
+    ceph orch device ls
   register: fs_space_checked
   ignore_errors: true
   until: fs_space_checked.stdout.find("Has a FileSystem, Insufficient space") == -1
