@@ -6,15 +6,8 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-- name: Get the Name of MGR Node
-  shell: |
-    ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
-  register: get_mgr_name
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ get_mgr_name.stdout }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # Get the Name of MGR Node
+  #  ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
 
 #
 - name: Set Fact for FSID
@@ -26,18 +19,6 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Set Fact for the Name of MGR Node
-  set_fact:
-    mgr_name: "{{ get_mgr_name.stdout }}"
-  delegate_to: "{{ item }}"
-  delegate_facts: True
-  with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#- debug: msg={{ mgr_name }}
-#- meta: end_play
-
-#
 - name: Set Fact for Cephadm_cmd Command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
@@ -47,111 +28,54 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-# ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
-# ceph orch daemon stop ceph-exporter.rk9-node02   # mgr,mds, crash,ceph-exporter,node-exporter
-# ceph orch ls
-#
-# Remove MDS Services
-# cephadm shell -- ceph orch rm mds.myfs
-
-#
-- name: Stop Services
-  shell: |
-    {{ cephadm_cmd }} ceph orch daemon stop {{ item }}.{{ inventory_hostname }}
-  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  delegate_facts: True
-  register: service_stopped
-  ignore_errors: true
-  with_items:
-    - mgr
-    - mon
-    - crash
-    - node-exporter
-    - ceph-exporter
-  when: inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ service_stopped }}
-  when: print_debug == true and inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-- name: Remove Services
-  shell: |
-    {{ cephadm_cmd }} ceph orch apply {{ item }} "1 {{ inventory_hostname }}"
-  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  delegate_facts: True
-  register: service_removed
-  ignore_errors: true
-  with_items:
-    - mgr
-    - mon
-    - crash
-    - node-exporter
-    - ceph-exporter
-  when: inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ service_removed }}
-  when: print_debug == true and inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#- name: Remove MDS Service
-#  shell: |
-#    {{ cephadm_cmd }} ceph orch rm mds.myfs
-#  register: osd_nodes_unlabled
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ osd_nodes_unlabled }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Unlabel the MGR/MDS/Mon Nodes with Its Role
   shell: |
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mds
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
-  register: ceph_nodes_unlabeled
-  with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ ceph_nodes_unlabeled }}
-  when: print_debug == true and inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
-- name: Remove the Nodes from Ceph Cluster
-  shell: |
-    {{ cephadm_cmd }} ceph orch host rm {{ inventory_hostname }}
-  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[inventory_hostname]['ansible_hostname'] }} {{ hostvars[inventory_hostname]['ansible_hostname'] }}-mgr
+    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[inventory_hostname]['ansible_hostname'] }} {{ hostvars[inventory_hostname]['ansible_hostname'] }}-mds
+    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[inventory_hostname]['ansible_hostname'] }} {{ hostvars[inventory_hostname]['ansible_hostname'] }}-mon
+  delegate_to: "{{ groups['mon'][0] }}"
   delegate_facts: True
-  register: ceph_nodes_removed
-  when: inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ ceph_nodes_removed }}
-  when: print_debug == true and inventory_hostname not in hostvars[groups['mon'][0]]['ansible_hostname']
+  register: ceph_nodes_unlabeled
+  when: inventory_hostname != groups['mon'][0]
+- debug: msg={{ ceph_nodes_unlabeled }}
+  when: print_debug == true and inventory_hostname != groups['mon'][0]
+  # ceph orch daemon stop node-exporter.rk9-node01  # ceph-exporter,crash,mon,mgr
+  # ceph orch apply {{ item }} "1 rk9-node01"
 
-#
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
+- name: Remove the Cluster Hosts and Check if There is Ceph Daemon Running
+  shell: |
+    {{ cephadm_cmd }} ceph orch host rm {{ hostvars[inventory_hostname]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch host drain {{ hostvars[inventory_hostname]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch host rm --force {{ hostvars[inventory_hostname]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch ps {{ hostvars[inventory_hostname]['ansible_hostname'] }}
+  delegate_to: "{{ groups['mon'][0] }}"
+  delegate_facts: True
+  register: cluster_hosts_removed
+  ignore_errors: true
+  when: inventory_hostname != groups['mon'][0]
+- debug: msg={{ cluster_hosts_removed }}
+  when: print_debug == true and inventory_hostname != groups['mon'][0]
+  # {{ cephadm_cmd }} ceph orch host ls
+  # ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
+
 # ceph mon stat
 # cephadm ls | grep mon | grep name | grep -v service_name | awk '{print $2}' | sed -e s/\"//g | sed -e s/,$//g
 # cephadm unit --name {{ mon_hostname }} stop
 # ceph orch rm SERVICE_NAME --force
-# {{ cephadm_cmd }} ceph mon remove {{ hostvars[item]['ansible_hostname'] }}
+# ceph mon remove {{ hostvars[item]['ansible_hostname'] }}
 # ceph mgr fail {{ mgr_name }}
+
+# Remove MDS Service
+# ceph orch rm mds.myfs
 
 # systemctl stop ceph-mgr@{{ mgr_name }}
 # ceph osd unset nodeep-scrub
 # ceph osd unset noscrub
-#
 # ceph -s
 
-# cephadm shell -- ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
-# cephadm shell -- ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
-# cephadm shell -- ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
-
-# template: src=wipe-cephfs.sh.j2 dest=/root/wipe-cephfs.sh owner=root group=root mode=755 force=yes
-# sh /root/wipe-cephfs.sh
-
-#- name:  Remove Monitoring Stacks
-#  shell: |
-#    {{ cephadm_cmd }} ceph orch rm grafana
-#    {{ cephadm_cmd }} ceph orch rm prometheus
-#    {{ cephadm_cmd }} ceph orch rm node-exporter
-#    {{ cephadm_cmd }} ceph orch rm ceph-exporter
-#    {{ cephadm_cmd }} ceph orch rm alertmanager
-#    {{ cephadm_cmd }} ceph mgr module disable prometheus
-#
+# Remove Monitoring Stacks
+# ceph orch rm grafana       # prometheus,node-exporter,ceph-exporter,alertmanager
+# ceph mgr module disable prometheus
 # ceph orch status
-
-# /usr/sbin/cephadm shell --fsid b5c66992-f5ce-11ee-ad54-00505693d59b -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring -- ceph orch damon stop node-exporter.rk9-node02
 

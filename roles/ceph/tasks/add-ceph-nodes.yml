@@ -25,11 +25,11 @@
   when: print_debug == true
 
 #
-- name: Copy SSH Keys to Other Ceph Nodes
-  shell: |
-    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
-  register: copy_ssh_keys
-  with_items: "{{ groups['all'] }}"
+#- name: Copy SSH Keys to Other Ceph Nodes
+#  shell: |
+#    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
+#  register: copy_ssh_keys
+#  with_items: "{{ groups['all'] }}"
 
 #
 - name: Allow Deployment of Monitor Daemons On Arbitrary Hosts to Add the Nodes to Ceph Cluster
