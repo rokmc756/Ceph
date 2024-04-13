@@ -3,10 +3,10 @@
   become: yes
   vars:
     print_debug: true
-    remove_osd_nodes: false
+    remove_osd_nodes: true
     remove_ceph_nodes: false
     purge_ceph: false
-    uninstall_ceph: true
+    uninstall_ceph: false
     remove_cephadm_bin: false
   roles:
     - { role: ceph }

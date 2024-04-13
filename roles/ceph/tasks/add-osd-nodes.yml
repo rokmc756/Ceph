@@ -158,24 +158,23 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Get All OSD IDs
+- name: Get All OSDs not UP
   shell: |
-    ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_osd_ids
+    ceph osd df | sed 1d | head -n -2 | awk '{ if($NF!="up") print $1 }' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+  register: all_osd_down_ids
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ all_osd_ids }}
+- debug: msg={{ all_osd_down_ids }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-  # ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-  # ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+# ceph osd df | sed 1d | head -n -2 | awk '{print $1","$20}'
 
 #
 - set_fact:
-    all_osd: "{{ all_osd_ids.stdout | split(',')}}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+    all_osds: "{{ all_osd_down_ids.stdout | split(',')}}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 - debug: msg={{ item }}
-  with_items: "{{ all_osd }}"
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#
+  with_items: "{{ all_osds }}"
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
+
 #
 - name: Reconfig and Redeploy Node & Ceph Exporters and Crash
   shell: |
@@ -187,9 +186,9 @@
     {{ cephadm_cmd }} ceph orch daemon redeploy node-exporter.{{ hostvars[item]['ansible_hostname'] }}
   register: node_exporter_reconfig
   with_items: "{{ groups['osd'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 - debug: msg={{ node_exporter_reconfig }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 
 #
 - name: Reconfig and Redeploy OSDs
@@ -197,25 +196,24 @@
     {{ cephadm_cmd }} ceph orch daemon reconfig osd.{{ item }}
     {{ cephadm_cmd }} ceph orch daemon redeploy osd.{{ item }}
   register: osd_reconfig
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  with_items: "{{ all_osds }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 - debug: msg={{ osd_reconfig }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 
-# ceph osd df | sed 1d | head -n -2 | awk '{print $1","$20}'
-# 0,up
-# 1,up
-# 2,up
-# 3,up
-# 4,up
-# 5,up
-# 6,up
-# 7,up
-# 8,up
-# 10,up
-# 11,up
-# 9,
+# ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+# ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+# ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
 
-# grep `weka cluster process | sed 1d | grep DPDK | awk '{print $1","$2}' | grep -e ^$(weka stats realtime --sort cpu -F role=FRONTEND
-# | awk '{print $1" "$2 }' | sed 1d | sort -k2,2 | head -1 | awk '{print $1}'), | cut -d , -f 2` | \
-
+#
+- name: Validate if OSDs are still Down
+  shell: |
+    ceph osd df | sed 1d | head -n -2 | awk '{ if($NF=="down") print $NF }' | uniq
+  register: osd_down_status
+  ignore_errors: true
+  until: osd_down_status.stdout.find("down") == -1
+  retries: 20
+  delay: 10
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
+- debug: msg={{ osd_down_status }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
