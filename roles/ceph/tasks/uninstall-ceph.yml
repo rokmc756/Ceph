@@ -22,6 +22,29 @@
   when: print_debug == true
 
 #
+- name: Kill processes of conmon and podman
+  shell: |
+    killall conmon
+    killall podman
+  register: kill_conmon_podman
+  ignore_errors: true
+- debug: msg={{ kill_conmon_podman }}
+  when: print_debug == true
+
+#
+- name: Uninstall Ceph Conmon Packages
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - cephadm
+    - ceph-common
+    - ceph-base
+    - ceph-radosgw
+    - conmon
+    - podman
+
+#
 # for j in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do dd if=/dev/zero of=/dev/$j bs=1M count=1000; done
 - name: Cleanup the Ceph Block Devices
   shell: |
@@ -36,27 +59,4 @@
   when: inventory_hostname in groups['osd']
 - debug: msg={{ cleanup_ceph_block_devices }}
   when: inventory_hostname in groups['osd'] and print_debug == true
-
-#
-#- name: Kill processes of conmon and podman
-#  shell: |
-#    killall conmon
-#    killall podman
-#  register: kill_conmon_podman
-#  ignore_errors: true
-#- debug: msg={{ kill_conmon_podman }}
-#  when: print_debug == true
-
-#
-- name: Uninstall Ceph Conmon Packages
-  package:
-    name: "{{ item }}"
-    state: absent
-  with_items:
-    - cephadm
-    - ceph-common
-    - ceph-base
-    - ceph-radosgw
-    - conmon
-    - podman
 

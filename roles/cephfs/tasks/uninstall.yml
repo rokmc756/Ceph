@@ -1,9 +1,9 @@
 #
 - name: Mark Down for Filesystem
   shell: |
-    ceph fs set {{ item.name }}-fs01 down true
+    ceph fs set {{ item.name }} down true
   register: cephfs_marked_down
-  with_items: "{{ rbd.pool }}"
+  with_items: "{{ cephfs.fs }}"
 - debug: msg={{ cephfs_marked_down }}
   when: print_debug == true
   # ignore_errors: true
@@ -19,9 +19,9 @@
 #
 - name: Remove Filesystems
   shell: |
-    ceph fs rm {{ item.name }}-fs01 --yes-i-really-mean-it
+    ceph fs rm {{ item.name }} --yes-i-really-mean-it
   register: pool_metadata_created
-  with_items: "{{ rbd.pool }}"
+  with_items: "{{ cephfs.fs }}"
 - debug: msg={{ pool_metadata_created }}
   when: print_debug == true
   # ceph osd pool create {{ item.name }} {{ item.pg_count }}
@@ -49,7 +49,7 @@
     ceph osd pool rm {{ item.name }}_data {{ item.name }}_data --yes-i-really-really-mean-it
     ceph osd pool rm {{ item.name }}_metadata {{ item.name }}_metadata --yes-i-really-really-mean-it
   register: pool_metadata_deleted
-  with_items: "{{ rbd.pool }}"
+  with_items: "{{ cephfs.fs }}"
 - debug: msg={{ pool_metadata_deleted }}
   when: print_debug == true
 

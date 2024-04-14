@@ -1,10 +1,17 @@
 ---
 # https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
 #
-- name: Get interface name from prefix of IP Addresses provided for Weka Nodes
+- name: Get interface name from prefix of IP Addresses provided for Ceph Nodes
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
     netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr1 ) | map(attribute='device') | first }}"
+  when: inventory_hostname not in groups['clients']
+
+- name: Get interface name from prefix of IP Addresses provided for Ceph Nodes
+  set_fact:
+    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
+    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr1 ) | map(attribute='device') | first }}"
+  when: inventory_hostname in groups['clients']
 
 #
 - name: Get IP Address from provided network device name

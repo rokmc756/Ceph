@@ -1,4 +1,3 @@
-
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-client-users-for-a-ceph-file-system_fs
 # https://docs.ceph.com/en/reef/cephfs/client-auth/
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-client-users-ceph-file
@@ -18,61 +17,85 @@
 #  mount -t ceph 192.168.0.71:6789,192.168.0.72:6789,192.168.0.173:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
 # root@ubt22-client01:/etc/ceph# mount -t ceph 192.168.1.71:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
 # mount error: no mds server is up or the cluster is laggy
+#
+# It works
 
 
-# 192.168.1.211 is a ip address of froentend contatiners
-- name: Install WekaFS POSIX Stateless Clients
-  shell: |
-    curl {{ feip0 }}:14000/dist/v1/install | sh
-  register: install_wekafs_client
+- name: Install CephFS Client Packages
+  package: name={{item}} state=present
+  with_items:
+    - "ceph-common"
+
+#
+- name: Copy Ceph Configuration for CephFS Clients
+  synchronize:
+    src:  "{{ item }}"
+    dest: "{{ item }}"
+    rsync_opts:
+      - "-e ssh"   #  - "-e ssh -i /remote/path/to/mykey"
+  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+  delegate_facts: true
+  register: ceph_config_dir_created
+  with_items:
+    - "/etc/ceph/ceph.conf"
+    - "/etc/ceph/ceph.client.admin.keyring"
   when: inventory_hostname in groups['clients']
-- debug: msg={{ install_wekafs_client }}
+- debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
 #
-- name: Create Directory to Mount WekaFS for POSIX Client
+- name: Change Permission for /etc/ceph/ceph.conf
+  shell: |
+    chmod 644 /etc/ceph/ceph.conf
+  register: ceph_conf_perm_changed
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ ceph_conf_perm_changed }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Create Directory to Mount CephFS Client
   shell: |
     mkdir {{ item.mount_dir }}
-  register: create_wekafs_dir
-  with_items: "{{ wekafs.fs.filesystem }}"
+  register: create_cephfs_dir
+  with_items: "{{ cephfs.fs }}"
   when: inventory_hostname in groups['clients']
-- debug: msg={{ create_wekafs_dir  }}
+- debug: msg={{ create_cephfs_dir  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
 #
-- name: Mount Stateless WekaFS Clients
+- name: Mount Stateless CephFS Clients
   shell: |
-    mount -t wekafs -o verbose -o num_cores={{ weka.client.net.cores }} \
-    {{ clients_net }} \
-    {{ feip0 }}/{{ wekafs.fs.filesystem[1].name }} {{ wekafs.fs.filesystem[1].mount_dir }}
-  register: mount_wekafs_dir
+    mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/ {{ item.mount_dir }} -o name=admin,fs={{ item.name }}
+  register: mount_cephfs_dir
+  with_items: "{{ cephfs.fs }}"
   when: print_debug == true and inventory_hostname in groups['clients']
-- debug: msg={{ mount_wekafs_dir }}
+- debug: msg={{ mount_cephfs_dir }}
   when: print_debug == true and inventory_hostname in groups['clients']
-  # mount -t wekafs -o verbose -o num_cores=2 -o net=ens193/192.168.1.61/24 -o net=ens224/192.168.1.71/24 192.168.1.211/wekafs-fs01 /mnt/wekafs-fs01
-  # netdev1 should be network device of client which mtu must be 9000 if it's not, client will be failed
+  # mount.ceph admin@09afe574-fa70-11ee-80b0-00505693d59b.cephfs-p01-fs01=/ /mnt/cephfs/
+  # mount -t ceph 192.168.1.71:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
 
 #
-- name: Check if WekaFS Directory is Mounted
+- name: Check if CephFS Directory is Mounted
   shell: |
     df -h
     ls -al {{ item.mount_dir }}
-  register: check_wekafs_mounted
+  register: check_cephfs_mounted
   with_items:
-    - "{{ wekafs.fs.filesystem }}"
+    - "{{ cephfs.fs }}"
   when: inventory_hostname in groups['clients']
-- debug: msg={{ check_wekafs_mounted  }}
+- debug: msg={{ check_cephfs_mounted  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
 #
 - name: Creat text file with the content
   shell: |
-    touch {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
-    echo "hello world" >  {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
-    cat {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
-  register: create_wekafs_file
+    touch {{ item.mount_dir }}/{{ item.name }}.txt
+    echo "hello world in {{ item.name }}" >  {{ item.mount_dir }}/{{ item.name }}.txt
+    cat {{ item.mount_dir }}/{{ item.name }}.txt
+  register: create_cephfs_file
+  with_items: "{{ cephfs.fs }}"
   when: inventory_hostname in groups['clients']
-- debug: msg={{ create_wekafs_file }}
+- debug: msg={{ create_cephfs_file }}
   when: print_debug == true and inventory_hostname in groups['clients']
 # Need to test switch mode of iptime in order to expand ports from 5 to 10
 

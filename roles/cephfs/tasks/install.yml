@@ -4,7 +4,7 @@
     ceph osd pool create {{ item.name }}_data {{ item.pg_count }}
     ceph osd pool create {{ item.name }}_metadata {{ item.pg_count }}
   register: pool_metadata_created
-  with_items: "{{ rbd.pool }}"
+  with_items: "{{ cephfs.pool }}"
 - debug: msg={{ pool_metadata_created }}
   when: print_debug == true
   # ceph osd pool create {{ item.name }} {{ item.pg_count }}
@@ -14,7 +14,7 @@
   shell: |
     ceph fs new {{ item.name }}-fs01 {{ item.name }}_metadata {{ item.name }}_data
   register: cephfs_enabled
-  with_items: "{{ rbd.pool }}"
+  with_items: "{{ cephfs.pool }}"
 - debug: msg={{ cephfs_enabled }}
   when: print_debug == true
 

@@ -4,13 +4,19 @@
 #  custom_size: 1G
 #  custom_image: trbd01
 
-rbd:
+cephfs:
   pool:
     - { name: "default-p01", pg_count: 100 }
     - { name: "cephfs-p01", pg_count: 100 }
     - { name: "block-p01", pg_count: 100 }
     - { name: "rgw-p01", pg_count: 100 }
     - { name: "nfs-p01", pg_count: 100 }
+  fs:
+    - { pool: "default-p01", name: "default-p01-fs01", size: "1G", mount_dir: "/mnt/default-p01-fs01" }
+    - { pool: "cephfs-p01", name: "cephfs-p01-fs01", size: "1G", mount_dir: "/mnt/cephfs-p01-fs01" }
+    - { pool: "block-p01", name: "block-p01-fs01", size: "1G", mount_dir: "/mnt/block-p01-fs01" }
+    - { pool: "rgw-p01", name: "rgw-p01-fs01", size: "1G", mount_dir: "/mnt/rgw-p01-fs01" }
+    - { pool: "nfs-p01", name: "nfs-p01-fs01", size: "1G", mount_dir: "/mnt/nfs-p01-fs01" }
   image:
     default:
       - { name: "default-img01", pool: "default-p01", size: "1G" }

@@ -5,21 +5,33 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
-#- name: Set facts for network and packages informations for Linux Distribution
-#  import_tasks: set-cephfs-facts.yml
-#  tags:
-#    - install
-#    - uninstall
+- name: Set facts for network and packages informations for Linux Distribution
+  import_tasks: set-cephfs-facts.yml
+  tags:
+    - install
+    - uninstall
 
 #
-- name: Enable Rados Block Device Pool
+- name: Create Pool and CephFS
   import_tasks: install.yml
   tags: install
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
-- name: Remove RBD Images
+- name: Install CephFS Clients
+  import_tasks: install-clients.yml
+  tags: install
+  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+
+#
+- name: Uninstall CephFS Clients
+  import_tasks: uninstall-clients.yml
+  tags: uninstall
+  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+
+#
+- name: Remove CephFS and Pools
   import_tasks: uninstall.yml
   tags: uninstall
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
