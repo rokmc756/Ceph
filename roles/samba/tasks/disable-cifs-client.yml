@@ -1,0 +1,45 @@
+#
+- name: Delete text file
+  shell: |
+    rm -f /mnt/cifs/test-cifs01.txt
+  register: delete_cifs_file
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ delete_cifs_file }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Umount CIFS directory
+  shell: |
+    umount /mnt/cifs
+  register: umount_cifs_dir
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ umount_cifs_dir }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Delete directory to mount CIFS
+  shell: |
+    rm -rf /mnt/cifs
+  register: delete_cifs_dir
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ delete_cifs_dir }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Remove CIFS Client
+  shell: |
+    dnf remove -y cifs-utils
+  register: uninstall_cifs_client
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ uninstall_cifs_client }}
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Disable Development Repository
+  shell: |
+    dnf config-manager --set-disabled devel
+  register: disable_devel_repo
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ disable_devel_repo }}
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+

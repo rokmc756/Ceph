@@ -1,0 +1,92 @@
+#
+- name: Umount SMB directory
+  mount:
+    path: "{{ smb.fs.mount_dir }}"
+    state: unmounted
+  retries: 10
+  delay: 10
+  register: umount_smb_wekafs
+  when: inventory_hostname in groups['workers']
+- debug: msg={{ umount_smb_wekafs }}
+  when: print_debug == true and inventory_hostname in groups['workers']
+  # umount -f -l {{ smb.fs.mount_dir }}
+
+#
+- name: Delete mounted directory
+  file:
+    state: absent
+    path: "{{ smb.fs.mount_dir }}"
+  register: delete_smb_files
+  when: inventory_hostname in groups['workers']
+- debug: msg={{ delete_smb_files }}
+  when: print_debug == true and inventory_hostname in groups['workers']
+
+#
+- name: Get All Share IDs
+  shell: |
+    weka smb share | sed 1d | awk '{print $2}'
+  register: all_share_ids
+  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+
+#
+- name: Remove All Share IDs
+  shell: |
+    weka smb share remove {{ item }} -f
+  register: remove_all_share_ids
+  with_items: "{{ all_share_ids.stdout_lines }}"
+  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname'] and "'' not in remove_all_share_ids.stdout"
+- debug: msg={{ remove_all_share_ids }}
+  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+  # failed_when: "'(Greenplum Database ' not in select_version.stdout"
+
+#
+- name: Get All SMB Contaienr IDs for SCB Cluster
+  shell: |
+    weka cluster container | awk '{print $1}' | sed -e 1d | tr '\n' ',' | sed 's/,$/\n/'
+  register: all_container_ids
+  when: weka.backend.scb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+
+#
+- name: Get All SMB Contaienr IDs for MCB Cluster
+  shell: |
+    weka cluster container | grep frontend | awk '{print $1}' | tr '\n' ',' | sed 's/,$/\n/'
+  register: all_container_ids
+  when: weka.backend.mcb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+
+#
+- debug: msg={{ all_container_ids }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+
+# - name: Remove SMB Containers
+#   shell: |
+#    weka smb cluster containers remove --container-ids {{ all_container_ids.stdout }} --force
+#  register: remove_smb_containers
+#  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+#- debug: msg={{ remove_smb_containers }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+#  error: SMB cluster must have at least 3 hosts to function as a cluster
+
+#
+- name: Leave from AD
+  shell: |
+    weka smb domain leave {{ smb.ad.users.admin.id }} {{ smb.ad.users.admin.pass }}
+  register: leave_ad
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+- debug: msg={{ leave_ad }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+  # until: leave_ad is succeeded
+  # retries: 10
+  # delay: 180
+
+#
+- name: Destroy SMB Cluster
+  shell: |
+    weka smb cluster destroy -f
+  register: destroy_smb_cluster
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+
+- debug: msg={{ destroy_smb_cluster }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+

@@ -1,0 +1,93 @@
+# ps -aux | grep tsmb # validate tsmb-server is running before configuring a share
+# weka smb share add myshare default --acl on
+
+# mkdir /mnt/default; mount -t wekafs default /mnt/default
+# chmod 777 /mnt/default
+
+#connect from windows and type:
+#\\<Host_Private_IP>\myshare
+
+#connect from linux and type:
+#mkdir /mnt/mounted_myshare
+#sudo mount -t cifs -o domain=test,username=wekadmin,password=myW3ka.io <CLUSTER_NAME-0>/myshare /mnt/mounted_myshare
+
+
+# On 181
+# mkdir /mnt/jtest-smb-fs01
+# mount -t wekafs jtest-smb-fs01 /mnt/jtest-smb-fs01/
+
+# dnf config-manager --set-enabled devel
+# dnf install -y samba samba-common samba-client
+# dnf install -y cifs-utils
+# modprobe cifs
+# realm join --user=Administrator jtest.weka.io
+# https://access.redhat.com/solutions/7009163
+# mount -t cifs -o domain=jtest.weka.io,username=Administrator,password=Changeme12\!\@ //192.168.0.151:/jtest-share-01 /mnt/smb
+# mount.cifs: bad UNC (192.168.0.151:/jtest-share-01)
+
+
+#Workgroup Master
+#--------- -------
+#Sharepoint temp1 which does not exist fails with error 6.
+# mount -t cifs //win2008/temp1 -o credentials=/root/win2008.cred /mnt/win2008
+#retrying with upper case share name
+#mount error 6 = No such device or address
+#Refer to the mount.cifs(8) manual page (e.g.man mount.cifs)
+#
+#While using the correct sharepoint temp works
+## mount -t cifs //win2008/temp -o credentials=/root/win2008.cred /mnt/win2008
+## df | grep win2008
+#//win2008/temp 156287996 77343140 78944856 50% /mnt/win2008
+# https://support.hpe.com/hpesc/public/docDisplay?docId=kc0115475en_us&docLocale=en_US
+#
+# https://www.notion.so/wekaio/SMB-Protocol-deploy-in-AD-best-practices-b3084bca69d54c2a8b87d6237109fbc8?pvs=4
+# [root@weka4-node07 ~]# mount -t cifs //192.168.0.153/jtest-share-01 /mnt/smb -o domain=jtest.weka.io,username=jomoon,password=Changeme12\!\@,vers=2.1,uid=1001,gid=1001 --verbose
+#
+# At winodows 11 for network drive, jomoon@jtest.weka.io and Changeme12!@ is possible to login into \\192.168.0.151\jtest-share-01
+
+#
+- name: X
+  shell: |
+    dnf config-manager --set-enabled devel
+  register: x
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ x }}
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Install SMB Client
+  shell: |
+    dnf install -y cifs-utils
+  register: x
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ x }}
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Create directory to mount CIFS
+  shell: |
+    mkdir /mnt/cifs
+  register: create_cifs_dir
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ create_cifs_dir }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Mount CIFS directory
+  shell: |
+    mount -t nfs 192.168.0.163:/jtest-default-fs01 /mnt/cifs
+  register: mount_cifs_dir
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+- debug: msg={{ mount_cifs_dir }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+
+#
+- name: Creat text file
+  shell: |
+    touch /mnt/cifs/test-cifs01.txt
+  register: create_cifs_file
+  when: inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+- debug: msg={{ create_cifs_file }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['clients'][0]]['ansible_hostname']
+

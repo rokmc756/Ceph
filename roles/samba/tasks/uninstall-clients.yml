@@ -1,0 +1,44 @@
+#
+- name: Delete text file
+  file:
+    state: absent
+    path: "{{ smb.fs.mount_dir }}/test-smb01.txt"
+  register: delete_smb_files
+- debug: msg={{ delete_smb_files }}
+  when: print_debug == true
+
+#
+- name: Umount SMB directory
+  mount:
+    path: "{{ smb.fs.mount_dir }}"
+    state: unmounted
+  retries: 10
+  delay: 10
+  register: umount_smb_dir
+- debug: msg={{ umount_smb_dir }}
+  when: print_debug == true
+  # ignore_errors: true
+  # umount -f -l {{ smb.fs.mount_dir }}
+
+#
+- name: Delete directory to mount SMB
+  file:
+    state: absent
+    path: "{{ smb.fs.mount_dir }}"
+  register: delete_smb_dir
+- debug: msg={{ delete_smb_dir }}
+  when: print_debug == true
+
+#
+- name: Uninstall SMB Client
+  package: name={{ item }} state=absent
+  with_items:
+    - "cifs-utils"
+
+#- name: Disable Development Repository
+#  shell: |
+#    dnf config-manager --set-disabled devel
+#  register: disable_devel_repo
+#  ignore_errors: true
+#- debug: msg={{ disable_devel_repo }}
+#  when: print_debug == true

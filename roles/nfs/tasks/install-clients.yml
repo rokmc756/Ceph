@@ -1,0 +1,53 @@
+#
+#- name:  Enable Devel Package Repository
+#  shell: |
+#    dnf config-manager --set-enabled devel
+#  register: enable_devel_repo
+#- debug: msg={{ enable_devel_repo }}
+#  when: print_debug == true
+
+#
+- name: Install NFS Client Packages for Linux
+  become: true
+  package: name={{item}} state=present
+  with_items:
+    - "nfs-utils"
+    - "nfs-client"
+  ignore_errors: true
+
+#
+- name: Create directory to mount NFS
+  file:
+    path: "{{ nfs.fs.mount_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+    recurse: yes
+  register: create_nfs_dir
+- debug: msg={{ create_nfs_dir }}
+  when: print_debug == true
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
+- name: Mount ephemeral NFS volume
+  mount:
+    src: "{{ nfs.net.ips_range | split('-') | first }}:/{{ nfs.fs.config }}"
+    path: "{{ nfs.fs.mount_dir }}"
+    opts: ""
+    fstype: nfs
+    state: ephemeral
+  register: mount_nfs_dir
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ mount_nfs_dir }}
+  when: print_debug == true
+
+#
+- name: Conditionally create a file if it does not exist
+  copy:
+    content: "Hellow Weka NFS-W World!"
+    dest: "{{ nfs.fs.mount_dir }}/test-nfs01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644
+

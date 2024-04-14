@@ -216,3 +216,4 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
 - debug: msg={{ osd_down_status }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and "'' not in all_osd_down_ids.stdout"
+

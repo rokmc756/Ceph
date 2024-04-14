@@ -33,14 +33,13 @@
 - name: Add Ceph Mon/MGR/MDS Nodes
   import_tasks: add-ceph-nodes.yml
   tags: install
-  when: add_ceph_nodes == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: add_ceph_nodes == true and inventory_hostname in groups['mon']
 
 #
 - name: Add OSD Nodes
   import_tasks: add-osd-nodes.yml
   tags: install
   when: add_osd_nodes == true
-  # and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Remove OSD Nodes

@@ -1,0 +1,66 @@
+
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-client-users-for-a-ceph-file-system_fs
+# https://docs.ceph.com/en/reef/cephfs/client-auth/
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-client-users-ceph-file
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/mounting-the-ceph-file-system-as-a-kernel-client_fs
+# https://www.ibm.com/docs/ko/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
+# https://docs.ceph.com/en/latest/dev/dpdk/
+# https://enterprise-support.nvidia.com/s/article/bring-up-ceph-rdma---developer-s-guide
+
+
+# 192.168.1.211 is a ip address of froentend contatiners
+- name: Install WekaFS POSIX Stateless Clients
+  shell: |
+    curl {{ feip0 }}:14000/dist/v1/install | sh
+  register: install_wekafs_client
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ install_wekafs_client }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Create Directory to Mount WekaFS for POSIX Client
+  shell: |
+    mkdir {{ item.mount_dir }}
+  register: create_wekafs_dir
+  with_items: "{{ wekafs.fs.filesystem }}"
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ create_wekafs_dir  }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Mount Stateless WekaFS Clients
+  shell: |
+    mount -t wekafs -o verbose -o num_cores={{ weka.client.net.cores }} \
+    {{ clients_net }} \
+    {{ feip0 }}/{{ wekafs.fs.filesystem[1].name }} {{ wekafs.fs.filesystem[1].mount_dir }}
+  register: mount_wekafs_dir
+  when: print_debug == true and inventory_hostname in groups['clients']
+- debug: msg={{ mount_wekafs_dir }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+  # mount -t wekafs -o verbose -o num_cores=2 -o net=ens193/192.168.1.61/24 -o net=ens224/192.168.1.71/24 192.168.1.211/wekafs-fs01 /mnt/wekafs-fs01
+  # netdev1 should be network device of client which mtu must be 9000 if it's not, client will be failed
+
+#
+- name: Check if WekaFS Directory is Mounted
+  shell: |
+    df -h
+    ls -al {{ item.mount_dir }}
+  register: check_wekafs_mounted
+  with_items:
+    - "{{ wekafs.fs.filesystem }}"
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ check_wekafs_mounted  }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Creat text file with the content
+  shell: |
+    touch {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
+    echo "hello world" >  {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
+    cat {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
+  register: create_wekafs_file
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ create_wekafs_file }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+# Need to test switch mode of iptime in order to expand ports from 5 to 10
+

@@ -1,0 +1,31 @@
+---
+# https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
+#
+- name: Get interface name from provided IP
+  set_fact:
+    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', weka.backend.net.ipaddr0 ) | map(attribute='device') | first }}"
+
+#- debug:
+#    var: "{{ netdev0 }} - {{ netdev1 }} - {{ netdev2 }}"
+
+#
+- name: Get IP Address from provided network device name
+  set_fact:
+    ipaddr0: "{{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}"
+
+#- debug:
+#    var: "{{ ipaddr0 }} - {{ ipaddr1 }} - {{ ipaddr2 }}"
+
+
+# https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
+- name: Define facts for all worker's hostname
+  set_fact:
+    all_ext1_hostnames: "{{ groups['workers'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
+- debug: msg={{ all_ext1_hostnames }}
+
+#
+- name: Define fact for all worker's first ip addresses
+  set_fact:
+    all_ext1_ipaddrs: "{{ groups['workers'] | map('extract', hostvars, ['ansible_'~netdev0, 'ipv4', 'address']) | join(',') }}"
+- debug: msg={{ all_ext1_ipaddrs }}
+

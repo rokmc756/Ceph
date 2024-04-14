@@ -1,0 +1,29 @@
+smb:
+  version: 3.0     # 2.1 also works
+  cluster:
+    name: smb-clu01
+    uid: 0
+    gid: 0
+  ad:
+    domain: jtest.weka.io
+    netbios: JTEST
+    users:
+      admin:
+        id: Administrator
+        pass: Changeme12\!\@
+      normal:
+        id: jomoon
+        pass: "Changeme12!@"
+        uid: 1100
+        gid: 1100
+  net:
+    ips_range: "192.168.1.241-245"
+  fs:
+    name: smb-fs01
+    mount_dir: /mnt/smb-fs01
+    mount_point: smb-fs01
+    file_mask: "0744"
+    dir_mask:  "0755"
+  share:
+    name: smb-share-01
+    description: "Default SMB Share"

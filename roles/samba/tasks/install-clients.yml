@@ -1,0 +1,51 @@
+#
+#- name:  Enable Devel Package Repository
+#  shell: |
+#    dnf config-manager --set-enabled devel
+#  register: enable_devel_repo
+#- debug: msg={{ enable_devel_repo }}
+#  when: print_debug == true
+
+#
+- name: Install SMB Client Packages for Linux
+  become: true
+  package: name={{item}} state=present
+  with_items:
+    - "cifs-utils"
+
+#
+- name: Create directory to mount CIFS
+  file:
+    path: "{{ smb.fs.mount_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+    recurse: yes
+  register: create_cifs_dir
+- debug: msg={{ create_cifs_dir }}
+  when: print_debug == true
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
+- name: Mount ephemeral SMB volume
+  mount:
+    src: "//{{ smb.net.ips_range | split('-') | first }}/{{ smb.share.name }}"
+    path: "{{ smb.fs.mount_dir }}"
+    opts: "username={{ smb.ad.users.normal.id }},password={{ smb.ad.users.normal.pass }},domain={{ smb.ad.netbios }},vers={{ smb.version }}"
+    fstype: cifs
+    state: ephemeral
+  register: mount_cifs_dir
+- debug: msg={{ mount_cifs_dir }}
+  when: print_debug == true
+  # mount -t cifs -o username=jomoon,password=Changeme12\!\@,domain=JTEST,vers=3.0 //192.168.1.241/smb-share-01 /mnt/smb/ # ephemeral does not work with uid=1100,gid=1100
+  # opts: "rw,file_mode=0600,dir_mode=0700"
+
+#
+- name: Conditionally create a file if it does not exist
+  copy:
+    content: "Hellow Weka SMB World!"
+    dest: "{{ smb.fs.mount_dir }}/test-smb01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644

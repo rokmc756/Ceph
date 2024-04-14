@@ -1,0 +1,120 @@
+#- name: Delete text file with the content
+#  shell: |
+#    rm -f {{ wekafs.fs.filesystem[1].mount_dir }}/test01.txt
+#  register: delete_wekafs_file
+#  ignore_errors: true
+#  when: inventory_hostname in groups['clients']
+#- debug: msg={{ delete_wekafs_file }}
+#  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Check if WekaFS directory is mounted
+  shell: |
+    df -h
+    ls -al {{ wekafs.fs.filesystem[1].mount_dir }}
+  register: check_wekafs_mounted
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ check_wekafs_mounted  }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Unmount WekaFS directory
+  shell: |
+    umount {{ wekafs.fs.filesystem[1].mount_dir }}
+  register: unmount_wekafs_dir
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ unmount_wekafs_dir }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Delete directory to mount WekaFS
+  shell: |
+    rm -rf {{ wekafs.fs.filesystem[1].mount_dir }}
+  register: delete_wekafs_dir
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ delete_wekafs_dir }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Stop and Remove WekaFS POSIX Client Containers
+  shell: |
+    weka local stop {{ item }} && weka local disable {{ item }} && weka local rm -f {{ item }}
+  register: destroy_weka_containers
+  with_items:
+    - "client"
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ destroy_weka_containers }}
+  when: inventory_hostname in groups['clients'] and print_debug == true
+
+#
+- name: Destroy Weka Client
+  shell: |
+    cd /root/tools/install ; ./wekadestroy --yes --force --uninstall {{ inventory_hostname }}
+  register: destroy_weka_client
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ destroy_weka_client }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Unmount tmpfs
+  shell: |
+    umount /opt/weka/data/agent/tmpfss/cross-container-rpc-the-tmpfs
+  register: umount_tmpfs
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+
+#
+- name: Remove Directory to be mount by WekaFS POSIX Clients
+  shell: |
+    rm -rf {{ item.mount_dir }}
+  register: remove_wekafs_dir
+  with_items:
+    - "{{ wekafs.fs.filesystem }}"
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ remove_wekafs_dir  }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Clear Memory Cache
+  shell: |
+    sync && echo 3 > /proc/sys/vm/drop_caches
+  register: clear_cache_memory
+  ignore_errors: true
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ clear_cache_memory }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+#- name: Reboot required
+#  shell: ( /bin/sleep 5 ; /sbin/shutdown -r now "Ansible updates triggered" ) &
+#  async: 1200
+#  poll: 0
+#  when: print_debug == true and inventory_hostname in groups['clients']
+#  notify:
+#    - Waiting for server to come back after reboot
+
+#- meta: flush_handlers
+#  when: print_debug == true and inventory_hostname in groups['clients']
+
+
+#########################################################################################################
+# Force uninstall Weka Client
+# cat /proc/mounts | grep wekafs
+#
+# If needed, wekafs mount points can be forcefully unmounted and the weka driver removed
+# weka local stop #expect this to fail if weka agent is not running anyway
+# echo drain > /proc/wekafs/interface
+# umount -i -f </mount/point/> #umount all wekafs mount points
+# echo uninstall > /proc/wekafs/interface
+# modprobe -r wekafsio
+#
+# Remove WEKA directories from the troubled host.
+# rm -rf /opt/weka
+# rm -rf /etc/wekaio
+# rm /var/run/weka/mount.flock
+

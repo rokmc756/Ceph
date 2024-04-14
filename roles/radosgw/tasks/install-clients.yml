@@ -1,0 +1,84 @@
+# https://www.middlewareinventory.com/blog/ansible-dict/
+#- name:  Enable Devel Package Repository
+#  shell: |
+#    dnf config-manager --set-enabled devel
+#  register: enable_devel_repo
+#- debug: msg={{ enable_devel_repo }}
+#  when: print_debug == true
+
+#
+- name: Install S3 Client Packages for Linux
+  become: true
+  package: name={{item}} state=present
+  with_items:
+    - "s3cmd"
+
+#
+- name: Create s3cmd directory for download
+  file:
+    path: "/root/s3cmd/{{ item.name }}/download"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_s3cmd_down_dir
+  with_items:
+    - "{{ s3.users }}"
+- debug: msg={{ create_s3cmd_down_dir }}
+  when: print_debug == true
+
+#
+- name: Create s3cmd directory for upload
+  file:
+    path: "/root/s3cmd/{{ item.name }}/upload"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_s3cmd_up_dir
+  with_items: "{{ s3.users }}"
+- debug: msg={{ create_s3cmd_up_dir }}
+  when: print_debug == true
+
+#
+- name: Copy S3 Config file for S3 Users
+  template: src={{ item.name }}-s3cfg.j2 dest=/root/s3cmd/{{ item.name }}-s3cfg owner=root group=root mode=755 force=yes
+  register: copy_s3_config
+  with_items:
+    - "{{ s3_users_info }}"
+- debug: msg={{ copy_s3_config }}
+  when: print_debug == true
+
+#
+- name: Copy parquet test files to upload and download into S3
+  copy: src=parquet-sample-data/{{ item }} dest=/root/s3cmd/{{ item }} mode=0644 owner=root group=root
+  register: copy_weka
+  with_items:
+    - "part-m-00001.gz.parquet"
+    - "part-m-00003.gz.parquet"
+    - "part-m-00005.gz.parquet"
+    - "part-m-00000.gz.parquet"
+    - "part-m-00002.gz.parquet"
+    - "part-m-00004.gz.parquet"
+    - "part-m-00006.gz.parquet"
+
+#
+- name: Upload parquet test files into S3
+  shell: |
+    s3cmd --no-check-certificate --config=/root/s3cmd/{{ item.name }}-s3cfg put /root/s3cmd/part*.gz.parquet s3://{{ item.bucket }}
+  register: upload_files_s3
+  with_items: "{{ s3.users }}"
+- debug: msg={{ upload_files_s3 }}
+  when: print_debug == true
+
+#
+- name: Download parquet test files into S3
+  shell: |
+    s3cmd --no-check-certificate --config=/root/s3cmd/{{ item.name }}-s3cfg get s3://{{ item.bucket }}/*.gz.parquet /root/s3cmd/{{ item.name }}/download
+  register: download_files_s3
+  with_items: "{{ s3.users }}"
+- debug: msg={{ download_files_s3 }}
+  when: print_debug == true
+

@@ -271,19 +271,19 @@
   when: print_debug == true and inventory_hostname in groups['osd']
 
 #
-- name: Reboot Required
-  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
-  ignore_errors: true
-  register: reboot_required
-  async: 120
-  poll: 0
-  notify:
-    - Waiting for server to come back after restart
-  when: inventory_hostname in groups['all']
+#- name: Reboot Required
+#  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+#  ignore_errors: true
+#  register: reboot_required
+#  async: 120
+#  poll: 0
+#  notify:
+#    - Waiting for server to come back after restart
+#  when: inventory_hostname in groups['all']
 
 #
-- meta: flush_handlers
-  when: inventory_hostname in groups['all']
+#- meta: flush_handlers
+#  when: inventory_hostname in groups['all']
 
 # ceph orch device ls | grep -E '{{ all_osd_nodes }}'
 - name: Validate if Devices has still filesytem and is insufficent space
