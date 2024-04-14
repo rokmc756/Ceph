@@ -5,6 +5,8 @@
 # https://www.ibm.com/docs/ko/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
 # https://docs.ceph.com/en/latest/dev/dpdk/
 # https://enterprise-support.nvidia.com/s/article/bring-up-ceph-rdma---developer-s-guide
+#
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 
 # apt-get install ceph-common
 # scp root@192.168.0.71:/etc/ceph/ceph.client* .
@@ -98,4 +100,6 @@
 - debug: msg={{ create_cephfs_file }}
   when: print_debug == true and inventory_hostname in groups['clients']
 # Need to test switch mode of iptime in order to expand ports from 5 to 10
+
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 

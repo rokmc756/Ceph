@@ -84,3 +84,7 @@
 - debug: msg={{ clear_cache_memory }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
+# Evic Clients
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=systems-manually-evicting-ceph-file-system-client
+# https://docs.ceph.com/en/quincy/cephfs/eviction/
+
