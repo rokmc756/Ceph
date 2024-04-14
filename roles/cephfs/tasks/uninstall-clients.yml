@@ -59,7 +59,8 @@
   package: name={{ item }} state=absent
   ignore_errors: true
   with_items:
-    "ceph-common"
+    - "ceph-common"
+    - "ceph-fuse"
 
 #
 - name: Delete Ceph Config Files

@@ -27,6 +27,7 @@
   package: name={{item}} state=present
   with_items:
     - "ceph-common"
+    - "ceph-fuse"
 
 #
 - name: Copy Ceph Configuration for CephFS Clients
@@ -102,4 +103,5 @@
 # Need to test switch mode of iptime in order to expand ports from 5 to 10
 
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
 

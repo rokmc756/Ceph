@@ -27,3 +27,9 @@
 - debug: msg={{ active_stats_checked }}
   when: print_debug == true
 
+# https://docs.ceph.com/en/quincy/cephfs/fs-volumes/
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-file-system-subvolume
+# https://access.redhat.com/documentation/th-th/red_hat_ceph_storage/4/html/file_system_guide/management-of-ceph-file-system-volumes-subvolumes-and-subvolume-groups
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-snapshot-file-system-subvolume
+# https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-ceph-file-systems_fs
