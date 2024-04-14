@@ -7,6 +7,18 @@
 # https://docs.ceph.com/en/latest/dev/dpdk/
 # https://enterprise-support.nvidia.com/s/article/bring-up-ceph-rdma---developer-s-guide
 
+# apt-get install ceph-common
+# scp root@192.168.0.71:/etc/ceph/ceph.client* .
+#  cp ceph.client.admin.keyring /etc/ceph/
+# mv /etc/ceph/ceph.client.admin.keyring /etc/ceph/ceph.client.ubt22-client01.keyring
+#  scp root@192.168.0.71:/etc/ceph/ceph.conf .
+#  cp ceph.conf /etc/ceph/
+#  chmod 644 /etc/ceph/ceph.conf
+#  mkdir -p /mnt/cephfs
+#  mount -t ceph 192.168.0.71:6789,192.168.0.72:6789,192.168.0.173:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
+# root@ubt22-client01:/etc/ceph# mount -t ceph 192.168.1.71:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
+# mount error: no mds server is up or the cluster is laggy
+
 
 # 192.168.1.211 is a ip address of froentend contatiners
 - name: Install WekaFS POSIX Stateless Clients

@@ -7,14 +7,13 @@
     install_ceph: false
     init_ceph: false
     add_ceph_nodes: false
-    add_osd_nodes: true                # --> Need to check if it works
+    add_osd_nodes: false                # --> Need to check if it works
   roles:
-    - { role: ceph }
-
-  # - { role: rbd }
+    - { role: cephfs }
+  #  - { role: rbd }
+  #  - { role: ceph }
   # - { role: radosgw }
   # - { role: nfs }
-  # - { role: cephfs }
   # - { role: custom }
   # - { role: init-hosts }
   # - { role: docker }
