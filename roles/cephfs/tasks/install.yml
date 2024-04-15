@@ -10,12 +10,71 @@
   # ceph osd pool create {{ item.name }} {{ item.pg_count }}
 
 #
-- name: Enable the Filesystem
+- name: Create Ceph Filesystem
   shell: |
     ceph fs new {{ item.name }}-fs01 {{ item.name }}_metadata {{ item.name }}_data
-  register: cephfs_enabled
+  register: cephfs_created
   with_items: "{{ cephfs.pool }}"
-- debug: msg={{ cephfs_enabled }}
+- debug: msg={{ cephfs_created }}
+  when: print_debug == true
+
+#
+#- name: Create Ceph Filesystem Sub Volumes
+#  shell: |
+#    ceph fs subvolume create {{ item.name }} {{ item.name }}-subvol01
+#  register: cephfs_subvol_created
+#  with_items: "{{ cephfs.fs }}"
+#- debug: msg={{ cephfs_subvol_created }}
+#  when: print_debug == true
+
+# Note that Ceph only increases the actual number of ranks in the Ceph File Systems if a spare MDS daemon is available to take the new rank.
+#
+- name: Set the max_mds parameter to the desired number of active MDS daemons
+  shell: |
+    ceph fs set {{ item.name }} max_mds 3
+  register: active_mds_daemon_set
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ active_mds_daemon_set }}
+  when: print_debug == true
+# ceph mds deactivate cephfs:1
+
+#
+- name: Verify the number of active MDS daemons
+  shell: |
+    ceph fs status {{ item.name }}
+  register: active_mds_daemons_verified
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ active_mds_daemons_verified }}
+  when: print_debug == true
+
+#
+- name: Authorize CephFS Client to access new Ceph Filesystem
+  shell: |
+    ceph fs authorize {{ item.name }} client.{{ item.name }} / r root_squash /temp rw
+  register: cephfs_client_authorized
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ cephfs_client_authorized }}
+  when: print_debug == true
+  # ceph fs authorize {{ item.name }} client.{{ item.name }} / rw root_squash /volumes rw
+  # ceph fs authorize {{ item.name }} client.{{ item.name }} /temp rw
+  # ceph fs authorize {{ item.name }} client.{{ item.name }} / r /temp rw
+
+#
+- name: Print Authentication Key for Ceph Users
+  shell: |
+    ceph auth get client.{{ item.name }}
+  register: ceph_user_key_printed
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ ceph_user_key_printed }}
+  when: print_debug == true
+
+#
+- name: Copy Authentication Key into Ceph Client Nodes for Ceph Users
+  shell: |
+    ceph auth get client.{{ item.name }} > /etc/ceph/ceph.client.{{ item.name }}.keyring
+  register: ceph_user_auth_key_copied
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ ceph_user_auth_key_copied }}
   when: print_debug == true
 
 #
@@ -23,9 +82,9 @@
   shell: |
     ceph mds stat
   register: active_stats_checked
-  with_items: "{{ rbd.pool }}"
 - debug: msg={{ active_stats_checked }}
   when: print_debug == true
+
 
 # https://docs.ceph.com/en/quincy/cephfs/fs-volumes/
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-file-system-subvolume
@@ -33,3 +92,5 @@
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-snapshot-file-system-subvolume
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-ceph-file-systems_fs
+
+

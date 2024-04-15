@@ -1,4 +1,4 @@
-- name: Delete text file with the content
+- name: Delete text file with the Content
   shell: |
     rm -f {{ item.mount_dir }}/{{ item.name }}.txt
   register: delete_cephfs_file
@@ -61,6 +61,7 @@
   with_items:
     - "ceph-common"
     - "ceph-fuse"
+  when: inventory_hostname in groups['clients']
 
 #
 - name: Delete Ceph Config Files
@@ -70,9 +71,20 @@
   ignore_errors: true
   with_items:
     - "/etc/ceph/ceph.conf"
-    - "/etc/ceph/ceph.client.admin.keyring"
   when: inventory_hostname in groups['clients']
 - debug: msg={{ delete_ceph_config_file }}
+  when: print_debug == true and inventory_hostname in groups['clients']
+
+#
+- name: Delete Ceph User Auth Key
+  shell: |
+    rm -f /etc/ceph/ceph.client.{{ item.name }}.keyring
+  register: ceph_user_auth_key_deleted
+  ignore_errors: true
+  with_items:
+    - "{{ cephfs.fs }}"
+  when: inventory_hostname in groups['clients']
+- debug: msg={{ ceph_user_auth_key_deleted }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
 #
@@ -88,4 +100,32 @@
 # Evic Clients
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=systems-manually-evicting-ceph-file-system-client
 # https://docs.ceph.com/en/quincy/cephfs/eviction/
+
+#
+#- name: Get All Client IDs
+#  shell: |
+#    ceph tell mds.* client ls 2> /dev/null | grep id | grep -v entity_id | grep -v pid | awk '{print $2}' | sed 's/,$//g'
+#  register: all_client_ids
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ all_client_ids }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+#- set_fact:
+#    all_ids: "{{ all_client_ids.stdout | split(',')}}"
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ item }}
+#  with_items: "{{ all_ids }}"
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+#- name: Evict All Client IDs
+#  shell: |
+#    ceph tell mds.* client evict id={{ item }}
+#  register: all_ids_evicted
+#  ignore_errors: true
+#  with_items: "{{ all_ids }}"
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ all_ids_evicted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

@@ -21,13 +21,15 @@
 - name: Install CephFS Clients
   import_tasks: install-clients.yml
   tags: install
-  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+  when: ceph.client.cephfs == true
+  # and inventory_hostname in groups['clients']
 
 #
 - name: Uninstall CephFS Clients
   import_tasks: uninstall-clients.yml
   tags: uninstall
-  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+  when: ceph.client.cephfs == true
+  # and inventory_hostname in groups['clients']
 
 #
 - name: Remove CephFS and Pools

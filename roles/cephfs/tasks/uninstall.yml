@@ -3,34 +3,46 @@
   shell: |
     ceph fs set {{ item.name }} down true
   register: cephfs_marked_down
+  ignore_errors: true
   with_items: "{{ cephfs.fs }}"
 - debug: msg={{ cephfs_marked_down }}
   when: print_debug == true
-  # ignore_errors: true
 
 #
 - name: Check Active Status
   shell: |
     ceph fs status
   register: fs_status_checked
+  ignore_errors: true
 - debug: msg={{ fs_status_checked }}
   when: print_debug == true
 
 #
-- name: Remove Filesystems
+#- name: Remove Sub Volumnes of Ceph Filesystem
+#  shell: |
+#    ceph fs subvolume rm {{ item.name }} {{ item.name }}-subvol01
+#  register: cephfs_subvol_removed
+#  ignore_errors: true
+#  with_items: "{{ cephfs.fs }}"
+#- debug: msg={{ cephfs_subvol_removed }}
+#  when: print_debug == true
+
+#
+- name: Remove Ceph Filesystem
   shell: |
     ceph fs rm {{ item.name }} --yes-i-really-mean-it
-  register: pool_metadata_created
+  register: cephfs_removed
+  ignore_errors: true
   with_items: "{{ cephfs.fs }}"
-- debug: msg={{ pool_metadata_created }}
+- debug: msg={{ cephfs_removed }}
   when: print_debug == true
-  # ceph osd pool create {{ item.name }} {{ item.pg_count }}
 
 #
 - name: Verify Filesystem has been Removed
   shell: |
     ceph fs ls
   register: fs_removed
+  ignore_errors: true
 - debug: msg={{ fs_removed }}
   when: print_debug == true
 
@@ -40,6 +52,7 @@
   shell: |
     ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
   register: pool_delete_allow
+  ignore_errors: true
 - debug: msg={{ pool_delete_allow }}
   when: print_debug == true
 
@@ -49,7 +62,19 @@
     ceph osd pool rm {{ item.name }}_data {{ item.name }}_data --yes-i-really-really-mean-it
     ceph osd pool rm {{ item.name }}_metadata {{ item.name }}_metadata --yes-i-really-really-mean-it
   register: pool_metadata_deleted
-  with_items: "{{ cephfs.fs }}"
+  ignore_errors: true
+  with_items: "{{ cephfs.pool }}"
 - debug: msg={{ pool_metadata_deleted }}
+  when: print_debug == true
+
+#
+- name: Remove Authentication Key for Ceph Users
+  shell: |
+    ceph auth rm client.{{ item.name }}
+    rm -f /etc/ceph/ceph.client.{{ item.name }}.keyring
+  register: ceph_user_auth_key_removed
+  ignore_errors: true
+  with_items: "{{ cephfs.fs }}"
+- debug: msg={{ ceph_user_auth_key_removed }}
   when: print_debug == true
 

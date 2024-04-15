@@ -247,9 +247,9 @@
   delegate_to: "{{ item }}"
   register: clear_cache_memory
   loop: "{{ groups['osd'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in groups['osd']
 - debug: msg={{ clear_cache_memory }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in groups['osd']
 
 #
 - name: Copy Wipe CephFS Script
@@ -271,19 +271,19 @@
   when: print_debug == true and inventory_hostname in groups['osd']
 
 #
-#- name: Reboot Required
-#  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
-#  ignore_errors: true
-#  register: reboot_required
-#  async: 120
-#  poll: 0
-#  notify:
-#    - Waiting for server to come back after restart
-#  when: inventory_hostname in groups['all']
+- name: Reboot Required
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  ignore_errors: true
+  register: reboot_required
+  async: 120
+  poll: 0
+  notify:
+    - Waiting for server to come back after restart
+  when: inventory_hostname in groups['osd']
 
 #
-#- meta: flush_handlers
-#  when: inventory_hostname in groups['all']
+- meta: flush_handlers
+  when: inventory_hostname in groups['osd']
 
 # ceph orch device ls | grep -E '{{ all_osd_nodes }}'
 - name: Validate if Devices has still filesytem and is insufficent space
