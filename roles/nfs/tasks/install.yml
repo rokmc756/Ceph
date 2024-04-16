@@ -17,30 +17,29 @@
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 #
-- name: Create NFS
+- name: Create a NFS filesystem Volume
   shell: |
-    ceph nfs cluster create {{ item.name }}
+    ceph fs volume create {{ item.fs }}
+  register: create_nfs_vol
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ create_nfs_vol }}
+  when: print_debug == true
+
+#
+- name: Enable the Ceph Manager NFS module
+  shell: |
+    ceph mgr module enable nfs
+  register: nfs_module_enabled
+- debug: msg={{ nfs_module_enabled }}
+  when: print_debug == true
+
+#
+- name: Create NFS Ganesha Cluster
+  shell: |
+    ceph nfs cluster create {{ item.name }} "{{ all_mon_hostnames }}"
   register: create_nfs
   with_items: "{{ nfs.cluster }}"
 - debug: msg={{ create_nfs }}
-  when: print_debug == true
-
-#
-- name: Check the ls status when Creating NFS
-  shell: |
-    ceph orch ls --service_name=nfs.{{ item.name }}
-  register: check_nfs_ls
-  with_items: "{{ nfs.cluster }}"
-- debug: msg={{ check_nfs_ls }}
-  when: print_debug == true
-
-#
-- name: Check the ps status when Creating NFS
-  shell: |
-    ceph orch ps --service_name=nfs.{{ item.name }}
-  register: check_nfs_ps
-  with_items: "{{ nfs.cluster }}"
-- debug: msg={{ check_nfs_ps }}
   when: print_debug == true
 
 #
@@ -53,12 +52,21 @@
   when: print_debug == true
 
 #
-- name: Create a NFS filesystem Volume
+- name: Check the ls status when Creating NFS Ganesha Cluster
   shell: |
-    ceph fs volume create {{ item.fs }}
-  register: create_nfs_vol
+    ceph orch ls --service_name=nfs.{{ item.name }}
+  register: check_nfs_ls
   with_items: "{{ nfs.cluster }}"
-- debug: msg={{ create_nfs_vol }}
+- debug: msg={{ check_nfs_ls }}
+  when: print_debug == true
+
+#
+- name: Check the ps status when Creating NFS Ganesha Cluster
+  shell: |
+    ceph orch ps --service_name=nfs.{{ item.name }}
+  register: check_nfs_ps
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ check_nfs_ps }}
   when: print_debug == true
 
 #
@@ -84,15 +92,6 @@
   when: print_debug == true
 
 #
-- name: Create a CephFS Export
-  shell: |
-    ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
-  register: create_cephfs_export
-  with_items: "{{ nfs.export }}"
-- debug: msg={{ create_cephfs_export }}
-  when: print_debug == true
-
-#
 - name: View the Export Block Based on the Pseudo Root Name
   shell: |
     ceph nfs export get {{ item.cluster }} {{ item.src }}
@@ -100,6 +99,17 @@
   with_items: "{{ nfs.export }}"
 - debug: msg={{ view_nfs_export }}
   when: print_debug == true
+
+#
+- name: Create a CephFS Export
+  shell: |
+    ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+  register: create_cephfs_export
+  with_items: "{{ nfs.export }}"
+- debug: msg={{ create_cephfs_export }}
+  when: print_debug == true
+  # ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+  # ceph fs subvolume getpath cephfs sub0
 
 #
 - name: List the NFS exports
@@ -149,3 +159,35 @@
 # ceph osd map cephfs.jtest-fs01.data jtest-ns01
 # ceph health detail
 # HEALTH_WARN 1 failed cephadm daemon(s)
+
+
+# ceph nfs cluster info
+#{
+#  "jtest-clu01": {
+#    "backend": [
+#      {
+#        "hostname": "rk9-node01",
+#        "ip": "192.168.1.71",
+#        "port": 2049
+#      },
+#      {
+#        "hostname": "rk9-node02",
+#        "ip": "192.168.0.72",
+#        "port": 2049
+#      },
+#      {
+#        "hostname": "rk9-node03",
+#        "ip": "192.168.0.73",
+#        "port": 2049
+#      }
+#    ],
+#    "virtual_ip": null
+#  }
+#}
+
+# ceph orch ps --daemon_type=nfs
+#NAME                                   HOST        PORTS   STATUS  REFRESHED  AGE  MEM USE  MEM LIM  VERSION    IMAGE ID
+#nfs.jtest-clu01.0.0.rk9-node03.vdmxmn  rk9-node03  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+#nfs.jtest-clu01.1.0.rk9-node02.rwqmyc  rk9-node02  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+#nfs.jtest-clu01.2.0.rk9-node01.fohytq  rk9-node01  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+

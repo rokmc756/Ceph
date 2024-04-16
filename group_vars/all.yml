@@ -43,10 +43,10 @@ ceph:
       data_plane: netdev2
   protocol:
     s3: false
-    nfs: false
+    nfs: true
     smb: false
   client:
-    cephfs: true
+    cephfs: false
     smb: false
     nfs: false
     s3: false

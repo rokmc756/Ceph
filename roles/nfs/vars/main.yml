@@ -13,7 +13,8 @@ nfs:
     - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
   export:
     - { name: "cephfs", cluster: "jtest-clu01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
-
+  client:
+    - { mount_dir: "/mnt/ceph", src: "/", fs: "jtest-fs01", dest: "/"  }
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
 # ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/

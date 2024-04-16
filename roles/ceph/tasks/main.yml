@@ -15,13 +15,13 @@
 - name: Upload Cephadm Binary
   import_tasks: upload-cephadm-bin.yml
   tags: install
-  when: upload_cephadm == true
+  when: upload_cephadm == true and inventory_hostname not in groups['clients']
 
 #
 - name: Install Ceph Software
   import_tasks: install-ceph.yml
   tags: install
-  when: install_ceph == true
+  when: install_ceph == true and inventory_hostname not in groups['clients']
 
 #
 - name: Initialize Ceph
@@ -39,13 +39,13 @@
 - name: Add OSD Nodes
   import_tasks: add-osd-nodes.yml
   tags: install
-  when: add_osd_nodes == true
+  when: add_osd_nodes == true and inventory_hostname not in groups['clients']
 
 #
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
   tags: uninstall
-  when: remove_osd_nodes == true
+  when: remove_osd_nodes == true and inventory_hostname not in groups['clients']
 
 #
 - name: Remove Ceph Mon/MGR/MDS Nodes
@@ -63,11 +63,11 @@
 - name: Uninstall Ceph Software
   import_tasks: uninstall-ceph.yml
   tags: uninstall
-  when: uninstall_ceph == true
+  when: uninstall_ceph == true and inventory_hostname not in groups['clients']
 
 #
 - name: Remove Cephadm Binary
   import_tasks: remove-cephadm-bin.yml
   tags: uninstall
-  when: remove_cephadm_bin == true
+  when: remove_cephadm_bin == true and inventory_hostname not in groups['clients']
 

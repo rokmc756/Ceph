@@ -12,14 +12,26 @@
     - uninstall
 
 #
-- name: Create NFS Cluster
+- name: Deploy NFS Cluster
   import_tasks: install.yml
   tags: install
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.protocol.nfs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Install NFS Clients
+  import_tasks: install-clients.yml
+  tags: install
+  when: ceph.client.nfs == true and inventory_hostname in groups['clients']
+
+#
+- name: Uninstall NFS Clients
+  import_tasks: uninstall-clients.yml
+  tags: uninstall
+  when: ceph.client.nfs == true and inventory_hostname in groups['clients']
 
 #
 - name: Destroy NFS Cluster
   import_tasks: uninstall.yml
   tags: uninstall
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.protocol.nfs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
