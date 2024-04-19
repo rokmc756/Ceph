@@ -1,0 +1,15 @@
+[ceph-iscsi]
+name=ceph-iscsi noarch packages
+baseurl=http://download.ceph.com/ceph-iscsi/3/rpm/el9/noarch
+enabled=1
+gpgcheck=0
+gpgkey=https://download.ceph.com/keys/release.asc
+type=rpm-md
+
+[ceph-iscsi-source]
+name=ceph-iscsi source packages
+baseurl=http://download.ceph.com/ceph-iscsi/3/rpm/el9/SRPMS
+enabled=0
+gpgcheck=1
+gpgkey=https://download.ceph.com/keys/release.asc
+type=rpm-md

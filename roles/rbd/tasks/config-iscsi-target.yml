@@ -1,7 +1,11 @@
 # https://docs.ceph.com/en/reef/rbd/iscsi-target-cli/
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html/block_device_guide/the-ceph-iscsi-gateway
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/7/html/block_device_guide/index
-
+# https://docs.ceph.com/en/reef/mgr/dashboard/#enabling-iscsi-management
+# https://github.com/ceph/ceph-iscsi
+# https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/
+#
+#
 # The Ceph iSCSI gateway is both an iSCSI target and a Ceph client; think of it as a “translator” between Ceph’s RBD interface and the iSCSI standard.
 # The Ceph iSCSI gateway can run on a standalone node or be colocated with other daemons eg. on a Ceph Object Store Disk (OSD) node. 
 # When co-locating, ensure that sufficient CPU and memory are available to share. The following steps install and configure the Ceph iSCSI gateway for basic operation.
