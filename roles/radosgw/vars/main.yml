@@ -1,6 +1,10 @@
 rgw:
   users:
-    - { user_name: "jmoon", display_name: "jack.moon", email: "rokmc756@gmail.com", access_key: "changeme", secret_key: "changeme", domain: "jtest.weka.io" }
+    - { user_name: "jmoon", display_name: "jack.moon", email: "rokmc756@gmail.com", access_key: "changeme", secret_key: "changeme", domain: "jtest.weka.io", bucket: "jbucket01"}
+    - { user_name: "rmoon", display_name: "rose.moon", email: "marineguy@naver.com", access_key: "changeme1", secret_key: "changeme1", domain: "jtest1.weka.io", bucket: "jbucket02" }
+    - { user_name: "dmoon", display_name: "dawin.moon", email: "dawin@naver.com", access_key: "changeme2", secret_key: "changeme2", domain: "jtest2.weka.io", bucket: "jbucket03" }
   auth:
+    - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
+    - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
 

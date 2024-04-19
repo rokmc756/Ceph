@@ -35,9 +35,11 @@ nfs:
     - { name: "cephfs", cluster: "jtest-ganesha01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
   client:
     - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
+  rgw:
+    - { cluster: "jtest-ganesha01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
 
-  # - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
 
+# - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
 # ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/

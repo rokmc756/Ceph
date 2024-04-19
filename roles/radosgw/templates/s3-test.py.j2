@@ -16,7 +16,7 @@ s3client = session.client(
 )
 
 # create [jtest-bucket01]
-bucket = s3client.create_bucket(Bucket = 'jbucket01')
+bucket = s3client.create_bucket(Bucket = str(sys.argv[1]))
 
 # List Buckets
 print(s3client.list_buckets())

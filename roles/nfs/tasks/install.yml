@@ -121,8 +121,8 @@
 #
 - name: Check the ls status when Creating NFS Ganesha Cluster
   shell: |
-    ceph orch ls --service_name=nfs.{{ item.name }}
-    ceph orch ps --service_name=nfs.{{ item.name }}
+    {{ cephadm_cmd }} ceph orch ls --service_name=nfs.{{ item.name }}
+    {{ cephadm_cmd }} ceph orch ps --service_name=nfs.{{ item.name }}
   register: check_nfs_ls
   with_items: "{{ nfs.ganesha }}"
 - debug: msg={{ check_nfs_ls }}
@@ -166,7 +166,6 @@
   when: print_debug == true
 #  https://docs.ceph.com/en/quincy/mgr/nfs/
 
-
 # Export RGW Bucket
 # ceph nfs export create rgw --cluster-id <cluster_id> --pseudo-path <pseudo_path> --bucket <bucket_name>
 # [--user-id <user-id>] [--readonly] [--client_addr <value>...] [--squash <value>] [--sectype <value>...]
@@ -178,11 +177,10 @@
 # Delete EXPORT
 # ceph nfs export rm <cluster_id> <pseudo_path>
 
-
 #
 - name: Create a CephFS Export
   shell: |
-    ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+    {{ cephadm_cmd }} ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
   register: create_cephfs_export
   with_items: "{{ nfs.export }}"
 - debug: msg={{ create_cephfs_export }}
@@ -196,7 +194,7 @@
 #- name: Create a CephFS Export
 #  shell: |
 #    ceph nfs export create cephfs --cluster-id {{ item.cluster }} --pseudo-path {{ item.src }} --fsname {{ item.fs }} \
-#    --path={{ item.dest }} --client_addr 192.168.1.00/24 --squash no_root_squash
+#    --path={{ item.dest }} --client_addr 192.168.1.0/24 --squash no_root_squash
 #  register: create_cephfs_export
 #  with_items: "{{ nfs.export }}"
 #- debug: msg={{ create_cephfs_export }}
@@ -207,9 +205,37 @@
 # ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
 
 #
+#- name: Transfer Ceph Configuration to Rados Gateway Host
+#  shell: |
+#    {{ cephadm_cmd }} radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
+#    --email={{ item.email }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
+#  register: rgw_user_created
+#  with_items: "{{ nfs.rgw }}"
+#- debug: msg={{ rgw_user_created }}
+#  when: print_debug == true
+
+#
+- name: Create a RGW Bucket Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --bucket {{ item.bucket }} --client_addr {{ item.client_addr }}
+  register: rgw_bucket_export_created
+  with_items: "{{ nfs.rgw }}"
+- debug: msg={{ rgw_bucket_export_created }}
+  when: print_debug == true
+
+#
+- name: Create a RGW User Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --user-id {{ item.user_id }} --client_addr {{ item.client_addr }}
+  register: rgw_user_export_created
+  with_items: "{{ nfs.rgw }}"
+- debug: msg={{ rgw_user_export_created }}
+  when: print_debug == true
+
+#
 - name: List the NFS exports
   shell: |
-    ceph nfs export ls {{ item.cluster }}
+    {{ cephadm_cmd }}  ceph nfs export ls {{ item.cluster }}
   register: list_nfs_export
   with_items: "{{ nfs.export }}"
 - debug: msg={{ list_nfs_export }}
@@ -218,7 +244,7 @@
 #
 - name: Get the Information of the NFS Export
   shell: |
-    ceph nfs cluster info {{ item.cluster }}
+    {{ cephadm_cmd }} ceph nfs cluster info {{ item.cluster }}
   register: get_nfs_export
   with_items: "{{ nfs.export }}"
 - debug: msg={{ get_nfs_export }}
@@ -232,7 +258,7 @@
 #
 - name: Check if Pools are still Unknown
   shell: |
-    ceph pg stat
+    {{ cephadm_cmd }} ceph pg stat
   register: unknown_pool_checked
   until: unknown_pool_checked.stdout.find("unknown") == -1
   retries: 30
@@ -243,13 +269,14 @@
 #
 - name: Check if Pools are Active+Clean
   shell: |
-    ceph pg stat
+    {{ cephadm_cmd }} ceph pg stat
   register: scrub_pool_checked
   until: scrub_pool_checked.stdout.find("scrubbing") == -1
   retries: 20
   delay: 15
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true
+
 
 # ceph osd map cephfs.jtest-fs01.data jtest-ns01
 # ceph health detail

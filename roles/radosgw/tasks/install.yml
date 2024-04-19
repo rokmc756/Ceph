@@ -187,7 +187,7 @@
 
 # Verify status
 # That's OK if following answers shown after a few seconds
-# # curl rk9-ceph-mon03:7480
+# curl rk9-ceph-mon03:7480
 # On Object Gateway Node, Create a S3 compatible user who can authenticate to Object Gateway.
 # for example, create [serverworld] user
 
@@ -259,10 +259,11 @@
 #
 - name: Verify Accessing with S3 Interface to Create Python Test Script on a Computer with a Common Users
   shell: |
-    python3 /root/s3-test.py
+    python3 /root/s3-test.py {{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: pip_boto3_run
+  with_items: "{{ rgw.users }}"
   when: inventory_hostname in groups['rgw']
 - debug: msg={{ pip_boto3_run  }}
   when: print_debug == true and inventory_hostname in groups['rgw']
