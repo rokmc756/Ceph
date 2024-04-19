@@ -34,7 +34,8 @@ nfs:
   export:
     - { name: "cephfs", cluster: "jtest-ganesha01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
   client:
-    - { mount_dir: "/mnt/ceph", src: "/", fs: "jtest-fs01", dest: "/"  }
+    - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
+
   # - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
 
 

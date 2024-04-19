@@ -41,13 +41,13 @@ ceph:
       ipaddr1: "192.168.1.7"
       ipaddr2: "192.168.2.7"
   protocol:
-    s3: false
     nfs: true
+    s3: false
     smb: false
   client:
+    nfs: false
     cephfs: false
     smb: false
-    nfs: false
     s3: false
     net:
       type: "virtual"               # or physical

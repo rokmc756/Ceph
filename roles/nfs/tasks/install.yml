@@ -82,11 +82,22 @@
 - name: Check if NFS Ganesha Serivce is still Starting
   shell: |
     ceph orch ps --daemon_type=nfs
-  register: nfs_ganesha_started
-  until: scrub_pool_checked.stdout.find("starting") == -1
+  register: nfs_ganesha_status
+  until: nfs_ganesha_status.stdout.find("starting") == -1
   retries: 20
   delay: 15
-- debug: msg={{ nfs_ganesha_started }}
+- debug: msg={{ nfs_ganesha_status }}
+  when: print_debug == true
+
+#
+- name: Check if NFS Ganesha Serivce is still Starting
+  shell: |
+    ceph orch ps --daemon_type=nfs
+  register: nfs_ganesha_status
+  until: nfs_ganesha_status.stdout.find("unknown") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ nfs_ganesha_status }}
   when: print_debug == true
 
 #
@@ -117,6 +128,31 @@
 - debug: msg={{ check_nfs_ls }}
   when: print_debug == true
 
+- name: Copy Ganesha Configuration File
+  template: src=ceph-nfs.conf.j2 dest={{ ceph.base_path }}/ceph-nfs.conf owner=root group=root mode=644 force=yes
+  register: ganesha_config_copied
+- debug: msg={{ ganesha_config_copied }}
+  when: print_debug == true
+
+#
+- name: Create a Configuration File and Apply it to the NFS Cluster
+  shell: |
+    ceph nfs cluster config set {{ item.name }} -i /root/ceph-nfs.conf
+  ignore_errors: true
+  register: nfs_config_created
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ nfs_config_created }}
+  when: print_debug == true
+
+#
+- name: View customized NFS Ganesha Configuration
+  shell: |
+    ceph nfs cluster config get {{ item.cluster }}
+  register: customized_nfs_ganesha_config_viewed
+  with_items: "{{ nfs.export }}"
+- debug: msg={{ customized_nfs_ganesha_config_viewed }}
+  when: print_debug == true
+
 #
 - name: Create a User, nfsclient to Expose CephFS though the NFS server
   shell: |
@@ -128,25 +164,20 @@
   with_items: "{{ nfs.auth }}"
 - debug: msg={{ create_nfs_auth }}
   when: print_debug == true
+#  https://docs.ceph.com/en/quincy/mgr/nfs/
 
-#
-- name: Create a Configuration File and Apply it to the NFS Cluster
-  shell: |
-    ceph nfs cluster config set {{ item.name }} -i /root/nfs.conf
-  ignore_errors: true
-  register: create_nfs_config
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ create_nfs_config }}
-  when: print_debug == true
 
+# Export RGW Bucket
+# ceph nfs export create rgw --cluster-id <cluster_id> --pseudo-path <pseudo_path> --bucket <bucket_name>
+# [--user-id <user-id>] [--readonly] [--client_addr <value>...] [--squash <value>] [--sectype <value>...]
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
 #
-- name: View the Export Block Based on the Pseudo Root Name
-  shell: |
-    ceph nfs export get {{ item.cluster }} {{ item.src }}
-  register: view_nfs_export
-  with_items: "{{ nfs.export }}"
-- debug: msg={{ view_nfs_export }}
-  when: print_debug == true
+# RGW USER EXPORT
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
+#
+# Delete EXPORT
+# ceph nfs export rm <cluster_id> <pseudo_path>
+
 
 #
 - name: Create a CephFS Export
@@ -157,7 +188,23 @@
 - debug: msg={{ create_cephfs_export }}
   when: print_debug == true
   # ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
-  # ceph fs subvolume getpath cephfs sub0
+#  # ceph fs subvolume getpath cephfs sub0
+
+#
+# https://github.com/nfs-ganesha/nfs-ganesha/blob/next/src/config_samples/export.txt
+# ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+#- name: Create a CephFS Export
+#  shell: |
+#    ceph nfs export create cephfs --cluster-id {{ item.cluster }} --pseudo-path {{ item.src }} --fsname {{ item.fs }} \
+#    --path={{ item.dest }} --client_addr 192.168.1.00/24 --squash no_root_squash
+#  register: create_cephfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ create_cephfs_export }}
+#  when: print_debug == true
+# ceph fs subvolume getpath <vol_name> <subvol_name> [--group_name <subvol_group_name>]
+
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
 
 #
 - name: List the NFS exports

@@ -7,10 +7,12 @@ NFS_CORE_PARAM {
     # NFS protocol
     Protocols = 4;
 }
+
 EXPORT_DEFAULTS {
     # default access mode
     Access_Type = RW;
 }
+
 EXPORT {
     # unique ID
     Export_Id = 101;
@@ -28,6 +30,7 @@ EXPORT {
     # allowed security options
     SecType = "sys";
 }
+
 LOG {
     # default log level
     Default_Log_Level = WARN;

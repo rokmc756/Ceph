@@ -32,7 +32,7 @@
 # https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
 - name: Mount ephemeral NFS volume
   mount:
-    src: "192.168.1.71:/ceph"
+    src: "{{ item.virtual_ip }}:{{ item.src }}"
     path: "{{ item.mount_dir }}"
     opts: ""
     fstype: nfs
