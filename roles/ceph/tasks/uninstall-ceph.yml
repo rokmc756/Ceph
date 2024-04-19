@@ -33,9 +33,10 @@
 
 #
 - name: Uninstall Ceph Conmon Packages
-  package:
+  dnf:
     name: "{{ item }}"
     state: absent
+    nobest: true
   with_items:
     - cephadm
     - ceph-common

@@ -21,81 +21,25 @@
   shell: |
     ceph fs volume create {{ item.fs }}
   register: create_nfs_vol
-  with_items: "{{ nfs.ganesha }}"
+  with_items: "{{ nfs.cluster }}"
 - debug: msg={{ create_nfs_vol }}
   when: print_debug == true
 
 #
 - name: Enable the Ceph Manager NFS module
   shell: |
-    {{ cephadm_cmd }} ceph mgr module enable nfs
+    ceph mgr module enable nfs
   register: nfs_module_enabled
 - debug: msg={{ nfs_module_enabled }}
   when: print_debug == true
 
 #
-- name: Create RADOS Pools
+- name: Create NFS Ganesha Cluster
   shell: |
-    {{ cephadm_cmd }} ceph osd pool create {{ item.pool }}
-  register: rados_pools_created
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ rados_pools_created }}
-  when: print_debug == true
-
-#
-- name: Enable Application for NFS
-  shell: |
-    {{ cephadm_cmd }} ceph osd pool application enable {{ item.pool }} nfs
-  register: nfs_app_enabled
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ nfs_app_enabled }}
-  when: print_debug == true
-
-#
-- name: Initialize RBD Pool
-  shell: |
-    {{ cephadm_cmd }} rbd pool init -p {{ item.pool }}
-  register: rbd_pool_init
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ rbd_pool_init }}
-  when: print_debug == true
-
-#
-#- name: Deploy NFS-Ganesha Gateway Using Placement Specification
-#  shell: |
-#    {{ cephadm_cmd }} ceph orch apply nfs {{ item.name }} --placement="{{ ceph.mon_host_num }} {{ all_mon_hostnames }} "
-#  register: nfs_ganesha_gw_deployed
-#  with_items: "{{ nfs.ganesha }}"
-#- debug: msg={{ nfs_ganesha_gw_deployed }}
-#  when: print_debug == true
-
-#
-- name: Deploy NFS-Ganesha Cluster Using Command Line
-  shell: |
-    {{ cephadm_cmd }} ceph nfs cluster create {{ item.name }} "{{ ceph.mon_host_num }} {{ all_mon_hostnames }}" --ingress --virtual-ip {{ item.virtual_ip }}
-  register: nfs_ganesha_gw_deployed
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ nfs_ganesha_gw_deployed }}
-  when: print_debug == true
-
-#
-- name: Check if NFS Ganesha Serivce is still Starting
-  shell: |
-    ceph orch ps --daemon_type=nfs
-  register: nfs_ganesha_started
-  until: scrub_pool_checked.stdout.find("starting") == -1
-  retries: 20
-  delay: 15
-- debug: msg={{ nfs_ganesha_started }}
-  when: print_debug == true
-
-#
-- name: List Services
-  shell: |
-    {{ cephadm_cmd }} ceph orch ls
-    {{ cephadm_cmd }} ceph orch ps --daemon_type=nfs
-  register: services_listed
-- debug: msg={{ services_listed }}
+    ceph nfs cluster create {{ item.name }}
+  register: create_nfs
+  with_items: "{{ nfs.cluster }}"
+- debug: msg={{ create_nfs }}
   when: print_debug == true
 
 #
@@ -103,19 +47,27 @@
   shell: |
     ceph nfs cluster info {{ item.name }}
   register: check_nfs_clu_info
-  with_items: "{{ nfs.ganesha }}"
+  with_items: "{{ nfs.cluster }}"
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true
 
 #
-- name: Check the ls status when Creating NFS Ganesha Cluster
-  shell: |
-    ceph orch ls --service_name=nfs.{{ item.name }}
-    ceph orch ps --service_name=nfs.{{ item.name }}
-  register: check_nfs_ls
-  with_items: "{{ nfs.ganesha }}"
-- debug: msg={{ check_nfs_ls }}
-  when: print_debug == true
+#- name: Check the ls status when Creating NFS Ganesha Cluster
+#  shell: |
+#    ceph orch ls --service_name=nfs.{{ item.name }}
+#  register: check_nfs_ls
+#  with_items: "{{ nfs.cluster }}"
+#- debug: msg={{ check_nfs_ls }}
+#  when: print_debug == true
+
+#
+#- name: Check the ps status when Creating NFS Ganesha Cluster
+#  shell: |
+#    ceph orch ps --service_name=nfs.{{ item.name }}
+#  register: check_nfs_ps
+#  with_items: "{{ nfs.cluster }}"
+#- debug: msg={{ check_nfs_ps }}
+#  when: print_debug == true
 
 #
 - name: Create a User, nfsclient to Expose CephFS though the NFS server
@@ -135,7 +87,7 @@
     ceph nfs cluster config set {{ item.name }} -i /root/nfs.conf
   ignore_errors: true
   register: create_nfs_config
-  with_items: "{{ nfs.ganesha }}"
+  with_items: "{{ nfs.cluster }}"
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true
 

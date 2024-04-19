@@ -8,15 +8,27 @@
 
 #
 - name: Install Podman and Civetweb
-  yum:
+  dnf:
     name: "{{ item }}"
     state: present
+    nobest: true
   with_items:
     - "podman"
     - "civetweb"
     - "util-linux"
     - "ceph-radosgw"
     - "uuid"
+    # - "centos-release-ceph-reef"
+    # - "centos-release-storage-common"
+    # - "centos-release-nfs-ganesha5"
+    # - "nfs-ganesha"
+    # - "nfs-ganesha-ceph"
+
+
+# dnf -y install centos-release-nfs-ganesha4
+# sed -i -e "s/enabled=1/enabled=0/g" /etc/yum.repos.d/CentOS-NFS-Ganesha-4.repo
+# dnf --enablerepo=centos-nfs-ganesha-4 -y install nfs-ganesha-ceph
+
 
 #
 - name: Install Ceph CLI Tools On the Host

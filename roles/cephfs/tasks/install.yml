@@ -1,4 +1,12 @@
 #
+- name: Increase max PGs per OSD
+  shell: |
+    ceph config set mon mon_max_pg_per_osd 300
+  register: max_pgs_increased
+- debug: msg={{ max_pgs_increased }}
+  when: print_debug == true
+
+#
 - name: Create Pool for Metadata and Data
   shell: |
     ceph osd pool create {{ item.name }}_data {{ item.pg_count }}

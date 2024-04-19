@@ -21,9 +21,10 @@ ceph:
   admin_user: admin
   admin_passwd: changeme
   bin_type: tar
-  host_num: "{{ groups['all'] | length }}"
+  mon_host_num: "{{ groups['mon'] | length }}"
   obs: false
-  fs: true
+  rbd: false
+  fs: false
   net:
     conn: "udp"                     # dpdk or udp
     gateway: "192.168.0.1"
@@ -41,7 +42,7 @@ ceph:
       ipaddr2: "192.168.2.7"
   protocol:
     s3: false
-    nfs: false
+    nfs: true
     smb: false
   client:
     cephfs: false
