@@ -22,6 +22,7 @@ ceph:
   admin_passwd: changeme
   bin_type: tar
   mon_host_num: "{{ groups['mon'] | length }}"
+  osd_host_num: "{{ groups['osd'] | length }}"
   obs: false
   rbd: false
   fs: false
@@ -42,13 +43,13 @@ ceph:
       ipaddr2: "192.168.2.7"
   protocol:
     nfs: true
-    s3: false
+    rgw: false
     smb: false
   client:
     nfs: false
     cephfs: false
     smb: false
-    s3: false
+    rgw: false
     net:
       type: "virtual"               # or physical
       cores: 1
