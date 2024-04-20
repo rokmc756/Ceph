@@ -594,3 +594,5 @@
 - debug: msg={{ sync_status_checked }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
+# https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
+
