@@ -43,7 +43,9 @@ ceph:
       ipaddr2: "192.168.2.7"
   protocol:
     nfs: true
-    rgw: false
+    rgw:
+      single: false
+      multi: true
     smb: false
   client:
     nfs: false

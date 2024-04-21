@@ -7,4 +7,8 @@ rgw:
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
-
+  multisite:
+    primary:
+      - { zone: "jz01", zone_group: "jzg01", rgw_ream: "jtest", end_ponit: "192.168.0.73", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", plancement_num: "3", placement_hosts: "{{ all_mon_hostnames }}" }
+    secondary:
+      - { zone: "jz01", zone_group: "jzg01", rgw_ream: "jtest", end_ponit: "192.168.0.76", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", plancement_num: "3", placement_hosts: "{{ all_osd_hostnames }}" }

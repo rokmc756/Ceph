@@ -1,0 +1,48 @@
+#
+
+# [ Secondary Site ]
+
+# ceph orch rm rgw.jz02
+
+# radosgw-admin zone delete --rgw-zonegroup=$zonegroup_name \
+#             --rgw-zone=$zone_name --endpoints=$endpoints \
+#             --access-key=$access_key --secret=$secret_key
+# 2024-04-21T16:42:45.524+0900 7f315be19880  0 Removed zone from zonegroup jzg01
+
+# radosgw-admin period delete
+# missing period id
+
+
+# radosgw-admin realm rm --rgw-realm=$rgw_realm --url=$primarycluster --access-key=$access_key --secret-key=$secret_key --default
+
+
+
+# [ Primary Site ]
+# ceph orch rm rgw.jz01
+
+
+# radosgw-admin period delete
+# missing period id
+
+
+# radosgw-admin zone delete --rgw-zone=$zone_name --access-key=$ACCESS_KEY --secret=$SECRET_KEY
+# no zone name or id provided
+
+
+# radosgw-admin user rm --uid=$replication_user --display-name=$replication_user --system
+
+
+# radosgw-admin zone delete --rgw-zonegroup=$zonegroup_name \
+#                          --rgw-zone=$zone_name \
+#                          --endpoints=$endpoints \
+#                          --master --default
+# 2024-04-21T16:52:57.386+0900 7ff90ac11880  0 NOTICE: removed master_zone of zonegroup jzg01
+# 2024-04-21T16:52:57.389+0900 7ff90ac11880  0 Removed zone from zonegroup jzg01
+
+
+# radosgw-admin zonegroup delete --rgw-zonegroup=$zonegroup_name --endpoints=$endpoints --master --default
+
+
+# export rgw_realm="jtest"
+# radosgw-admin realm rm --rgw-realm=$rgw_realm --default
+

@@ -23,20 +23,21 @@
 #  when: print_debug == true
 
 #
-- name: Delete s3cmd Test Directory
-  file:
-    path: "/root/s3cmd"
-    state: absent
-  register: del_s3cmd_dir
-  ignore_errors: true
-  with_items: "{{ s3.users }}"
-- debug: msg={{ del_s3cmd_dir }}
-  when: print_debug == true
-
+#- name: Delete s3cmd Test Directory
+#  file:
+#    path: "/root/s3cmd"
+#    state: absent
+#  register: del_s3cmd_dir
+#  ignore_errors: true
+#  with_items: "{{ s3.users }}"
+#- debug: msg={{ del_s3cmd_dir }}
+#  when: print_debug == true
 #
-- name: Uninstall S3 Client Packages for Linux
-  become: true
-  package: name={{ item }} state=absent
-  ignore_errors: true
-  with_items: "s3cmd"
+##
+#- name: Uninstall S3 Client Packages for Linux
+#  become: true
+#  package: name={{ item }} state=absent
+#  ignore_errors: true
+#  with_items: "s3cmd"
+#
 

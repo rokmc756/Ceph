@@ -5,6 +5,11 @@
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 #
+- name: Check if Single and MultiSite both are enabled to deploy in groups_vars/all.yml
+  fail: msg="Stopped due to both Single and Multisite Settings enabled in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
+  when: ceph.protocol.rgw.single == true and ceph.protocol.rgw.multi == true
+
+#
 - name: Set facts for network and packages informations for Linux Distribution
   import_tasks: set-rgw-facts.yml
   tags:
@@ -12,12 +17,38 @@
     - uninstall
 
 #
-- name: Deploy Rados Gateway
-  import_tasks: install.yml
+- name: Install Single Rados Gateway
+  import_tasks: install-single.yml
   tags: install
+  when: ceph.protocol.rgw.single == true
 
 #
-- name: Destroy Rados Gateway
-  import_tasks: uninstall.yml
+- name: Install Multisite Rados Gateway
+  import_tasks: install-multisite.yml
+  tags: install
+  when: ceph.protocol.rgw.multi == true
+
+#
+- name: Install S3 Clients
+  import_tasks: install-clients.yml
+  tags: install
+  when: ceph.client.rgw == true and inventory_hostname in groups['clients']
+
+#
+- name: Uninstall S3 Clients
+  import_tasks: uninstall-clients.yml
   tags: uninstall
+  when: ceph.client.rgw == true and inventory_hostname in groups['clients']
+
+#
+- name: Uninstall Multisite Rados Gateway
+  import_tasks: uninstall-multisite.yml
+  tags: uninstall
+  when: ceph.protocol.rgw.multi == true
+
+#
+- name: Uninstall Single Rados Gateway
+  import_tasks: uninstall-single.yml
+  tags: uninstall
+  when: ceph.protocol.rgw.single == true
 

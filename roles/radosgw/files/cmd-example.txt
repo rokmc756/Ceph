@@ -1,0 +1,32 @@
+s3cmd --config ~/.s3cfg put test-s3.py s3://jtest-s3-bucket01
+s3cmd --config ~/.s3cfg get test-s3.py s3://jtest-s3-bucket01
+
+s3cmd --config ~/.s3cfg get s3://jtest-s3-bucket01/test-s3.py
+
+
+
+# [root@weka4-node01 ~]# mkdir /mnt/jtest-default-fs01
+# [root@weka4-node01 ~]# mkdir /mnt/jtest-s3-fs01
+
+# [root@weka4-node01 ~]# mount -t wekafs jtest-s3-fs01 /mnt/jtest-s3-fs01/
+# wekafs_mount_helper: Mounting jtest-s3-fs01 on /mnt/jtest-s3-fs01
+# Basing mount on container default
+# This is legacy mount, will wait for the driver before calling directly
+# wekafs_mount_helper: Executing `mount --no-canonicalize -i -t wekafs -o inode_bits=auto,dentry_max_age_positive=1000,dentry_max_age_negative=0,readahead_kb=32768,container_name=default,writecache,relatime,rw,relatime_threshold=0,token=eyJhbGciOiJSUzI1NiIsIml0dCI6IkNMSUVOVCIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDgyNjc1NTcsImlhdCI6MTcwODI2NjM1NywiaXR0IjoiQ0xJRU5UIiwic3ViIjp7ImZzSWQiOiJGU0lkPDM-IiwidWlkIjoiODIyMDRlM2QtMTg4My1hYjZlLTBkYTMtYjA4NTk0MWE3OGUwIn19.rg5WjzHbh9dWHjPklcEH7x4lSh_zYZ_umGYRyvqio26Vfc9w5SSi2--aoMO4vT-60kbig5o5cpzJFoJE2IQY0rLdbbTuiD0-QgggR3Un9yVHS23k2IWh2aICmdTBUaH_M8QW_1_IP6n2ZC-nZFKlhHl_7nfR9k_3jC6pccAG1r2Ch6I-p_iM_A4dYOaX0cN3I4pwYUWTdCzp2ZipRlJQT9dHID6ME1jejn2rIVHJ34XgF5ByTZufwL7y5wYzaYlYvtE4q7XbSYunTWcyQ-Z5uGvEypZyeaA1HPWiGrxTGets6xaiApYxdGkg_R6vp22XM-XCTUKvpiS8nsLFXj5oJQ jtest-s3-fs01 /mnt/jtest-s3-fs01`
+# Mount completed successfully
+
+
+# [root@weka4-node01 ~]# ls -al /mnt/jtest-s3-fs01/
+# total 0
+# drwxrwxr-x  1 root root   0 Feb 18 21:51 .
+# drwxr-xr-x. 9 root root 144 Feb 18 23:25 ..
+# drwxr-xr-x  1 root root   0 Feb 18 23:10 jtest-s3-bucket01
+# drwxr-xr-x  1 root root   0 Feb 18 21:51 .minio.sys
+
+# [root@weka4-node01 ~]# ls -al /mnt/jtest-s3-fs01/jtest-s3-bucket01/
+# total 4
+# drwxr-xr-x 1 root root   0 Feb 18 23:10 .
+# drwxrwxr-x 1 root root   0 Feb 18 21:51 ..
+# drwxr-xr-x 1 root root   0 Feb 18 23:10 .minio.sys
+# -rw-r--r-- 1 root root 317 Feb 18 23:10 test-s3.py
+

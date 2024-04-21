@@ -595,4 +595,9 @@
   when: print_debug == true and inventory_hostname in groups['rgw']
 
 # https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
+#
+# radosgw-admin user info --uid=jz01-rep-user
+# radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
+# radosgw-admin zone modify --rgw-zone=jz01 --access-key=changeme --secret=changeme
+# radosgw-admin user modify --uid=jz01-rep-user --access-key=changeme --secret-key=changeme
 
