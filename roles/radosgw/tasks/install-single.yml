@@ -259,7 +259,7 @@
 #
 - name: Verify Accessing with S3 Interface to Create Python Test Script on a Computer with a Common Users
   shell: |
-    python3 /root/s3-test.py {{ item.bucket }}
+    python3 /root/s3-test.py 7480 {{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: pip_boto3_run

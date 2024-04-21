@@ -11,12 +11,12 @@ session = boto3.session.Session(
 # Object Gateway URL
 s3client = session.client(
     's3',
-    endpoint_url = 'http://{{ hostvars[groups['mon'][2]]['ansible_'~netdev0]['ipv4']['address'] }}:7480',
+    endpoint_url = 'http://{{ hostvars[groups['mon'][2]]['ansible_'~netdev0]['ipv4']['address'] }}:' + str(sys.argv[1]),
     config = Config()
 )
 
 # create [jtest-bucket01]
-bucket = s3client.create_bucket(Bucket = str(sys.argv[1]))
+bucket = s3client.create_bucket(Bucket = str(sys.argv[2]))
 
 # List Buckets
 print(s3client.list_buckets())

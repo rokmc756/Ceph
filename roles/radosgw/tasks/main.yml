@@ -20,13 +20,13 @@
 - name: Install Single Rados Gateway
   import_tasks: install-single.yml
   tags: install
-  when: ceph.protocol.rgw.single == true
+  when: ceph.protocol.rgw.single == true and inventory_hostname not in groups['clients']
 
 #
 - name: Install Multisite Rados Gateway
   import_tasks: install-multisite.yml
   tags: install
-  when: ceph.protocol.rgw.multi == true
+  when: ceph.protocol.rgw.multi == true and inventory_hostname not in groups['clients']
 
 #
 - name: Install S3 Clients
@@ -44,11 +44,11 @@
 - name: Uninstall Multisite Rados Gateway
   import_tasks: uninstall-multisite.yml
   tags: uninstall
-  when: ceph.protocol.rgw.multi == true
+  when: ceph.protocol.rgw.multi == true and inventory_hostname not in groups['clients']
 
 #
 - name: Uninstall Single Rados Gateway
   import_tasks: uninstall-single.yml
   tags: uninstall
-  when: ceph.protocol.rgw.single == true
+  when: ceph.protocol.rgw.single == true and inventory_hostname not in groups['clients']
 

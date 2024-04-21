@@ -1,48 +1,125 @@
+# RGW Secondary Site
 #
-
-# [ Secondary Site ]
-
-# ceph orch rm rgw.jz02
-
-# radosgw-admin zone delete --rgw-zonegroup=$zonegroup_name \
-#             --rgw-zone=$zone_name --endpoints=$endpoints \
-#             --access-key=$access_key --secret=$secret_key
-# 2024-04-21T16:42:45.524+0900 7f315be19880  0 Removed zone from zonegroup jzg01
-
-# radosgw-admin period delete
-# missing period id
+- name: Remove Primary RGW Service
+  shell: |
+   ceph orch rm rgw.{{ item.zone }}
+  register: secondary_rgw_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.secondary }}"
+  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+- debug: msg={{ secondary_rgw_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-# radosgw-admin realm rm --rgw-realm=$rgw_realm --url=$primarycluster --access-key=$access_key --secret-key=$secret_key --default
+- name: Remove Zone from Zone Grup
+  shell: |
+    radosgw-admin zone delete --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} \
+    --endpoints={{ item.endpoint }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+  register: zone_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.secondary }}"
+  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+- debug: msg={{ zone_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-
-# [ Primary Site ]
-# ceph orch rm rgw.jz01
-
-
-# radosgw-admin period delete
-# missing period id
-
-
-# radosgw-admin zone delete --rgw-zone=$zone_name --access-key=$ACCESS_KEY --secret=$SECRET_KEY
-# no zone name or id provided
+- name: Delete Period
+  shell: |
+    radosgw-admin period delete
+  register: period_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+- debug: msg={{ period_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-# radosgw-admin user rm --uid=$replication_user --display-name=$replication_user --system
+- name: Remove Realm, Access and Secret Keys
+  shell: |
+     radosgw-admin realm rm --rgw-realm={{ item.rgw_realm }} --url={{ item.endpoint }} \
+     --access-key={{ item.access_key }} --secret-key={{ item.secret_key }} --default
+  register: realm_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+- debug: msg={{ realm_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-# radosgw-admin zone delete --rgw-zonegroup=$zonegroup_name \
-#                          --rgw-zone=$zone_name \
-#                          --endpoints=$endpoints \
-#                          --master --default
-# 2024-04-21T16:52:57.386+0900 7ff90ac11880  0 NOTICE: removed master_zone of zonegroup jzg01
-# 2024-04-21T16:52:57.389+0900 7ff90ac11880  0 Removed zone from zonegroup jzg01
+# RGW Primary Site
+#
+- name: Remove Primary RGW Service
+  shell: |
+    ceph orch rm rgw.{{ item.zone }}
+  register: primary_rgw_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ primary_rgw_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-# radosgw-admin zonegroup delete --rgw-zonegroup=$zonegroup_name --endpoints=$endpoints --master --default
+- name: Delete Period
+  shell: |
+    radosgw-admin period delete
+  register: period_deleted
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ period_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-# export rgw_realm="jtest"
-# radosgw-admin realm rm --rgw-realm=$rgw_realm --default
+- name: Delete Access and Secret Key
+  shell: |
+    radosgw-admin zone delete --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+  register: auth_keys_deleted
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ auth_keys_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+- name: Remove System User
+  shell: |
+    radosgw-admin user rm --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system
+  register: system_user_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ system_user_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+- name: Delete Zone
+  shell: |
+    radosgw-admin zone delete --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} --endpoints={{ item.endpoint }} --master --default
+  register: zone_deleted
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ zone_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+- name: Delete Zone Group
+  shell: |
+    radosgw-admin zonegroup delete --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
+  register: zone_group_deleted
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ zone_group_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+- name: Remove Realm
+  shell: |
+    radosgw-admin realm rm --rgw-realm={{ item.rgw_realm }} --default
+  register: realm_removed
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.primary }}"
+  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+- debug: msg={{ realm_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
