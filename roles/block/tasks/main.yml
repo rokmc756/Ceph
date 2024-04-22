@@ -20,13 +20,13 @@
 - name: Create Rados Block Devices with Pools
   import_tasks: install.yml
   tags: install
-  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.block.rbd == true and inventory_hostname not in groups['clients']
 
 
 - name: Create iSCSI Targets
   import_tasks: install-iscsi.yml
   tags: install
-  when: ceph.block.iscsi == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
 - name: Install iSCSI Clients
@@ -44,11 +44,12 @@
 - name: Delete iSCSI Targets
   import_tasks: uninstall-iscsi.yml
   tags: uninstall
-  when: ceph.block.iscsi == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
 - name: Delete Rados Block Devices with Pools
   import_tasks: uninstall.yml
   tags: uninstall
-  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.block.rbd == true and inventory_hostname not in groups['clients']
+
 

@@ -4,10 +4,9 @@
 # https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
 # https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
 
-wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-3.7-1.el9.noarch.rpm
-wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-tools-2.2-1.el9.noarch.rpm
-
-https://cbs.centos.org/koji/buildinfo?buildID=34736
+# wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-3.7-1.el9.noarch.rpm
+# wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-tools-2.2-1.el9.noarch.rpm
+# https://cbs.centos.org/koji/buildinfo?buildID=34736
 
 # ceph-iscsi-3.7-1.el9.noarch.rpm
 # tcmu-runner-1.5.4-4.el9s.x86_64.rpm
@@ -15,85 +14,192 @@ https://cbs.centos.org/koji/buildinfo?buildID=34736
 # libtcmu-devel-1.5.4-4.el9s.x86_64.rpm
 # yum localinstall -y ceph-iscsi-3.7*.rpm tcmu-runner-1.5.4-4.el9s.x86_64.rpm libtcmu*.rpm
 
+
+- name: List hosts for iSCSI Gateway
+  shell: |
+    ceph orch host ls
+  register: hosts_listed
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ hosts_listed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+# ceph tell osd.* config get osd_heartbeat_grace
+# ceph tell osd.* config get osd_heartbeat_interval
+# ceph tell osd.* config get osd_client_watch_timeout
+
 # To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
 # The suggested values are 20, 5 and 15, respectively.
-ceph tell osd.* config get osd_heartbeat_grace
-ceph tell osd.* config get osd_heartbeat_interval
-ceph tell osd.* config get osd_client_watch_timeout
+- name: Avoid initiator timeout
+  shell: |
+    ceph config set osd osd_heartbeat_grace 20
+    ceph config set osd osd_heartbeat_interval 5
+    ceph config set osd osd_client_watch_timeout 15
+  register: initiator_timeout_avoided
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ initiator_timeout_avoided }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-ceph config set osd osd_heartbeat_grace 20
-ceph config set osd osd_heartbeat_interval 5
-ceph config set osd osd_client_watch_timeout 15
+# Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
+- name: Create a Replicated Pool with replicated_rule Crush Map
+  shell: |
+    ceph osd pool create jtest-iscsi-pool01 replicated replicated_rule
+  register: replica_pool_created
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ replica_pool_created }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # ceph osd pool create jtest-iscsi-pool01 32 32
 
 
-ceph orch host ls
+- name: Initialize the Pool for RBD Application
+  shell: |
+    rbd pool init jtest-iscsi-pool01
+  register: rbd_pool_inited
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ rbd_pool_inited }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-# ceph osd pool create jtest-iscsi-pool01 32 32
-ceph osd pool create jtest-iscsi-pool01 replicated replicated_rule
-rbd pool init jtest-iscsi-pool01
 
+- name:  Deploy iSCSI gateway
+  shell: |
+    ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="3 rk9-node01 rk9-node02 rk9-node03" \
+    --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
+  register: iscsi_gw_deployed
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_deployed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 # ceph orch apply iscsi iscsipool --placement="ceph-amk5-m0g9z7-node1-installer,ceph-amk5-m0g9z7-node4" --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63" admin admin
-ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="3 rk9-node01 rk9-node02 rk9-node03" --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
-
 # ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="1 rk9-node01"
 
+# ceph orch ls
+# ceph orch ls --service_type=iscsi
+# ceph orch ps --daemon_type=iscsi
+# firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
+# podman ps # iscsi - tcmu
+
+# gwcli ls
+# gwcli
+#
+
+- pause:
+    seconds: 20
 
 
-ceph orch ls
+- name: Get iSCSI Gateway Container ID
+  shell: |
+    podman ps | grep ceph | grep tcmu | awk '{print" "$NF}' | tr -d "^[:blank:]"
+  register: iscsi_gw_cont_id
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_cont_id }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-ceph orch ls --service_type=iscsi
-
-ceph orch ps --daemon_type=iscsi
-
-firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
-
-podman ps # iscsi - tcmu
-
-podman exec -it ceph-xxxx-tcmu bash
-
-gwcli ls
-
-gwcli
-
-cd iscsi-targets
-
-create iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
-
-cd iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
-
-ls
-
-cd gateways
-create rk9-node01.jtest.weka.io 192.168.0.71
-create rk9-node02.jtest.weka.io 192.168.0.72
-create rk9-node03.jtest.weka.io 192.168.0.73
-
-cd /disks
-
-create pool=jtest-iscsi-pool01 image=jtest-disk01 size=2G
-
-cd ..
-
-ls
-
-cd iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+#
+- name: Set command line for Podman iSCSI Gateway Container
+  set_fact:
+    podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-cd hosts
+- name: Create iSCSI Target
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets
+    create iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+    exit
+    EOF
+  register: iscsi_target_created
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_target_created }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-create iqn.2024-04.io.weka.jtest:iscsi-client1
 
-auth username=iscsi-user01 password=changeme12345
+- name: Create iSCSI Target
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways
+    create rk9-node01.jtest.weka.io 192.168.0.71
+    create rk9-node02.jtest.weka.io 192.168.0.72
+    create rk9-node03.jtest.weka.io 192.168.0.73
+    exit
+    EOF
+  register: iscsi_target_created
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_target_created }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-disk add jtest-iscsi-pool01/jtest-disk01
 
-ls
+# cd iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+# ls
+# cd gateways
+# create rk9-node01.jtest.weka.io 192.168.0.71
+# create rk9-node02.jtest.weka.io 192.168.0.72
+# create rk9-node03.jtest.weka.io 192.168.0.73
 
-podman ps
+# cd /disks
+# create pool=jtest-iscsi-pool01 image=jtest-disk01 size=2G
+- name: Create Pool and Images
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /disks
+    create pool=jtest-iscsi-pool01 image=jtest-disk01 size=2G
+    exit
+    EOF
+  register: pool_image_created
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ pool_image_created }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-podman exec -it ceph-xxxx-tcmu bash
+# cd ..
+# ls
+# cd iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+# cd hosts
+# create iqn.2024-04.io.weka.jtest:iscsi-client1
 
-gwcli ls
 
+- name: Create iSCSI Initiator
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts
+    create iqn.2024-04.io.weka.jtest:iscsi-client1
+    exit
+    EOF
+  register: iscsi_initiator_created
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_initiator_created }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Setup User and Password for iSCSI Clients
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts
+    auth username=iscsi-user01 password=changeme12345
+    exit
+    EOF
+  register: user_password_setup
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ user_password_setup }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # auth username=iscsi-user01 password=changeme12345
+
+
+- name: Add Disk
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts
+    disk add jtest-iscsi-pool01/jtest-disk01
+    exit
+    EOF
+  register: disk_added
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ disk_added }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # disk add jtest-iscsi-pool01/jtest-disk01
+
+# ls
+# podman ps
+# podman exec -it ceph-xxxx-tcmu bash
+# gwcli ls
 

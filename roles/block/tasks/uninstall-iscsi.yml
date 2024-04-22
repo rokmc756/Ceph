@@ -1,15 +1,139 @@
+- name: Get iSCSI Gateway Container ID
+  shell: |
+    podman ps | grep ceph | grep tcmu | awk '{print" "$NF}'
+  register: iscsi_gw_cont_id
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_cont_id }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-ceph orch ls
 
-ceph orch rm iscsi.iscsi
+- name: Set command line for Podman iSCSI Gateway Container
+  set_fact:
+    podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-ceph orch ps
 
-ceph tell mon.\* injectargs --mon-allow-pool-delete true
+- name:  Remove Pool and Disk
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
+    disk remove jtest-iscsi-pool01/jtest-disk01
+    exit
+    EOF
+  register: pool_disk_removed
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ pool_disk_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-ceph osd pool rm jtest-iscsi-pool01 jtest-iscsi-pool01 --yes-i-really-really-mean-it
 
-ceph dashboard iscsi-gateway-rm rk9-node01.jtest.weka.io
-ceph dashboard iscsi-gateway-rm rk9-node02.jtest.weka.io
-ceph dashboard iscsi-gateway-rm rk9-node03.jtest.weka.io
+- name: Auth Nochap
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
+    auth nochap
+    exit
+    EOF
+  register: nochap_auth
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ nochap_auth }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Delete iSCSI Client
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts
+    delete iqn.2024-04.io.weka.jtest:iscsi-client1
+    exit
+    EOF
+  register: iscsi_client_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_client_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Delete Disk
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/disks
+    delete jtest-iscsi-pool01/jtest-disk01
+    exit
+    EOF
+  register: disk_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ disk_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+#- name: X
+#  shell: |
+#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node01.jtest.weka.io confirm=true
+#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node02.jtest.weka.io confirm=true
+#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node03.jtest.weka.io confirm=true
+#  register: X
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ X }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][1]]['ansible_hostname']
+
+
+- name: Delete iSCSI Target
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets
+    delete iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+    exit
+    EOF
+  register: iscsi_target_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_target_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # ceph orch ls
+
+
+- name: Delete iSCSI Gateway Service
+  shell: |
+    ceph orch rm iscsi.jtest-iscsi-pool01
+  register: iscsi_gw_service_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_service_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # ceph orch ps
+
+
+- name: Allow to Delete Pool
+  shell: |
+    ceph tell mon.\* injectargs --mon-allow-pool-delete true
+  register: delete_pool_allowed
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ delete_pool_allowed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Remove Pool
+  shell: |
+    ceph osd pool rm jtest-iscsi-pool01 jtest-iscsi-pool01 --yes-i-really-really-mean-it
+  register: pool_removed
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ pool_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Remove iSCSI Gateway
+  shell: |
+    ceph dashboard iscsi-gateway-rm rk9-node01.jtest.weka.io
+    ceph dashboard iscsi-gateway-rm rk9-node02.jtest.weka.io
+    ceph dashboard iscsi-gateway-rm rk9-node03.jtest.weka.io
+  register: iscsi_gw_removed
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

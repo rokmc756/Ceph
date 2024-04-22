@@ -27,3 +27,5 @@ rbd:
       - { name: "nfs-img02", pool: "nfs-p01", size: "1G" }
       - { name: "nfs-img03", pool: "nfs-p01", size: "1G" }
 
+iscsi:
+  test: "2"

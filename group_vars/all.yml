@@ -26,7 +26,7 @@ ceph:
   obs: false
   fs: false
   block:
-    rbd: true
+    rbd: false
     iscsi: true
   net:
     conn: "udp"                     # dpdk or udp
