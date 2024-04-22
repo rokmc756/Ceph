@@ -1,0 +1,52 @@
+# https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
+# https://www.youtube.com/watch?v=bOPsVM43HOs
+# https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
+# https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
+# https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
+
+ceph orch host ls
+
+# rgwiscsi1.ceph.example.com 10.10.128.10
+# rgwiscsi2.ceph.example.com 10.10.128.10
+
+ceph osd pool create iscsipool 32 32
+
+ceph orch apply iscsi iscsipool admin admin --placement="2 rgwiscsi1 rgwiscsi2"
+
+ceph orch ls
+
+ceph orch ps --daemon_type=iscsi
+
+firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
+
+podman ps # iscsi - tcmu
+
+podman exec -it ceph-xxxx-tcmu bash
+
+# gwcli ls
+# gwcli
+# cd iscsi-targets
+# create iqn.203-01.com.redhat.iscsi-gw:iscsi-igw
+# cd iqn.203-01.com.redhat.iscsi-gw:iscsi-igw
+# ls
+# cd gateways
+# create rgwiscsi.example.com 10.10.128.9
+# create rgwiscsi2.example.com 10.10.128.10
+#
+# cd /disks
+#
+# create pool=iscsipool image=disk_1 size=1G
+# cd ..
+#
+# ls
+# cd iscsi-targets/iqn.2003-01.com.redhat.com.iscsi-gw:iscsi-igw
+# cd hosts
+# create iqn.1994-05.com.redhat:iscsi-client1
+# auth username=iscsiuser1 password=iscsi1234567
+# disk add iscsipool/disk_1
+# ls
+
+podman ps
+podman exec -it ceph-xxxx-tcmu bash
+gwcli ls
+

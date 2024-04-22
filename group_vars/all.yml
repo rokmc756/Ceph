@@ -44,8 +44,8 @@ ceph:
   protocol:
     nfs: true
     rgw:
-      single: false
-      multi: true
+      single: true
+      multi: false
     smb: false
   client:
     nfs: false
