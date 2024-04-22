@@ -63,8 +63,7 @@
 
 - name:  Deploy iSCSI gateway
   shell: |
-    ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="3 rk9-node01 rk9-node02 rk9-node03" \
-    --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
+    ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="3 rk9-node01 rk9-node02 rk9-node03" --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
   register: iscsi_gw_deployed
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_deployed }}
@@ -119,9 +118,9 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways
-    create rk9-node01.jtest.weka.io 192.168.0.71
-    create rk9-node02.jtest.weka.io 192.168.0.72
-    create rk9-node03.jtest.weka.io 192.168.0.73
+    create rk9-node01 192.168.0.71
+    create rk9-node02 192.168.0.72
+    create rk9-node03 192.168.0.73
     exit
     EOF
   register: iscsi_target_created
@@ -202,4 +201,12 @@
 # podman ps
 # podman exec -it ceph-xxxx-tcmu bash
 # gwcli ls
+
+# https://github.com/ceph/ceph-ansible/issues/3870
+# ceph-ansible installs ceph-iscsi and tcmu-runner, but the initial configuration is broken (see my comments above, python errors while installing). When I manually configure gwcli (target, target IPs), ceph-ansible runs flawlessly afterwards. I try to track down the problem:
+# Remove manually the gwcli-configuration
+# on both iscsi-gateways: yum remove tcmu-runner ceph-iscsi
+
+# gwcli / export copy | jq -r '.["version"]'
+# https://stackoverflow.com/questions/71973210/gwcli-not-working-after-deleting-pool-in-ceph
 

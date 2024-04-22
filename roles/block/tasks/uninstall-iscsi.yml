@@ -27,18 +27,18 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Auth Nochap
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
-    auth nochap
-    exit
-    EOF
-  register: nochap_auth
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ nochap_auth }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- name: Auth Nochap
+#  shell: |
+#    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+#    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
+#    auth nochap
+#    exit
+#    EOF
+#  register: nochap_auth
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#- debug: msg={{ nochap_auth }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Delete iSCSI Client
@@ -135,5 +135,15 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_removed }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Delete iSCSI Gateway Users
+  shell: |
+    for i in $(ceph auth list | grep client.iscsi); do ceph auth del $i; done
+  register: iscsi_gw_users_deleted
+  ignore_errors: true
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_gw_users_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
