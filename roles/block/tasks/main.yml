@@ -1,0 +1,54 @@
+---
+# For now fail if it's not suppoted OS
+- name: Check OS
+  fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
+  when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
+
+#
+- name: Check if iSCSI and RBD both are enabled to deploy in groups_vars/all.yml
+  fail: msg="Stopped due to both iSCSI and RBD Settings enabled in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
+  when: ( ceph.block.iscsi == true and ceph.block.rbd == false ) or ( ceph.block.iscsi == true and ceph.block.rbd == true )
+
+
+- name: Set facts for network and packages informations for Linux Distribution
+  import_tasks: set-block-facts.yml
+  tags:
+    - install
+    - uninstall
+
+
+- name: Create Rados Block Devices with Pools
+  import_tasks: install.yml
+  tags: install
+  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Create iSCSI Targets
+  import_tasks: install-iscsi.yml
+  tags: install
+  when: ceph.block.iscsi == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Install iSCSI Clients
+  import_tasks: install-clients.yml
+  tags: install
+  when: ceph.client.block.iscsi == true and inventory_hostname in groups['clients']
+
+
+- name: Uninstall iSCSI Clients
+  import_tasks: uninstall-clients.yml
+  tags: uninstall
+  when: ceph.client.block.iscsi == true and inventory_hostname in groups['clients']
+
+
+- name: Delete iSCSI Targets
+  import_tasks: uninstall-iscsi.yml
+  tags: uninstall
+  when: ceph.block.iscsi == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Delete Rados Block Devices with Pools
+  import_tasks: uninstall.yml
+  tags: uninstall
+  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+

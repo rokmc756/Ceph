@@ -1,0 +1,99 @@
+# https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
+# https://www.youtube.com/watch?v=bOPsVM43HOs
+# https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
+# https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
+# https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
+
+wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-3.7-1.el9.noarch.rpm
+wget https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/ceph-iscsi-tools-2.2-1.el9.noarch.rpm
+
+https://cbs.centos.org/koji/buildinfo?buildID=34736
+
+# ceph-iscsi-3.7-1.el9.noarch.rpm
+# tcmu-runner-1.5.4-4.el9s.x86_64.rpm
+# libtcmu-1.5.4-4.el9s.x86_64.rpm
+# libtcmu-devel-1.5.4-4.el9s.x86_64.rpm
+# yum localinstall -y ceph-iscsi-3.7*.rpm tcmu-runner-1.5.4-4.el9s.x86_64.rpm libtcmu*.rpm
+
+# To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
+# The suggested values are 20, 5 and 15, respectively.
+ceph tell osd.* config get osd_heartbeat_grace
+ceph tell osd.* config get osd_heartbeat_interval
+ceph tell osd.* config get osd_client_watch_timeout
+
+
+ceph config set osd osd_heartbeat_grace 20
+ceph config set osd osd_heartbeat_interval 5
+ceph config set osd osd_client_watch_timeout 15
+
+
+ceph orch host ls
+
+# ceph osd pool create jtest-iscsi-pool01 32 32
+ceph osd pool create jtest-iscsi-pool01 replicated replicated_rule
+rbd pool init jtest-iscsi-pool01
+
+# ceph orch apply iscsi iscsipool --placement="ceph-amk5-m0g9z7-node1-installer,ceph-amk5-m0g9z7-node4" --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63" admin admin
+ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="3 rk9-node01 rk9-node02 rk9-node03" --trusted_ip_list="192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
+
+# ceph orch apply iscsi jtest-iscsi-pool01 admin admin --placement="1 rk9-node01"
+
+
+
+ceph orch ls
+
+ceph orch ls --service_type=iscsi
+
+ceph orch ps --daemon_type=iscsi
+
+firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
+
+podman ps # iscsi - tcmu
+
+podman exec -it ceph-xxxx-tcmu bash
+
+gwcli ls
+
+gwcli
+
+cd iscsi-targets
+
+create iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+
+cd iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+
+ls
+
+cd gateways
+create rk9-node01.jtest.weka.io 192.168.0.71
+create rk9-node02.jtest.weka.io 192.168.0.72
+create rk9-node03.jtest.weka.io 192.168.0.73
+
+cd /disks
+
+create pool=jtest-iscsi-pool01 image=jtest-disk01 size=2G
+
+cd ..
+
+ls
+
+cd iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+
+
+cd hosts
+
+create iqn.2024-04.io.weka.jtest:iscsi-client1
+
+auth username=iscsi-user01 password=changeme12345
+
+disk add jtest-iscsi-pool01/jtest-disk01
+
+ls
+
+podman ps
+
+podman exec -it ceph-xxxx-tcmu bash
+
+gwcli ls
+
+

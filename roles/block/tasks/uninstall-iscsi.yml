@@ -1,0 +1,15 @@
+
+ceph orch ls
+
+ceph orch rm iscsi.iscsi
+
+ceph orch ps
+
+ceph tell mon.\* injectargs --mon-allow-pool-delete true
+
+ceph osd pool rm jtest-iscsi-pool01 jtest-iscsi-pool01 --yes-i-really-really-mean-it
+
+ceph dashboard iscsi-gateway-rm rk9-node01.jtest.weka.io
+ceph dashboard iscsi-gateway-rm rk9-node02.jtest.weka.io
+ceph dashboard iscsi-gateway-rm rk9-node03.jtest.weka.io
+

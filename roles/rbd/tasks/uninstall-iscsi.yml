@@ -1,8 +1,0 @@
-
-ceph orch ls
-
-ceph orch rm iscsi.iscsi
-
-ceph orch ps
-
-
