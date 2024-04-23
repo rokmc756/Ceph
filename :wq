@@ -16,8 +16,8 @@
 - name:  Remove Pool and Disk
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}/hosts/{{ item.init_wwn }}
-    disk remove {{ item.pg_name }}/{{ item.image }}
+    cd /iscsi-targets/{{ item.name }}/hosts/{{ item.initiators[0].name }}
+    disk remove {{ item.pool[0].name }}/{{ item.pool[0].image }}
     exit
     EOF
   register: pool_disk_removed
@@ -31,7 +31,7 @@
 - name: Auth Nochap
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}/hosts/{{ item.init_wwn }}
+    cd /iscsi-targets/{{ item.name }}/hosts/{{ item.initiators[0].name }}
     auth nochap
     exit
     EOF
@@ -46,8 +46,8 @@
 - name: Delete iSCSI Client
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}/hosts
-    delete {{ item.init_wwn }}
+    cd /iscsi-targets/{{ item.name }}/hosts
+    delete {{ item.initiators[0].name }}
     exit
     EOF
   register: iscsi_client_deleted
@@ -61,8 +61,8 @@
 - name: Delete Disk
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}/disks
-    delete {{ item.pg_name }}/{{ item.image }}
+    cd /iscsi-targets/{{ item.name }}/disks
+    delete {{ item.pool[0].name }}/{{ item.pool[0].image }}
     exit
     EOF
   register: disk_deleted
@@ -76,7 +76,7 @@
 - name: Delete iSCSI Gateways
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}/gateways;
+    cd /iscsi-targets/{{ item.name }}/gateways;
     delete rk9-node01.jtest.weka.io confirm=true
     delete rk9-node02.jtest.weka.io confirm=true
     delete rk9-node03.jtest.weka.io confirm=true
@@ -94,7 +94,7 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets
-    delete {{ item.wwn }}
+    delete {{ item.name }}
     exit
     EOF
   register: iscsi_target_deleted
@@ -107,7 +107,7 @@
 
 - name: Delete iSCSI Gateway Service
   shell: |
-    ceph orch rm iscsi.{{ item.pg_name }}
+    ceph orch rm iscsi.{{ item.pool[0].name }}
   register: iscsi_gw_service_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
@@ -129,7 +129,7 @@
 
 - name: Remove Pool
   shell: |
-    ceph osd pool rm {{ item.pg_name }} {{ item.pg_name }} --yes-i-really-really-mean-it
+    ceph osd pool rm {{ item.pool.name }} {{ item.pool.name }} --yes-i-really-really-mean-it
   register: pool_removed
   ignore_errors: true
   loop: "{{ iscsi.targets }}"

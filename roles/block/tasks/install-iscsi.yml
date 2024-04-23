@@ -44,9 +44,9 @@
 # Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
 - name: Create a Replicated Pool with replicated_rule Crush Map
   shell: |
-    ceph osd pool create {{ item.name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
+    ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
   register: replica_pool_created
-  loop: "{{ iscsi.pool }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ replica_pool_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -55,9 +55,9 @@
 
 - name: Initialize the Pool for RBD Application
   shell: |
-    rbd pool init {{ item.name }}
+    rbd pool init {{ item.pg_name }}
   register: rbd_pool_inited
-  loop: "{{ iscsi.pool }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ rbd_pool_inited }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -65,9 +65,9 @@
 
 - name:  Deploy iSCSI Gateway
   shell: |
-    ceph orch apply iscsi {{ item.name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'
+    ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'
   register: iscsi_gw_deployed
-  loop: "{{ iscsi.pool }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_deployed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -102,12 +102,12 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets
-    create {{ item.name }}
+    create {{ item.wwn }}
     exit
     EOF
   register: iscsi_target_created
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_target_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -116,14 +116,14 @@
 - name: Create iSCSI Gateways
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.name }}/gateways
+    cd /iscsi-targets/{{ item.wwn }}/gateways
     create rk9-node01.jtest.weka.io 192.168.0.71
     create rk9-node02.jtest.weka.io 192.168.0.72
     create rk9-node03.jtest.weka.io 192.168.0.73
     exit
     EOF
   register: iscsi_target_created
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_target_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -139,30 +139,27 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /disks
-    create pool={{ item.name }} image={{ item.image }} size={{ item.image_size }}
+    create pool={{ item.pg_name }} image={{ item.image }} size={{ item.image_size }}
     exit
     EOF
   register: pool_image_created
-  loop: "{{ iscsi.pool }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ pool_image_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-# cd ..
-# ls
 # cd iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
 # cd hosts
 # create iqn.2024-04.io.weka.jtest:iscsi-client1
 - name: Create iSCSI Initiator
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.name }}/hosts
-    create {{ item.initiators[0].name }}
-    create {{ item.initiators[1].name }}
+    cd /iscsi-targets/{{ item.mutual_id }}/hosts
+    create {{ item.wwn }}
     exit
     EOF
   register: iscsi_initiator_created
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_initiator_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -171,12 +168,12 @@
 - name: Setup User and Password for iSCSI Initiators
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.name }}/hosts
-    auth username={{ item.initiators[0].auth.userid }} password={{ item.initiators[0].auth.password }}
+    cd /iscsi-targets/{{ item.mutual_id }}/hosts
+    auth username={{ item.auth_id }} password={{ item.password }}
     exit
     EOF
   register: user_password_setup
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ user_password_setup }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -185,12 +182,12 @@
 - name: Add Disk
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.name }}/hosts
-    disk add {{ item.pool[0].name }}/{{ item.pool[0].image }}
+    cd /iscsi-targets/{{ item.wwn }}/hosts
+    disk add {{ item.pg_name }}/{{ item.image }}
     exit
     EOF
   register: disk_added
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ disk_added }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
