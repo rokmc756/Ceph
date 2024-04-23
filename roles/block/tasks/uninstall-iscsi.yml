@@ -16,40 +16,43 @@
 - name:  Remove Pool and Disk
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
-    disk remove jtest-iscsi-pool01/jtest-disk01
+    cd /iscsi-targets/{{ item.name }}/hosts/{{ item.initiators[0].name }}
+    disk remove {{ item.pool[0].name }}/{{ item.pool[0].image }}
     exit
     EOF
   register: pool_disk_removed
+  loop: "{{ iscsi.targets }}"
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ pool_disk_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-#- name: Auth Nochap
-#  shell: |
-#    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-#    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts/iqn.2024-04.io.weka.jtest:iscsi-client1
-#    auth nochap
-#    exit
-#    EOF
-#  register: nochap_auth
-#  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ nochap_auth }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- name: Auth Nochap
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/{{ item.name }}/hosts/{{ item.initiators[0].name }}
+    auth nochap
+    exit
+    EOF
+  register: nochap_auth
+  ignore_errors: true
+  loop: "{{ iscsi.targets }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ nochap_auth }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Delete iSCSI Client
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/hosts
-    delete iqn.2024-04.io.weka.jtest:iscsi-client1
+    cd /iscsi-targets/{{ item.name }}/hosts
+    delete {{ item.initiators[0].name }}
     exit
     EOF
   register: iscsi_client_deleted
   ignore_errors: true
+  loop: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_client_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -58,48 +61,56 @@
 - name: Delete Disk
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/disks
-    delete jtest-iscsi-pool01/jtest-disk01
+    cd /iscsi-targets/{{ item.name }}/disks
+    delete {{ item.pool[0].name }}/{{ item.pool[0].image }}
     exit
     EOF
   register: disk_deleted
   ignore_errors: true
+  loop: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ disk_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-#- name: X
-#  shell: |
-#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node01.jtest.weka.io confirm=true
-#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node02.jtest.weka.io confirm=true
-#    {{ podman_iscsi_gw_cmd }} cd /iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw/gateways; delete rk9-node03.jtest.weka.io confirm=true
-#  register: X
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ X }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][1]]['ansible_hostname']
+- name: Delete iSCSI Gateways
+  shell: |
+    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+    cd /iscsi-targets/{{ item.name }}/gateways;
+    delete rk9-node01.jtest.weka.io confirm=true
+    delete rk9-node02.jtest.weka.io confirm=true
+    delete rk9-node03.jtest.weka.io confirm=true
+    exit
+    EOF
+  register: iscsi_target_deleted
+  ignore_errors: true
+  loop: "{{ iscsi.targets }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ iscsi_target_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Delete iSCSI Target
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets
-    delete iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+    delete {{ item.name }}
     exit
     EOF
   register: iscsi_target_deleted
   ignore_errors: true
+  loop: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_target_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-  # ceph orch ls
 
 
 - name: Delete iSCSI Gateway Service
   shell: |
-    ceph orch rm iscsi.jtest-iscsi-pool01
+    ceph orch rm iscsi.{{ item.pool[0].name }}
   register: iscsi_gw_service_deleted
   ignore_errors: true
+  loop: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_service_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -118,9 +129,10 @@
 
 - name: Remove Pool
   shell: |
-    ceph osd pool rm jtest-iscsi-pool01 jtest-iscsi-pool01 --yes-i-really-really-mean-it
+    ceph osd pool rm {{ item.pool[0].name }} {{ item.pool[0].name }} --yes-i-really-really-mean-it
   register: pool_removed
   ignore_errors: true
+  loop: "{{ iscsi.targets }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ pool_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -128,11 +140,10 @@
 
 - name: Remove iSCSI Gateway
   shell: |
-    ceph dashboard iscsi-gateway-rm rk9-node01.jtest.weka.io
-    ceph dashboard iscsi-gateway-rm rk9-node02.jtest.weka.io
-    ceph dashboard iscsi-gateway-rm rk9-node03.jtest.weka.io
+    ceph dashboard iscsi-gateway-rm {{ item }}.jtest.weka.io
   register: iscsi_gw_removed
   ignore_errors: true
+  with_items: "{{ groups['mon'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

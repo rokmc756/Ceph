@@ -10,7 +10,7 @@
 # rbd unmap /dev/rbd[0-3]
 # rbd rm datapool/rbdvol1
 
-#
+
 - name: Remove Block Device Image in {{ rbd.pool_name }} Pool
   shell: |
     rbd rm {{ item.name }} -p {{ item.pool }}
@@ -25,6 +25,7 @@
 - debug: msg={{ remove_rbd_image }}
   when: print_debug == true
 
+
 # Error EPERM: pool deletion is disabled;
 # you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
 - name: Allow Pool to Delete
@@ -35,7 +36,7 @@
 - debug: msg={{ pool_delete_allow }}
   when: print_debug == true
 
-#
+
 # Error EPERM: pool deletion is disabled;
 # you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
 - name: Remove RBD Pool
@@ -48,7 +49,7 @@
 - debug: msg={{ remove_custom_pool }}
   when: print_debug == true
 
-#
+
 - name: Delete RBD Users
   shell: |
     {{ cephadm_cmd }} ceph auth del client.{{ item }}

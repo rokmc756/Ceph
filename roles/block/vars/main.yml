@@ -28,4 +28,97 @@ rbd:
       - { name: "nfs-img03", pool: "nfs-p01", size: "1G" }
 
 iscsi:
-  test: "2"
+  pool:
+    - name: jtest-iscsi-pool01
+      pg_num: 32
+      pgp_num: 32
+      replica: "replicated replicated_rule"
+      trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24"
+      image: jtest-iscsi-img01
+      image_size: 2G
+  storage_partitions:
+    - name: /dev/vdb
+      number: 1
+      flags:
+        - lvm
+      part_end: 1GB
+    - name: /dev/vdc
+      number: 1
+      flags:
+        - lvm
+      part_end: 1GB
+  storage_volumegroups:
+    - name: vg_iscsi1
+      devices:
+        - /dev/vdb1
+    - name: vg_iscsi2
+      devices:
+        - /dev/vdc1
+  storage_volumes:
+    - name: vg_iscsi_lv_node1
+      vg: vg_iscsi
+      size: 100
+    - name: vg_iscsi_lv_node2
+      vg: vg_iscsi
+      size: 100
+  targets:
+    - name: iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+      pool:
+        - name: jtest-iscsi-pool01
+          image: jtest-iscsi-img01
+          image_size: 2G
+      disks:
+        - name: lun_node1
+          path: /dev/vg_iscsi/vg_iscsi_lv_node1
+          type: block
+          lunid: 0
+        - name: lun_node2
+          path: /dev/vg_iscsi/vg_iscsi_lv_node2
+          type: block
+          lunid: 1
+      initiators:
+        - name: iqn.2024-04.io.weka.jtest:iscsi-client1
+          auth:
+            userid: iqn.2024-04.io.weka.jtest:iscsi-client1
+            password: changeme
+            userid_mutual: iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+            password_mutual: changeme
+          mapped_luns:
+            - mapped_lunid: 0
+              lunid: 0
+            - mapped_lunid: 1
+              lunid: 2
+        - name: iqn.2024-04.io.weka.jtest:iscsi-client2
+          auth:
+            userid: iscsi-user1
+            password: changeme
+          mapped_luns:
+            - mapped_lunid: 0
+              lunid: 1
+            - mapped_lunid: 1
+              lunid: 3
+              write_protect: 1
+      portals:
+        - ip: 192.168.0.11
+  open_iscsi_initiator_name: iqn.2021-07.com.ricsanfre:iscsi-initiator
+  open_iscsi_automatic_startup: true
+  open_iscsi_targets:
+    - name: iscsi-target
+      discover: true
+      auto_portal_startup: true
+      auto_node_startup: true
+      portal: 192.168.0.11
+      target: iqn.2021-07.com.ricsanfre:iscsi-target
+      login: true
+      node_auth: CHAP
+      node_user: iqn.2021-07.com.ricsanfre:iscsi-initiator
+      node_pass: changeme
+      node_user_in: iqn.2021-07.com.ricsanfre:iscsi-target
+      node_pass_in: changeme
+
+  # open_iscsi_authentication: true
+  # open_iscsi_auth_username: iqn.2021-07.com.ricsanfre:iscsi-initiator
+  # open_iscsi_auth_password: s1cret0
+  # open_iscsi_auth_username_in: iqn.2021-07.com.ricsanfre:iscsi-target
+  # open_iscsi_auth_password_in: 0tr0s1cret0
+
