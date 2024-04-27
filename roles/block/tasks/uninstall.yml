@@ -50,9 +50,10 @@
   when: print_debug == true
 
 
+#    {{ cephadm_cmd }} ceph auth del client.{{ item }}
 - name: Delete RBD Users
   shell: |
-    {{ cephadm_cmd }} ceph auth del client.{{ item }}
+    ceph auth del client.{{ item }}
   register: rbd_users_deleted
   ignore_errors: true
   with_items:

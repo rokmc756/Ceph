@@ -39,6 +39,10 @@ iscsi:
          wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changeme",
          mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changeme"
       }
+    - {
+         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changeme",
+         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changeme"
+      }
   portals:
     - { ip: 192.168.0.11 }
 

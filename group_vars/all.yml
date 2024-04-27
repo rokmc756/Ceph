@@ -24,7 +24,7 @@ ceph:
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
   obs: false
-  fs: false
+  fs: true
   block:
     rbd: false
     iscsi: true
@@ -52,7 +52,7 @@ ceph:
   client:
     block:
       rbd: false
-      iscsi: false
+      iscsi: true
     nfs: false
     cephfs: false
     smb: false
