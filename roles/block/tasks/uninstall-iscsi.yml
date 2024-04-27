@@ -109,7 +109,6 @@
   register: iscsi_gw_service_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
-  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_service_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
