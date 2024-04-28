@@ -1,92 +1,174 @@
-#
-- name: Umount SMB directory
-  mount:
-    path: "{{ smb.fs.mount_dir }}"
-    state: unmounted
-  retries: 10
-  delay: 10
-  register: umount_smb_wekafs
-  when: inventory_hostname in groups['workers']
-- debug: msg={{ umount_smb_wekafs }}
-  when: print_debug == true and inventory_hostname in groups['workers']
-  # umount -f -l {{ smb.fs.mount_dir }}
-
-#
-- name: Delete mounted directory
-  file:
-    state: absent
-    path: "{{ smb.fs.mount_dir }}"
-  register: delete_smb_files
-  when: inventory_hostname in groups['workers']
-- debug: msg={{ delete_smb_files }}
-  when: print_debug == true and inventory_hostname in groups['workers']
-
-#
-- name: Get All Share IDs
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
+- name: Get FSID
   shell: |
-    weka smb share | sed 1d | awk '{print $2}'
-  register: all_share_ids
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
 
 #
-- name: Remove All Share IDs
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set Fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#
+- name: Delete Ceph File System NFS Exports
   shell: |
-    weka smb share remove {{ item }} -f
-  register: remove_all_share_ids
-  with_items: "{{ all_share_ids.stdout_lines }}"
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname'] and "'' not in remove_all_share_ids.stdout"
-- debug: msg={{ remove_all_share_ids }}
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-  # failed_when: "'(Greenplum Database ' not in select_version.stdout"
-
-#
-- name: Get All SMB Contaienr IDs for SCB Cluster
-  shell: |
-    weka cluster container | awk '{print $1}' | sed -e 1d | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_container_ids
-  when: weka.backend.scb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- name: Get All SMB Contaienr IDs for MCB Cluster
-  shell: |
-    weka cluster container | grep frontend | awk '{print $1}' | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_container_ids
-  when: weka.backend.mcb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- debug: msg={{ all_container_ids }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-# - name: Remove SMB Containers
-#   shell: |
-#    weka smb cluster containers remove --container-ids {{ all_container_ids.stdout }} --force
-#  register: remove_smb_containers
-#  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-#- debug: msg={{ remove_smb_containers }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-#  error: SMB cluster must have at least 3 hosts to function as a cluster
-
-#
-- name: Leave from AD
-  shell: |
-    weka smb domain leave {{ smb.ad.users.admin.id }} {{ smb.ad.users.admin.pass }}
-  register: leave_ad
+    {{ cephadm_cmd }} ceph nfs export rm {{ item.cluster }} {{ item.src }}
+  register: delete_cephfs_nfs_exports
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ leave_ad }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-  # until: leave_ad is succeeded
-  # retries: 10
-  # delay: 180
+  with_items: "{{ nfs.export }}"
+- debug: msg={{ delete_cephfs_nfs_exports }}
+  when: print_debug == true
+  # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
 
 #
-- name: Destroy SMB Cluster
+- name: Stop CephFS Metadata for NFS Service
   shell: |
-    weka smb cluster destroy -f
-  register: destroy_smb_cluster
+    {{ cephadm_cmd }} ceph orch stop mds.{{ item.fs }}
+  register: cephfs_metadata_stopped
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ cephfs_metadata_stopped }}
+  when: print_debug == true
 
-- debug: msg={{ destroy_smb_cluster }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
+#
+- name: Remove CephFS Metadata for NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch rm mds.{{ item.fs }}
+  register: cephfs_metadata_removed
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ cephfs_metadata_removed }}
+  when: print_debug == true
+
+#
+- name: Destroy NFS Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph nfs cluster rm {{ item.name }}
+  register: nfs_cluster_destroyed
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ nfs_cluster_destroyed }}
+  when: print_debug == true
+  # Need to check if .nfs pool should be removebal
+
+#
+- name: Mark Filesystem Down
+  shell: |
+    {{ cephadm_cmd }} ceph fs set {{ item.fs }} down true
+  register: cephfs_marked_down
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ cephfs_marked_down }}
+  when: print_debug == true
+
+#
+- name: Unjoin Filesystem into Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph fs set {{ item.fs }} joinable false
+  register: cephfs_unjoined
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ cephfs_unjoined }}
+  when: print_debug == true
+
+#
+- name: Fail Filesystem
+  shell: |
+    {{ cephadm_cmd }} ceph fs fail {{ item.fs }}
+  register: cephfs_failed
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ cephfs_failed }}
+  when: print_debug == true
+
+# ceph mds stat                                                                                                                      rk9-node01: Wed Apr 10 05:24:57 2024
+# jtest-fs01:1 {0=jtest-fs01.rk9-node06.mgdctu=up:active} 4 up:standby
+# jtest-fs01:0 3 up:standby
+# ceph fs dump | grep mds | grep {{ item.fs }}
+# ceph mds stat | grep {{ item.fs }}
+
+#
+- name: Allow to Delete Pool from Mon
+  shell: |
+    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
+  register: delete_pool_allowed
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ delete_pool_allowed }}
+  when: print_debug == true
+
+#
+- name: Delete CephFS Volume in NFS
+  shell: |
+    {{ cephadm_cmd }} ceph fs rm {{ item.fs }} --yes-i-really-mean-it
+  register: delete_cephfs_volume_nfs
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ delete_cephfs_volume_nfs }}
+  when: print_debug == true
+
+# Need to check when is possible to remove NFS Data and MetaData Pools
+- name: Remove NFS Data Pool
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
+  register: remove_nfs_data
+  ignore_errors: true
+  with_items: "{{ nfs.export }}"
+- debug: msg={{ remove_nfs_data }}
+  when: print_debug == true
+
+#
+- name: Remove NFS Metadata Pool
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
+  register: remove_nfs_metadata
+  ignore_errors: true
+  with_items: "{{ nfs.export }}"
+- debug: msg={{ remove_nfs_metadata }}
+  when: print_debug == true
+  # until: remove_nfs_metadata is succeeded
+  # retries: 20
+  # delay: 10
+  # ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
+
+#
+- name: Delete NFS Users
+  shell: |
+    {{ cephadm_cmd }} ceph auth del client.{{ item.name }}
+  register: nfs_user_deleted
+  ignore_errors: true
+  with_items: "{{ nfs.users }}"
+- debug: msg={{ nfs_user_deleted }}
+  when: print_debug == true
+
+#
+- name: Stop NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch stop nfs.{{ item.name }}
+  register: nfs_service_stopped
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ nfs_service_stopped }}
+  when: print_debug == true
+
+#
+- name: Remove NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch rm nfs.{{ item.name }}
+  register: nfs_service_removed
+  ignore_errors: true
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ nfs_service_removed }}
+  when: print_debug == true
+
+# ceph nfs export rm <cluster_id> <pseudo_path>
+# radosgw-admin user rm --uid=$USER_NAME
 

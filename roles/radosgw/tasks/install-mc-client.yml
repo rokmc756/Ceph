@@ -1,4 +1,5 @@
 ---
+- name: Check if mc exists
   stat: path={{ minio.client_bin }}
   register: mc_bin_exists
 - debug: msg={{ mc_bin_exists }}

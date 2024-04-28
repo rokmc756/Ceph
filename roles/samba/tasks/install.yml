@@ -1,144 +1,315 @@
-# Setup: SMB service on WEKA
-
-# Check that the ID mapping backend is “rfc2307”
-# weka smb cluster
 #
-# And that the Active Directory has been joined
-# weka smb domain
-#
-# Optional, but useful: setting up DNS A records for either the SMB-running Backends or
-# the Floating IPs allows you to access the SMB service by name (and also allows the use of the strongly-preferred later authentication algorithms).
-# PS C:\Users\Administrator> Add-DnsServerResourceRecordA -Name "wekasmb" -ZoneName "ad.example.com" -AllowUpdateAny -IPv4Address "192.168.114.100"
-# https://www.notion.so/wekaio/Multi-protocol-SMB-and-NFS-single-filesystem-access-8abcd9d23e004549a66e2e98fbcbd787?pvs=4
-
-# For debug and open a 2224 port by firewalld
-# weka local exec --container smbw /usr/sbin/pcs cluster status
-# weka smb cluster update
-
-#
-- name: Check if MCB and SCB both are enabled to deploy in groups_vars/all.yml
-  fail: msg="Stopped due to both MCB and SCB settings enabled in groups_vars/all.yml. Please choose one of them and rerun playbook"
-  when: weka.backend.mcb == true and weka.backend.scb == true
-
-#
-- name: Get All Container IDs for SCB
+- name: Get FSID
   shell: |
-    weka cluster container | awk '{print $1}' | sed -e 1d | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_scb_container_ids
-  when: weka.backend.scb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ all_scb_container_ids }}
-  when: print_debug == true and weka.backend.scb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- set_fact:
-    all_cont_ids: "{{ all_scb_container_ids.stdout }}"
-  when: weka.backend.scb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- name: Get All Container IDs for MCB
-  shell: |
-    weka cluster container | grep frontend | awk '{print $1}' | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_mcb_container_ids
-  when: weka.backend.mcb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ all_mcb_container_ids }}
-  when: print_debug == true and weka.backend.mcb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- set_fact:
-    all_cont_ids: "{{ all_mcb_container_ids.stdout }}"
-  when: weka.backend.mcb == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- name: Create SMB Cluster
-  shell: |
-    weka smb cluster create {{ smb.cluster.name }} {{ smb.ad.domain }} --domain-netbios-name {{ smb.ad.netbios }} ---encryption enabled \
-    --container-ids {{ all_cont_ids }} --smb-ips-range {{ smb.net.ips_range }} {{ smb.fs.name }}
-  register: create_smb_cluster
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ create_smb_cluster }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- name: Validate if SMB Cluster is Online
-  shell: weka smb cluster status
-  register: check_smb_cluster_status
-  until: check_smb_cluster_status.stdout.find("Not Ready") == -1
-  retries: 30
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ check_smb_cluster_status }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-
-#
-- name: Login into Active Directory
-  shell: |
-    weka smb domain join {{ smb.ad.users.admin.id }} {{ smb.ad.users.admin.pass }}
-  register: login_ad
-  until: login_ad is succeeded
-  retries: 10
-  delay: 420
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ login_ad }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-  # weka smb domain join Administrator --debug --extra-options --domain-ou "jtest.weka.io"
-  # "stdout": "Domain join timed out",
-  # "stdout_lines": [
-  # "Domain join timed out"
-
-#
-- name: Add Default SMB Share
-  shell: |
-    weka smb share add {{ smb.share.name }} {{ smb.fs.name }} --acl on --encryption cluster_default \
-    --internal-path '/{{ smb.share.name }}' --description "{{ smb.share.description }}"
-  register: add_smb_share
-  when: inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-- debug: msg={{ add_smb_share }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['workers'][0]]['ansible_hostname']
-  # weka smb share add smb-share-02 smb-fs02 --acl on --encryption cluster_default --internal-path /smb-share-02 --file-create-mask 0744 \
-  # --directory-create-mask 0755 --description TEST  0755 and 0744 chagned different value such as 4xx in case of using vars/main.yml
-
-#
-- name: Create directory to mount
-  file:
-    path: "{{ smb.fs.mount_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: 0777
-    recurse: yes
-  register: create_cifs_dir
-- debug: msg={{ create_cifs_dir }}
-  when: print_debug == true
-
-# https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
-- name: Mount Ephemeral SMB WekaFS on all Hosts
-  mount:
-    src: "{{ smb.fs.name }}"
-    path: "{{ smb.fs.mount_dir }}"
-    opts: ""
-    fstype: wekafs
-    state: ephemeral
-  register: mount_smb_wekafs
-- debug: msg={{ mount_smb_wekafs }}
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
   when: print_debug == true
 
 #
-- name: Change Permission Share Directory
-  file:
-    path: "{{ smb.fs.mount_dir }}/{{ smb.share.name }}"
-    state: directory
-    owner: root
-    group: root
-    mode: 0777
-    recurse: yes
-  register: change_mounted_dir_perm
-- debug: msg={{ change_mounted_dir_perm }}
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+#
+- name: Set Fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+#
+- name: Create a SMB filesystem Volume
+  shell: |
+    ceph fs volume create {{ item.fs }}
+  register: create_smb_vol
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ create_smb_vol }}
   when: print_debug == true
 
-# how IPA can trust with AD on Freeipa
-# ipa-adtrust-install --netbios-name JTEST -a changeme
+#
+- name: Enable the Ceph Manager SMB module
+  shell: |
+    {{ cephadm_cmd }} ceph mgr module enable smb
+  register: smb_module_enabled
+- debug: msg={{ smb_module_enabled }}
+  when: print_debug == true
 
-# Debug command why joining AD takes too long
-# adcli join --domain jtest.weka.io --service-name=cifs --computer-name smb-clu01 --host-fqdn jtest.weka.io -v --domain-ou dc=jtest,dc=weka,dc=io -U jomoon
-# weka local exec -C smbw bash -ce "chmod 777 /tmp/wekafs/*"
-# fio --name=fio-long-1_`hostname` --rw=write --bs=512k --ioengine=posixaio --direct=1 --directory=/mnt/mounted_myshare/ --size=10GB --iodepth=8 --numjobs=1 --group_reporting --runtime=3000000 --time_based
-# https://www.notion.so/wekaio/FIP-SMBW-5fc9a2a0c4cd4c8ba9f6a0aafc9840df?pvs=4
+#
+- name: Create RADOS Pools
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool create {{ item.pool }}
+  register: rados_pools_created
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ rados_pools_created }}
+  when: print_debug == true
+
+#
+- name: Enable Application for NFS
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool application enable {{ item.pool }} smb
+  register: smb_app_enabled
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ smb_app_enabled }}
+  when: print_debug == true
+
+#
+- name: Initialize RBD Pool
+  shell: |
+    {{ cephadm_cmd }} rbd pool init -p {{ item.pool }}
+  register: rbd_pool_init
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ rbd_pool_init }}
+  when: print_debug == true
+
+#
+#- name: Deploy NFS-Ganesha Gateway Using Placement Specification
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch apply nfs {{ item.name }} --placement="{{ ceph.mon_host_num }} {{ all_mon_hostnames }} "
+#  register: nfs_ganesha_gw_deployed
+#  with_items: "{{ nfs.ganesha }}"
+#- debug: msg={{ nfs_ganesha_gw_deployed }}
+#  when: print_debug == true
+
+#
+- name: Deploy Pacemaker Cluster Using Command Line
+  shell: |
+    {{ cephadm_cmd }} ceph smb cluster create {{ item.name }} "{{ ceph.mon_host_num }} {{ all_mon_hostnames }}" --ingress --virtual-ip {{ item.virtual_ip }}
+  register: smb_pcs_gw_deployed
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ smb_pcs_gw_deployed }}
+  when: print_debug == true
+
+#
+- name: Check if SMB Pacemaker Serivce is still Starting
+  shell: |
+    ceph orch ps --daemon_type=smb
+  register: smb_pcs_status
+  until: smb_pcs_status.stdout.find("starting") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ smb_pcs_status }}
+  when: print_debug == true
+
+#
+- name: Check if SMB Packemaker Serivce is still Starting
+  shell: |
+    ceph orch ps --daemon_type=smb
+  register: smb_pcs_status
+  until: smb_pcs_status.stdout.find("unknown") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ smb_pcs_status }}
+  when: print_debug == true
+
+#
+- name: List Services
+  shell: |
+    {{ cephadm_cmd }} ceph orch ls
+    {{ cephadm_cmd }} ceph orch ps --daemon_type=smb
+  register: services_listed
+- debug: msg={{ services_listed }}
+  when: print_debug == true
+
+#
+- name: Check the Cluster Info Status when Creating SMB
+  shell: |
+    ceph smb cluster info {{ item.name }}
+  register: check_nfs_clu_info
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ check_smb_clu_info }}
+  when: print_debug == true
+
+#
+- name: Check the ls status when Creating SMB Pacemaker Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph orch ls --service_name=smb.{{ item.name }}
+    {{ cephadm_cmd }} ceph orch ps --service_name=smb.{{ item.name }}
+  register: check_nfs_ls
+  with_items: "{{ smb.pcs }}"
+- debug: msg={{ check_smb_ls }}
+  when: print_debug == true
+
+#- name: Copy Ganesha Configuration File
+#  template: src=ceph-nfs.conf.j2 dest={{ ceph.base_path }}/ceph-nfs.conf owner=root group=root mode=644 force=yes
+#  register: ganesha_config_copied
+#- debug: msg={{ ganesha_config_copied }}
+#  when: print_debug == true
+
+#
+- name: Create a Configuration File and Apply it to the SMB Cluster
+  shell: |
+    ceph smb cluster config set {{ item.name }} -i /root/ceph-smb.conf
+  ignore_errors: true
+  register: smb_config_created
+  with_items: "{{ nfs.ganesha }}"
+- debug: msg={{ smb_config_created }}
+  when: print_debug == true
+
+#
+- name: View customized SMB Pacemaker Configuration
+  shell: |
+    ceph smb cluster config get {{ item.cluster }}
+  register: customized_smb_pcs_config_viewed
+  with_items: "{{ smb.export }}"
+- debug: msg={{ customized_smb_pcs_config_viewed }}
+  when: print_debug == true
+
+#
+- name: Create a User, nfsclient to Expose CephFS though the NFS server
+  shell: |
+    ceph auth {{ item.action }} client.{{ item.user }} mon '{{ item.mon }}' \
+    osd '{{ item.osd }} pool={{ item.pool }} namespace={{ item.namespace }}, {{ item.cephfs }} data={{ item.data }}' \
+    mds '{{ item.mds }} path={{ item.path }}' > {{ item.key }}
+  ignore_errors: true
+  register: create_nfs_auth
+  with_items: "{{ nfs.auth }}"
+- debug: msg={{ create_nfs_auth }}
+  when: print_debug == true
+#  https://docs.ceph.com/en/quincy/mgr/nfs/
+
+# Export RGW Bucket
+# ceph nfs export create rgw --cluster-id <cluster_id> --pseudo-path <pseudo_path> --bucket <bucket_name>
+# [--user-id <user-id>] [--readonly] [--client_addr <value>...] [--squash <value>] [--sectype <value>...]
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
+#
+# RGW USER EXPORT
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
+#
+# Delete EXPORT
+# ceph nfs export rm <cluster_id> <pseudo_path>
+
+#
+#- name: Create a CephFS Export
+#  shell: |
+#    {{ cephadm_cmd }} ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+#  register: create_cephfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ create_cephfs_export }}
+#  when: print_debug == true
+#  # ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+#  # ceph fs subvolume getpath cephfs sub0
+
+#
+# https://github.com/nfs-ganesha/nfs-ganesha/blob/next/src/config_samples/export.txt
+# ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+#- name: Create a CephFS Export
+#  shell: |
+#    ceph nfs export create cephfs --cluster-id {{ item.cluster }} --pseudo-path {{ item.src }} --fsname {{ item.fs }} \
+#    --path={{ item.dest }} --client_addr 192.168.1.0/24 --squash no_root_squash
+#  register: create_cephfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ create_cephfs_export }}
+#  when: print_debug == true
+# ceph fs subvolume getpath <vol_name> <subvol_name> [--group_name <subvol_group_name>]
+
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
+
+#
+#- name: Transfer Ceph Configuration to Rados Gateway Host
+#  shell: |
+#    {{ cephadm_cmd }} radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
+#    --email={{ item.email }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
+#  register: rgw_user_created
+#  with_items: "{{ nfs.rgw }}"
+#- debug: msg={{ rgw_user_created }}
+#  when: print_debug == true
+
+#
+#- name: Create a RGW Bucket Export
+#  shell: |
+#    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --bucket {{ item.bucket }} --client_addr {{ item.client_addr }}
+#  register: rgw_bucket_export_created
+#  with_items: "{{ nfs.rgw }}"
+#- debug: msg={{ rgw_bucket_export_created }}
+#  when: print_debug == true
+#
+##
+#- name: Create a RGW User Export
+#  shell: |
+#    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --user-id {{ item.user_id }} --client_addr {{ item.client_addr }}
+#  register: rgw_user_export_created
+#  with_items: "{{ nfs.rgw }}"
+#- debug: msg={{ rgw_user_export_created }}
+#  when: print_debug == true
+#
+##
+#- name: List the NFS exports
+#  shell: |
+#    {{ cephadm_cmd }}  ceph nfs export ls {{ item.cluster }}
+#  register: list_nfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ list_nfs_export }}
+#  when: print_debug == true
+#
+##
+#- name: Get the Information of the NFS Export
+#  shell: |
+#    {{ cephadm_cmd }} ceph nfs cluster info {{ item.cluster }}
+#  register: get_nfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ get_nfs_export }}
+#  when: print_debug == true
+#
+##
+#- name: Pause until Pools are started to Scrub
+#  pause:
+#    seconds: 40
+#
+##
+#- name: Check if Pools are still Unknown
+#  shell: |
+#    {{ cephadm_cmd }} ceph pg stat
+#  register: unknown_pool_checked
+#  until: unknown_pool_checked.stdout.find("unknown") == -1
+#  retries: 30
+#  delay: 10
+#- debug: msg={{ unknown_pool_checked }}
+#  when: print_debug == true
+#
+##
+#- name: Check if Pools are Active+Clean
+#  shell: |
+#    {{ cephadm_cmd }} ceph pg stat
+#  register: scrub_pool_checked
+#  until: scrub_pool_checked.stdout.find("scrubbing") == -1
+#  retries: 20
+#  delay: 15
+#- debug: msg={{ scrub_pool_checked }}
+#  when: print_debug == true
+
+
+# ceph osd map cephfs.jtest-fs01.data jtest-ns01
+# ceph health detail
+# HEALTH_WARN 1 failed cephadm daemon(s)
+
+
+# ceph nfs cluster info
+#{
+#  "jtest-clu01": {
+#    "backend": [
+#      {
+#        "hostname": "rk9-node01",
+#        "ip": "192.168.1.71",
+#        "port": 2049
+#      },
+#      {
+#        "hostname": "rk9-node02",
+#        "ip": "192.168.0.72",
+#        "port": 2049
+#      },
+#      {
+#        "hostname": "rk9-node03",
+#        "ip": "192.168.0.73",
+#        "port": 2049
+#      }
+#    ],
+#    "virtual_ip": null
+#  }
+#}
+
+# ceph orch ps --daemon_type=nfs
+#NAME                                   HOST        PORTS   STATUS  REFRESHED  AGE  MEM USE  MEM LIM  VERSION    IMAGE ID
+#nfs.jtest-clu01.0.0.rk9-node03.vdmxmn  rk9-node03  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+#nfs.jtest-clu01.1.0.rk9-node02.rwqmyc  rk9-node02  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+#nfs.jtest-clu01.2.0.rk9-node01.fohytq  rk9-node01  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
+

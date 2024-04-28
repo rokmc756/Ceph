@@ -54,8 +54,8 @@ ceph:
   protocol:
     nfs: false
     rgw:
-      single: false
-      multi: true
+      single: true
+      multi: false
     smb: false
   client:
     block:

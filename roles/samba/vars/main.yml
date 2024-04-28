@@ -1,29 +1,50 @@
+#nfs:
+#  cluster_name: jtest-nfs-clu01
+#  cephfs_name: cephfs-nfs
+#  user_name: nfsclient
+#  namespace: singletest
+
+
+# ceph osd pool create nfs-pool01
+#  ceph osd pool application enable nfs-pool01 freeform/rgw/rbd/cephfs/nfs
+#  ceph osd pool application enable nfs-pool01 cephfs
+#  rbd pool init -p nfs-pool01
+#  create osd pool create nfs-ganesha01
+#  
+#  ceph create osd pool create nfs-ganesha01
+#
+#  ceph osd pool create nfs-ganesha01
+#  ceph osd pool application enable nfs-ganesha01 nfs
+#  rbd pool init -p nfs-ganesha01
+#
+#  ceph orch apply nfs nfs-ganesha01 --placement="3 rk9-node01 rk9-node02 rk9-node03"
+
+
+#    - { name: "jtest-clu01", fs: "jtest-fs01" }
+#  cluster:
+#    - { name: "jtest-nfs-ganesha01", fs: "jtest-fs01" }
+
 smb:
-  version: 3.0     # 2.1 also works
-  cluster:
-    name: smb-clu01
-    uid: 0
-    gid: 0
-  ad:
-    domain: jtest.weka.io
-    netbios: JTEST
-    users:
-      admin:
-        id: Administrator
-        pass: Changeme12\!\@
-      normal:
-        id: jomoon
-        pass: "Changeme12!@"
-        uid: 1100
-        gid: 1100
-  net:
-    ips_range: "192.168.1.241-245"
-  fs:
-    name: smb-fs01
-    mount_dir: /mnt/smb-fs01
-    mount_point: smb-fs01
-    file_mask: "0744"
-    dir_mask:  "0755"
-  share:
-    name: smb-share-01
-    description: "Default SMB Share"
+  pcs:
+    - { name: "jtest-pcs01", pool: "jtest-smb-pool01", fs: "jtest-fs01", virtual_ip: "192.168.1.88/24" }
+  users:
+    - { cluster: "jtest-pcs01", name: "jomoon", passwd: "changeme", namespace: "jtest-ns01" }
+  auth:
+    - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: "jtest-smb-pool01", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
+  export:
+    - { name: "cephfs", cluster: "jtest-pcs01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
+  client:
+    - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
+  rgw:
+    - { cluster: "jtest-pcs01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
+
+
+# - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
+
+# In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
+# ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/
+# - name: Create a User, nfsclient to Expose CephFS though the NFS server
+# ceph auth {{ nfs.auth.action }} client.{{ nfs.users.name }} mon '{{ nfs.auth.mon }}' \
+# osd '{{ nfs.auth.osd }} pool={{ nfs.auth.pool }} namespace={{ nfs.auth.namespace }}, {{ nfs.auth.cephfs }} data={{ nfs.auth.data }}' \
+# mds '{{ nfs.auth.mds }} path={{ nfs.auth.path }}' > {{ nfs.auth.key }}
+

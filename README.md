@@ -180,6 +180,9 @@ $ make uninstall
 - https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
 - https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
 - https://www.symmcom.com/docs/how-tos/storages/how-to-configure-s3-compatible-object-storage-on-ceph
+- https://docs.ceph.com/en/latest/cephadm/services/smb/
+- https://cyuu.tistory.com/145
+- https://reintech.io/blog/setting-up-pxe-boot-server-windows-deployment-ubuntu
 
 ## SMB
 - https://documentation.suse.com/ses/7.1/html/ses-all/cha-ses-cifs.html
