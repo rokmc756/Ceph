@@ -179,6 +179,7 @@ $ make uninstall
 - https://docs.ceph.com/en/latest/rados/operations/add-or-rm-osds/
 - https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
 - https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
+- https://www.symmcom.com/docs/how-tos/storages/how-to-configure-s3-compatible-object-storage-on-ceph
 
 ## SMB
 - https://documentation.suse.com/ses/7.1/html/ses-all/cha-ses-cifs.html

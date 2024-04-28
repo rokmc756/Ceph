@@ -162,19 +162,19 @@
   when: print_debug == true and inventory_hostname in groups['rgw']
 
 
-- name: Open a port in firewalld for Rados Gateway
-  shell: |
-    firewall-cmd --add-port=7480/tcp
-    firewall-cmd --runtime-to-permanent
-  register: open_rgw_port
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ open_rgw_port }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+#- name: Open a port in firewalld for Rados Gateway
+#  shell: |
+#    firewall-cmd --add-port=7480/tcp
+#    firewall-cmd --runtime-to-permanent
+#  register: open_rgw_port
+#  when: inventory_hostname in groups['rgw']
+#- debug: msg={{ open_rgw_port }}
+#  when: print_debug == true and inventory_hostname in groups['rgw']
 
 #
-- name: Pause for 1 Minutes to Wait for Compleiting Initializaion of Rados Gateway
+- name: Pause for 30 seconds to Wait for Compleiting Initializaion of Rados Gateway
   pause:
-    minutes: 1
+    seconds: 30
 
 # radosgw-admin sync status
 #          realm  ()

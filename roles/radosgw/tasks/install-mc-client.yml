@@ -1,0 +1,55 @@
+---
+  stat: path={{ minio.client_bin }}
+  register: mc_bin_exists
+- debug: msg={{ mc_bin_exists }}
+
+
+- name: Copy minio client binary from local directory, roles/minio/files
+  copy: src=mc-{{ minio.release_date }}.tar.gz dest=/tmp/mc-{{ minio.release_date }}.tar.gz mode=0644 owner=root group=root
+  register: mc_local_copy
+  when: mc_bin_exists.stat.exists == false and minio.download == false
+
+
+- name: Download minio client
+  get_url:
+    url: "{{ minio.client_url }}"
+    dest: "{{ minio.client_bin }}"
+    checksum: "{{ minio.client_checksum | d(omit) }}"
+    mode: 0755
+    timeout: 20
+  when: ( minio.client_url.endswith('mc') or minio.client_url.endswith('Z') ) and ( mc_bin_exists.stat.exists == false and minio.download == true )
+
+
+- name: Unarchive minio client
+  unarchive:
+    src: "{{ minio.client_url }}"
+    dest: "{{ minio.client_bin | dirname }}"
+    remote_src: "{{ minio.client_url.startswith('http') }}"
+    mode: 0755
+  when: minio.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and minio.download == false )
+
+
+# https://github.com/hetznercloud/ceph-s3-box
+# These examples are performed using the MinIO Client (mc) but any other s3 clients will work, too.
+#
+# Set up an alias for MinIO to interact with the RADOS Gateway
+# mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
+#
+# Create a bucket named "my-bucket"
+# mc mb test/my-bucket
+# 
+# List all buckets
+# mc ls test
+#
+# Upload a file named "example.txt" to the "my-bucket" bucket
+# mc cp example.txt test/my-bucket/example.txt
+#
+# Download the "example.txt" file from the "my-bucket" bucket
+# mc cp test/my-bucket/example.txt ./downloaded-example.txt
+#
+# Remove the "example.txt" file from the "my-bucket" bucket
+# mc rm test/my-bucket/example.txt
+#
+# Remove the "my-bucket" bucket
+# mc rb --force test/my-bucket
+

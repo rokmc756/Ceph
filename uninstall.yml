@@ -7,13 +7,13 @@
     remove_ceph_nodes: false
     purge_ceph: false
     uninstall_ceph: false
-    remove_cephadm_bin: true
+    remove_cephadm_bin: false
   roles:
-    - { role: ceph }
+    - { role: radosgw }
+#    - { role: ceph }
 #    - { role: cephfs }
 #    - { role: block }
 #    - { role: nfs }
-#    - { role: radosgw }
 #    - { role: block }
 #    - { role: init-hosts }
 #    - { role: ceph }
