@@ -1,22 +1,21 @@
-#
 - name: Get FSID
   shell: |
-    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
   register: get_fsid
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true
 
-#
+
 - name: Set Fact for FSDI
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
 
-#
+
 - name: Set Fact for cephadm command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
-#
+
 - name: Enable Ceph CLI
   shell: |
     {{ cephadm_cmd }} ceph -s
@@ -24,7 +23,7 @@
 - debug: msg={{ enable_ceph_cli }}
   when: print_debug == true
 
-#
+
 - name: Label the Nodes with It's Role
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
@@ -33,7 +32,7 @@
 - debug: msg={{ label_nodes }}
   when: print_debug == true
 
-#
+
 - name:  Confirm the Label
   shell: |
     {{ cephadm_cmd }} ceph orch host ls
@@ -50,7 +49,7 @@
 #- debug: msg={{ add_monitors }}
 #  when: print_debug == true
 
-#
+
 - name: Apply the Role of Monitor for All Nodes
   shell: |
     {{ cephadm_cmd }} ceph orch apply mon --placement={{ all_nodes_hostname }}
@@ -58,7 +57,7 @@
 - debug: msg={{ apply_monitors }}
   when: print_debug == true
 
-#
+
 - name: Label the Nodes with Its Role
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
@@ -67,12 +66,11 @@
 - debug: msg={{ label_mgr }}
   when: print_debug == true
 
-#
+
 - name:  Confirm the Label
   shell: |
     {{ cephadm_cmd }} ceph orch host ls
   register: confirm_label
-
 - debug: msg={{ confirm_label }}
   when: print_debug == true
 

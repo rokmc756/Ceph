@@ -2,6 +2,7 @@
 - name: Mark Down for Filesystem
   shell: |
     ceph fs set {{ item.name }} down true
+    ceph fs fail {{ item.name }}
   register: cephfs_marked_down
   ignore_errors: true
   with_items: "{{ cephfs.fs }}"

@@ -14,9 +14,18 @@ ubt20_common_devel_pkgs: "perl"
 ubt22_common_devel_pkgs: "perl"
 ubt23_common_devel_pkgs: "perl"
 
+suse_common_pkgs: "firewalld,sshpass,cifs-utils,nfs-utils,lsof,glibc-devel,rpcbind,xfsprogs,kernel-devel,jq,expect,net-tools,uuid,tar,rsync,wget"
+suse_common_devel_pkgs: "git"
+suse15_common_devel_pkgs: "make,perl,gcc,tcl,tk,nvme-cli,pdsh,python3-pip,gdisk"
+# Not found packages: glibc-headers, libnl3, elfutils-libelf-devel
+
+ceph_pkgs: "cephadm,ceph-common,ceph-base,ceph-radosgw,conmon,podman"
+
+
 official_rh_pkgs: "pdsh"
 official_ubt_pkgs: "pdsh"
 
 update_cache: false
 upgrade_packages: false
+
 

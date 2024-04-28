@@ -62,7 +62,7 @@
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 # https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
 
-#
+
 - name: Add Lines for Setting Rados Gateway in /etc/ceph/ceph.conf
   lineinfile:
     path: /etc/ceph/ceph.conf
@@ -81,7 +81,7 @@
 - debug: msg={{ rgw_config_added }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Create Ceph Configuration Directory on Rados Gateway
   file:
     path: "/etc/ceph"
@@ -94,7 +94,7 @@
 - debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Copy Ceph Configuration to Rados Gateway Host
   synchronize:
     src:  "{{ item }}"
@@ -111,7 +111,7 @@
 - debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Create Directory for Rados Gateway
   file:
     path: "/var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}"
@@ -124,7 +124,7 @@
 - debug: msg={{ rgw_dir_created }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Create Authentication for Rados Gateway
   shell: |
     ceph auth {{ item.action }} client.rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }} \
@@ -136,7 +136,7 @@
 - debug: msg={{ rgw_auth_created }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Change Owership of Ceph Config and Directories
   file:
     dest: "{{ item }}"
@@ -152,7 +152,7 @@
 - debug: msg={{ ceph_config_dir_owner_changed }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Enable Systemd Service for Rados Gateway
   shell: |
     systemctl enable --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
@@ -161,15 +161,15 @@
 - debug: msg={{ rgw_systemd_enabled }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
-#- name: Open a port in firewalld for Rados Gateway
-#  shell: |
-#    firewall-cmd --add-port=7480/tcp
-#    firewall-cmd --runtime-to-permanent
-#  register: open_rgw_port
-#  when: inventory_hostname in groups['rgw']
-#- debug: msg={{ open_rgw_port }}
-#  when: print_debug == true and inventory_hostname in groups['rgw']
+
+- name: Open a port in firewalld for Rados Gateway
+  shell: |
+    firewall-cmd --add-port=7480/tcp
+    firewall-cmd --runtime-to-permanent
+  register: open_rgw_port
+  when: inventory_hostname in groups['rgw']
+- debug: msg={{ open_rgw_port }}
+  when: print_debug == true and inventory_hostname in groups['rgw']
 
 #
 - name: Pause for 1 Minutes to Wait for Compleiting Initializaion of Rados Gateway

@@ -1,28 +1,31 @@
-#
-- name: Add Repo for Ceph Reef for All Hosts
+- name: Add Repo for Ceph Reef for RedHat/Rocky/CentOS
   shell: |
     {{ cephadm.base_path }}/cephadm add-repo --release reef
   register: add_repo
+  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ add_repo }}
-  when: print_debug == true
+  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
-#
+
+#- name: Add Repo for Ceph Reef for SUSE
+#  shell: |
+#   {{ cephadm.base_path }}/cephadm add-repo --release reef
+#  register: add_repo
+#  when: ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int >= 9
+#- debug: msg={{ add_repo }}
+#  when: print_debug == true and ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int >= 9
+
+
 - name: Install Podman and Civetweb
-  dnf:
+  package:
     name: "{{ item }}"
     state: present
-    nobest: true
-  with_items:
-    - "podman"
-    - "civetweb"
-    - "util-linux"
-    - "ceph-radosgw"
-    - "uuid"
-    # - "centos-release-ceph-reef"
-    # - "centos-release-storage-common"
-    # - "centos-release-nfs-ganesha5"
-    # - "nfs-ganesha"
-    # - "nfs-ganesha-ceph"
+  with_items: "{{ ceph_pkgs }}"
+  # - "centos-release-ceph-reef"
+  # - "centos-release-storage-common"
+  # - "centos-release-nfs-ganesha5"
+  # - "nfs-ganesha"
+  # - "nfs-ganesha-ceph"
 
 
 # dnf -y install centos-release-nfs-ganesha4

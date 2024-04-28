@@ -1,0 +1,9 @@
+#
+- name: Power Off Virtual Machines
+  vmware_guest_powerstate:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    name: "{{ dsm_agent_vm_name }}"
+    validate_certs: "no"
+    state: powered-off

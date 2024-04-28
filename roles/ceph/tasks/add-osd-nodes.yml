@@ -1,7 +1,7 @@
 #
 - name: Get FSID
   shell: |
-    /root/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
   register: get_fsid
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_fsid.stdout }}

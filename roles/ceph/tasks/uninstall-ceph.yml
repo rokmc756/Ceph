@@ -1,12 +1,12 @@
-#
 - name: Remove the Ceph Software Package Repository
   shell: |
     cephadm rm-repo
   register: remove_ceph_repo
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
 - debug: msg={{ remove_ceph_repo }}
-  when: print_debug == true
+  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" )
 
-#
+
 - name: Cleanup the Ceph Configuration Files
   file:
     path: "{{ item }}"
@@ -21,7 +21,7 @@
 - debug: msg={{ cleanup_ceph_config }}
   when: print_debug == true
 
-#
+
 - name: Kill processes of conmon and podman
   shell: |
     killall conmon
@@ -31,21 +31,15 @@
 - debug: msg={{ kill_conmon_podman }}
   when: print_debug == true
 
-#
+
 - name: Uninstall Ceph Conmon Packages
-  dnf:
+  package:
     name: "{{ item }}"
     state: absent
-    nobest: true
-  with_items:
-    - cephadm
-    - ceph-common
-    - ceph-base
-    - ceph-radosgw
-    - conmon
-    - podman
+  with_items: "{{ ceph_pkgs }}"
+  #  nobest: true
 
-#
+
 # for j in $(echo 'nvme0n1 nvme0n2 nvme0n3 nvme0n4'); do dd if=/dev/zero of=/dev/$j bs=1M count=1000; done
 - name: Cleanup the Ceph Block Devices
   shell: |

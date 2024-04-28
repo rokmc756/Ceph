@@ -183,3 +183,9 @@ $ make uninstall
 ## SMB
 - https://documentation.suse.com/ses/7.1/html/ses-all/cha-ses-cifs.html
 
+## Errors to be fixed
+~~~
+"time=\"2024-04-28T18:25:13+09:00\" level=warning msg=\"Error validating CNI config file /etc/cni/net.d/10-calico.conflist: [failed to find plugin \\\"calico\\\" in path [/usr/lib/cni]]\"",
+"time=\"2024-04-28T18:25:13+09:00\" level=warning msg=\"Error validating CNI config file /etc/cni/net.d/10-flannel.conflist: [failed to find plugin \\\"flannel\\\" in path [/usr/lib/cni]]\""
+~~~
+

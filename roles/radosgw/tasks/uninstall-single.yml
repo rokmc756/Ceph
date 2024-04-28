@@ -7,7 +7,7 @@
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
@@ -16,7 +16,7 @@
   with_items: "{{ groups['all'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Set Fact for cephadm_cmd command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
@@ -25,7 +25,7 @@
   with_items: "{{ groups['all'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Remove Users in the Ceph Object Gateway
   shell: |
     radosgw-admin user rm --uid={{ item.user_name }} --purge-data
@@ -36,7 +36,7 @@
 - debug: msg={{ rgw_user_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Remove Zone in the Ceph Object Gateway
   shell: |
     {{ cephadm_cmd }} ceph orch rm rgw.test_realm.test_zone_bb
@@ -46,7 +46,7 @@
 - debug: msg={{ rgw_zone_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Stop and Disable Rados Gateway
   shell: |
     systemctl stop --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
@@ -57,7 +57,7 @@
 - debug: msg={{ rgw_service_disabled }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Delete Lines for Setting Radosgw in /etc/ceph/ceph.conf
   lineinfile:
     path: /etc/ceph/ceph.conf
@@ -75,7 +75,7 @@
 - debug: msg={{ rgw_config_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Remove Ceph Configuration to Rados Gateway Host
   file:
     path: "{{ item }}"
@@ -89,7 +89,7 @@
 - debug: msg={{ ceph_config_removed }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Allow to Delete Pool from Mon
   shell: |
     {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
@@ -99,7 +99,7 @@
 - debug: msg={{ delete_pool_allowed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Remove Rados Gateway Pools
   shell: |
     {{ cephadm_cmd }} ceph osd pool rm {{ item }} {{ item }} --yes-i-really-really-mean-it
@@ -118,7 +118,7 @@
 - debug: msg={{ rgw_pool_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if Pools are still Unknown
   shell: |
     ceph pg stat
@@ -130,7 +130,7 @@
 - debug: msg={{ unknown_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if Pools are Active+Clean
   shell: |
     ceph pg stat
@@ -142,7 +142,7 @@
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Delete Rados Gateway Users
   shell: |
     {{ cephadm_cmd }} ceph auth del client.{{ item }}
