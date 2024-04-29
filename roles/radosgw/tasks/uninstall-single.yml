@@ -28,8 +28,8 @@
 
 - name: Delete Buckets
   shell: |
-    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
-    /usr/local/bin/mc rb --force test/{{ item.bucket }}
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc rb --force {{ item.mc_alias}}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: buckets_created

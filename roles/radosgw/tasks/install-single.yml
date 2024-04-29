@@ -242,8 +242,8 @@
 
 - name: Create Buckets
   shell: |
-    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
-    /usr/local/bin/mc mb test/{{ item.bucket }}
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc mb {{ item.mc_alias }}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: buckets_created
@@ -276,40 +276,5 @@
 #
 # Remove the "my-bucket" bucket
 # mc rb --force test/my-bucket
-#
 
-
-#- name: Upgrade Boto3 Pip Module for Testing S3 Connection and Protocols
-#  shell: |
-#    pip3 install --upgrade boto3
-#  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-#  delegate_facts: true
-#  register: pip_boto3_installed
-#  when: inventory_hostname in groups['rgw']
-#- debug: msg={{ pip_boto3_installed }}
-#  when: print_debug == true and inventory_hostname in groups['rgw']
-#
-##
-#- name: Copy Python S3 Script
-#  template: src=s3-test.py.j2 dest=/root/s3-test.py owner=root group=root mode=755 force=yes
-#  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-#  delegate_facts: true
-#  register: s3_py_script_copied
-#  when: inventory_hostname in groups['rgw']
-#- debug: msg={{ s3_py_script_copied }}
-#  when: print_debug == true and inventory_hostname in groups['rgw']
-#
-##
-#- name: Verify Accessing with S3 Interface to Create Python Test Script on a Computer with a Common Users
-#  shell: |
-#    python3 /root/s3-test.py 7480 {{ item.bucket }}
-#  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-#  delegate_facts: true
-#  register: pip_boto3_run
-#  with_items: "{{ rgw.users }}"
-#  when: inventory_hostname in groups['rgw']
-#- debug: msg={{ pip_boto3_run  }}
-#  when: print_debug == true and inventory_hostname in groups['rgw']
-
-# Need to add multisite features
 

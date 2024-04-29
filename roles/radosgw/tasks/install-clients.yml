@@ -1,12 +1,3 @@
-# https://www.middlewareinventory.com/blog/ansible-dict/
-#- name:  Enable Devel Package Repository
-#  shell: |
-#    dnf config-manager --set-enabled devel
-#  register: enable_devel_repo
-#- debug: msg={{ enable_devel_repo }}
-#  when: print_debug == true
-
-
 #- name: Install MC S3 Client Packages
 #  import_tasks: install-mc-client.yml
 
@@ -54,20 +45,27 @@
     - "part-m-00006.gz.parquet"
 
 
-- name: Upload parquet test files into S3
+- name: Set up an alias for MinIO to interact with the RADOS Gateway
   shell: |
-    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
-    /usr/local/bin/mc cp /root/s3-base/part-m-*.gz.parquet test/{{ item.bucket }}/
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+  register: mc_alias_set
+  with_items: "{{ rgw.users }}"
+- debug: msg={{ mc_alias_set }}
+  when: print_debug == true
+
+
+- name: Upload Parquet Test Files Into S3
+  shell: |
+    /usr/local/bin/mc cp /root/s3-base/part-m-*.gz.parquet {{ item.mc_alias }}/{{ item.bucket }}/
   register: upload_files_s3
   with_items: "{{ rgw.users }}"
 - debug: msg={{ upload_files_s3 }}
   when: print_debug == true
 
 
-- name: Download parquet test files into S3
+- name: Download Parquet Test Files into S3
   shell: |
-    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
-    /usr/local/bin/mc cp test/{{ item.bucket }}/part-m-*.gz.parquet /root/s3-base/download/
+    /usr/local/bin/mc cp --recursive {{ item.mc_alias }}/{{ item.bucket }}/ /root/s3-base/download/
   register: download_files_s3
   with_items: "{{ rgw.users }}"
 - debug: msg={{ download_files_s3 }}
@@ -76,29 +74,12 @@
 
 # https://github.com/hetznercloud/ceph-s3-box
 # These examples are performed using the MinIO Client (mc) but any other s3 clients will work, too.
-#
 # mc config host add s3tokyo https://s3-ap-northeast-1.amazonaws.com <access_key> <secret_key>
-
-# Set up an alias for MinIO to interact with the RADOS Gateway
-# mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
 #
-# Create a bucket named "my-bucket"
 # mc mb test/my-bucket
 #
 # List all buckets
 # mc ls test
 #
-# Upload a file named "example.txt" to the "my-bucket" bucket
-# mc cp example.txt test/my-bucket/example.txt
-#
-# Download the "example.txt" file from the "my-bucket" bucket
-# mc cp test/my-bucket/example.txt ./downloaded-example.txt
-#
-# Remove the "example.txt" file from the "my-bucket" bucket
-# mc rm test/my-bucket/example.txt
-#
 # Remove the "my-bucket" bucket
 # mc rb --force test/my-bucket
-#
-
-
