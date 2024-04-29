@@ -13,27 +13,30 @@
 # s3cmd  ls s3://BucketName/foldername_prefix* |awk '{print $2}' | while read files; do s3cmd  rm -r $files; done
 # s3cmd rm s3://mybucket/myfileidontwant --force
 
-#- name: Delete Parquet Test Files in S3 Backends
-#  shell: |
-#    s3cmd --no-check-certificate --config=/root/s3cmd/{{ item.name }}-s3cfg del -r s3://{{ item.bucket }}/*.gz.parquet
-#  register: del_parq_files_s3
-#  ignore_errors: true
-#  with_items: "{{ s3.users }}"
-#- debug: msg={{ del_parq_files_s3 }}
-#  when: print_debug == true
+
+- name: Delete Parquet Test Files in S3 Backends
+  shell: |
+    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc rm test/{{ item.bucket }}/part-m-*.gz.parquet
+  register: del_parq_files_s3
+  ignore_errors: true
+  with_items: "{{ rgw.users }}"
+- debug: msg={{ del_parq_files_s3 }}
+  when: print_debug == true
+
+
+- name: Delete s3-base Test Directory
+  file:
+    path: "/root/s3-base"
+    state: absent
+  register: del_s3cmd_dir
+  ignore_errors: true
+  with_items: "{{ s3.users }}"
+- debug: msg={{ del_s3cmd_dir }}
+  when: print_debug == true
+
 
 #
-#- name: Delete s3cmd Test Directory
-#  file:
-#    path: "/root/s3cmd"
-#    state: absent
-#  register: del_s3cmd_dir
-#  ignore_errors: true
-#  with_items: "{{ s3.users }}"
-#- debug: msg={{ del_s3cmd_dir }}
-#  when: print_debug == true
-#
-##
 #- name: Uninstall S3 Client Packages for Linux
 #  become: true
 #  package: name={{ item }} state=absent
@@ -41,3 +44,36 @@
 #  with_items: "s3cmd"
 #
 
+#- name: Download parquet test files into S3
+#  shell: |
+#    mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+#    mc cp test/{{ item.bucket }}/part-m-*.gz.parquet /root/s3-base/{{ item.name }}/download
+#  register: download_files_s3
+#  with_items: "{{ s3.users }}"
+#- debug: msg={{ download_files_s3 }}
+#  when: print_debug == true
+
+
+# https://github.com/hetznercloud/ceph-s3-box
+# These examples are performed using the MinIO Client (mc) but any other s3 clients will work, too.
+#
+# Set up an alias for MinIO to interact with the RADOS Gateway
+# mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
+#
+# Create a bucket named "my-bucket"
+# mc mb test/my-bucket
+#
+# List all buckets
+# mc ls test
+#
+# Upload a file named "example.txt" to the "my-bucket" bucket
+# mc cp example.txt test/my-bucket/example.txt
+#
+# Download the "example.txt" file from the "my-bucket" bucket
+# mc cp test/my-bucket/example.txt ./downloaded-example.txt
+#
+# Remove the "example.txt" file from the "my-bucket" bucket
+# mc rm test/my-bucket/example.txt
+#
+# Remove the "my-bucket" bucket
+# mc rb --force test/my-bucket

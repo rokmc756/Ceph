@@ -6,79 +6,99 @@
 #- debug: msg={{ enable_devel_repo }}
 #  when: print_debug == true
 
+
+#- name: Install MC S3 Client Packages
+#  import_tasks: install-mc-client.yml
+
+
+- name: Create S3 Base Directory for Download
+  file:
+    path: "/root/s3-base/download"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_rgw_down_dir
+  with_items:
+    - "{{ rgw.users }}"
+- debug: msg={{ create_rgw_down_dir }}
+  when: print_debug == true
+
+
+- name: Create S3 Base Directory for Upload
+  file:
+    path: "/root/s3-base/upload"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_rgw_up_dir
+  with_items:
+    - "{{ rgw.users }}"
+- debug: msg={{ create_rgw_up_dir }}
+  when: print_debug == true
+
+
+- name: Copy parquet test files to upload and download into S3
+  copy: src={{ item }} dest=/root/s3-base/{{ item }} mode=0644 owner=root group=root
+  register: parquet_files_copied
+  with_items:
+    - "part-m-00001.gz.parquet"
+    - "part-m-00003.gz.parquet"
+    - "part-m-00005.gz.parquet"
+    - "part-m-00000.gz.parquet"
+    - "part-m-00002.gz.parquet"
+    - "part-m-00004.gz.parquet"
+    - "part-m-00006.gz.parquet"
+
+
+- name: Upload parquet test files into S3
+  shell: |
+    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc cp /root/s3-base/part-m-*.gz.parquet test/{{ item.bucket }}/
+  register: upload_files_s3
+  with_items: "{{ rgw.users }}"
+- debug: msg={{ upload_files_s3 }}
+  when: print_debug == true
+
+
+- name: Download parquet test files into S3
+  shell: |
+    /usr/local/bin/mc alias set test http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc cp test/{{ item.bucket }}/part-m-*.gz.parquet /root/s3-base/download/
+  register: download_files_s3
+  with_items: "{{ rgw.users }}"
+- debug: msg={{ download_files_s3 }}
+  when: print_debug == true
+
+
+# https://github.com/hetznercloud/ceph-s3-box
+# These examples are performed using the MinIO Client (mc) but any other s3 clients will work, too.
 #
-#- name: Install S3 Client Packages for Linux
-#  become: true
-#  package: name={{item}} state=present
-#  with_items:
-#    - "s3cmd"
+# mc config host add s3tokyo https://s3-ap-northeast-1.amazonaws.com <access_key> <secret_key>
+
+# Set up an alias for MinIO to interact with the RADOS Gateway
+# mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
 #
+# Create a bucket named "my-bucket"
+# mc mb test/my-bucket
 #
-#- name: Create s3cmd directory for download
-#  file:
-#    path: "/root/s3cmd/{{ item.name }}/download"
-#    state: directory
-#    owner: root
-#    group: root
-#    mode: 0755
-#    recurse: yes
-#  register: create_s3cmd_down_dir
-#  with_items:
-#    - "{{ s3.users }}"
-#- debug: msg={{ create_s3cmd_down_dir }}
-#  when: print_debug == true
+# List all buckets
+# mc ls test
 #
+# Upload a file named "example.txt" to the "my-bucket" bucket
+# mc cp example.txt test/my-bucket/example.txt
 #
-#- name: Create s3cmd directory for upload
-#  file:
-#    path: "/root/s3cmd/{{ item.name }}/upload"
-#    state: directory
-#    owner: root
-#    group: root
-#    mode: 0755
-#    recurse: yes
-#  register: create_s3cmd_up_dir
-#  with_items: "{{ s3.users }}"
-#- debug: msg={{ create_s3cmd_up_dir }}
-#  when: print_debug == true
+# Download the "example.txt" file from the "my-bucket" bucket
+# mc cp test/my-bucket/example.txt ./downloaded-example.txt
 #
+# Remove the "example.txt" file from the "my-bucket" bucket
+# mc rm test/my-bucket/example.txt
 #
-#- name: Copy S3 Config file for S3 Users
-#  template: src={{ item.name }}-s3cfg.j2 dest=/root/s3cmd/{{ item.name }}-s3cfg owner=root group=root mode=755 force=yes
-#  register: copy_s3_config
-#  with_items:
-#    - "{{ s3_users_info }}"
-#- debug: msg={{ copy_s3_config }}
-#  when: print_debug == true
+# Remove the "my-bucket" bucket
+# mc rb --force test/my-bucket
 #
-#
-#- name: Copy parquet test files to upload and download into S3
-#  copy: src=parquet-sample-data/{{ item }} dest=/root/s3cmd/{{ item }} mode=0644 owner=root group=root
-#  register: copy_weka
-#  with_items:
-#    - "part-m-00001.gz.parquet"
-#    - "part-m-00003.gz.parquet"
-#    - "part-m-00005.gz.parquet"
-#    - "part-m-00000.gz.parquet"
-#    - "part-m-00002.gz.parquet"
-#    - "part-m-00004.gz.parquet"
-#    - "part-m-00006.gz.parquet"
-#
-#
-#- name: Upload parquet test files into S3
-#  shell: |
-#    s3cmd --no-check-certificate --config=/root/s3cmd/{{ item.name }}-s3cfg put /root/s3cmd/part*.gz.parquet s3://{{ item.bucket }}
-#  register: upload_files_s3
-#  with_items: "{{ s3.users }}"
-#- debug: msg={{ upload_files_s3 }}
-#  when: print_debug == true
-#
-#
-#- name: Download parquet test files into S3
-#  shell: |
-#    s3cmd --no-check-certificate --config=/root/s3cmd/{{ item.name }}-s3cfg get s3://{{ item.bucket }}/*.gz.parquet /root/s3cmd/{{ item.name }}/download
-#  register: download_files_s3
-#  with_items: "{{ s3.users }}"
-#- debug: msg={{ download_files_s3 }}
-#  when: print_debug == true
-#
+
+

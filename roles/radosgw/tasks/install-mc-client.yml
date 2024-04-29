@@ -3,12 +3,28 @@
   stat: path={{ minio.client_bin }}
   register: mc_bin_exists
 - debug: msg={{ mc_bin_exists }}
+  when: print_debug == true
 
 
 - name: Copy minio client binary from local directory, roles/minio/files
   copy: src=mc-{{ minio.release_date }}.tar.gz dest=/tmp/mc-{{ minio.release_date }}.tar.gz mode=0644 owner=root group=root
   register: mc_local_copy
   when: mc_bin_exists.stat.exists == false and minio.download == false
+- debug: msg={{ mc_local_copy }}
+  when: print_debug == true and mc_bin_exists.stat.exists == false and minio.download == false
+
+
+- name: Unarchive minio client tarball
+  unarchive:
+    src: "mc-{{ minio.release_date }}.tar.gz"
+    dest: "/usr/local/bin"
+    mode: 0755
+    owner: root
+    group: root
+  register: mc_tarball_unarchived
+  when: ( mc_bin_exists.stat.exists == false and minio.download == false )
+- debug: msg={{ mc_tarball_unarchived }}
+  when: print_debug == true and ( mc_bin_exists.stat.exists == false and minio.download == false )
 
 
 - name: Download minio client
@@ -18,16 +34,23 @@
     checksum: "{{ minio.client_checksum | d(omit) }}"
     mode: 0755
     timeout: 20
+  register: mc_client_downloaded
   when: ( minio.client_url.endswith('mc') or minio.client_url.endswith('Z') ) and ( mc_bin_exists.stat.exists == false and minio.download == true )
+- debug: msg={{ mc_client_downloaded }}
+  when: print_debug == true and ( minio.client_url.endswith('mc') or minio.client_url.endswith('Z') ) and ( mc_bin_exists.stat.exists == false and minio.download == true )
 
 
-- name: Unarchive minio client
+- name: Unarchive minio client binary
   unarchive:
     src: "{{ minio.client_url }}"
     dest: "{{ minio.client_bin | dirname }}"
     remote_src: "{{ minio.client_url.startswith('http') }}"
     mode: 0755
-  when: minio.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and minio.download == false )
+  register: mc_client_bin_unarchived
+  when: minio.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and minio.download == true )
+- debug: msg={{ mc_client_bin_unarchived }}
+  when: minio.client_url.endswith('zip') and ( mc_bin_exists.stat.exists == false and minio.download == true )
+
 
 
 # https://github.com/hetznercloud/ceph-s3-box

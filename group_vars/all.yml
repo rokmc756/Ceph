@@ -32,7 +32,7 @@ ceph:
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
   obs: false
-  fs: true
+  fs: false
   block:
     rbd: true
     iscsi: false
@@ -54,7 +54,7 @@ ceph:
   protocol:
     nfs: false
     rgw:
-      single: true
+      single: false
       multi: false
     smb: false
   client:
@@ -64,7 +64,7 @@ ceph:
     nfs: false
     cephfs: false
     smb: false
-    rgw: false
+    rgw: true
     net:
       type: "virtual"               # or physical
       cores: 1

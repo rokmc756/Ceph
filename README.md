@@ -183,6 +183,7 @@ $ make uninstall
 - https://docs.ceph.com/en/latest/cephadm/services/smb/
 - https://cyuu.tistory.com/145
 - https://reintech.io/blog/setting-up-pxe-boot-server-windows-deployment-ubuntu
+- https://medium.com/jacklee26/set-up-pxe-server-on-ubuntu20-04-and-window-10-e69733c1de87
 
 ## SMB
 - https://documentation.suse.com/ses/7.1/html/ses-all/cha-ses-cifs.html
