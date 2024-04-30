@@ -11,8 +11,6 @@
     mode: 0755
     recurse: yes
   register: create_rgw_down_dir
-  with_items:
-    - "{{ rgw.users }}"
 - debug: msg={{ create_rgw_down_dir }}
   when: print_debug == true
 
@@ -26,8 +24,6 @@
     mode: 0755
     recurse: yes
   register: create_rgw_up_dir
-  with_items:
-    - "{{ rgw.users }}"
 - debug: msg={{ create_rgw_up_dir }}
   when: print_debug == true
 
@@ -45,13 +41,15 @@
     - "part-m-00006.gz.parquet"
 
 
+# For Single RGW
 - name: Set up an alias for MinIO to interact with the RADOS Gateway
   shell: |
-    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
   register: mc_alias_set
   with_items: "{{ rgw.users }}"
+  when: ceph.client.rgw.single == true
 - debug: msg={{ mc_alias_set }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.rgw.single == true
 
 
 - name: Upload Parquet Test Files Into S3
@@ -59,8 +57,9 @@
     /usr/local/bin/mc cp /root/s3-base/part-m-*.gz.parquet {{ item.mc_alias }}/{{ item.bucket }}/
   register: upload_files_s3
   with_items: "{{ rgw.users }}"
+  when: ceph.client.rgw.single == true
 - debug: msg={{ upload_files_s3 }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.rgw.single == true
 
 
 - name: Download Parquet Test Files into S3
@@ -68,8 +67,40 @@
     /usr/local/bin/mc cp --recursive {{ item.mc_alias }}/{{ item.bucket }}/ /root/s3-base/download/
   register: download_files_s3
   with_items: "{{ rgw.users }}"
+  when: ceph.client.rgw.single == true
 - debug: msg={{ download_files_s3 }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.rgw.single == true
+
+
+# For Multiple Zone
+- name: Set up an alias for MinIO to interact with the RADOS Gateway
+  shell: |
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+  register: mc_alias_set
+  with_items: "{{ rgw.multisite.users }}"
+  when: ceph.client.rgw.multi == true
+- debug: msg={{ mc_alias_set }}
+  when: print_debug == true and ceph.client.rgw.multi == true
+
+
+- name: Upload Parquet Test Files Into S3
+  shell: |
+    /usr/local/bin/mc cp /root/s3-base/part-m-*.gz.parquet {{ item.mc_alias }}/{{ item.bucket }}/
+  register: upload_files_s3
+  with_items: "{{ rgw.multisite.users }}"
+  when: ceph.client.rgw.multi == true
+- debug: msg={{ upload_files_s3 }}
+  when: print_debug == true and ceph.client.rgw.multi == true
+
+
+- name: Download Parquet Test Files into S3
+  shell: |
+    /usr/local/bin/mc cp --recursive {{ item.mc_alias }}/{{ item.bucket }}/ /root/s3-base/download/
+  register: download_files_s3
+  with_items: "{{ rgw.multisite.users }}"
+  when: ceph.client.rgw.multi == true
+- debug: msg={{ download_files_s3 }}
+  when: print_debug == true and ceph.client.rgw.multi == true
 
 
 # https://github.com/hetznercloud/ceph-s3-box

@@ -5,7 +5,7 @@
    ceph orch rm rgw.{{ item.zone }}
   register: secondary_rgw_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.secondary }}"
+  with_items: "{{ rgw.multisite.zone.secondary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 - debug: msg={{ secondary_rgw_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
@@ -17,20 +17,20 @@
     --endpoints={{ item.endpoint }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
   register: zone_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.secondary }}"
+  with_items: "{{ rgw.multisite.zone.secondary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 - debug: msg={{ zone_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-- name: Delete Period
-  shell: |
-    radosgw-admin period delete
-  register: period_deleted
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ period_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+#- name: Delete Period
+#  shell: |
+#    radosgw-admin period delete
+#  register: period_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
+#- debug: msg={{ period_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
 - name: Remove Realm, Access and Secret Keys
@@ -39,7 +39,7 @@
      --access-key={{ item.access_key }} --secret-key={{ item.secret_key }} --default
   register: realm_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 - debug: msg={{ realm_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
@@ -52,21 +52,20 @@
     ceph orch rm rgw.{{ item.zone }}
   register: primary_rgw_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ primary_rgw_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-- name: Delete Period
-  shell: |
-    radosgw-admin period delete
-  register: period_deleted
-  ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ period_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- name: Delete Period
+#  shell: |
+#    radosgw-admin period delete
+#  register: period_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ period_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Delete Access and Secret Key
@@ -74,7 +73,7 @@
     radosgw-admin zone delete --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
   register: auth_keys_deleted
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.users }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ auth_keys_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -85,7 +84,7 @@
     radosgw-admin user rm --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system
   register: system_user_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.users }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ system_user_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -96,7 +95,7 @@
     radosgw-admin zone delete --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} --endpoints={{ item.endpoint }} --master --default
   register: zone_deleted
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ zone_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -107,7 +106,7 @@
     radosgw-admin zonegroup delete --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
   register: zone_group_deleted
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ zone_group_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -118,7 +117,7 @@
     radosgw-admin realm rm --rgw-realm={{ item.rgw_realm }} --default
   register: realm_removed
   ignore_errors: true
-  with_items: "{{ rgw.multisite.primary }}"
+  with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 - debug: msg={{ realm_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -126,7 +125,7 @@
 
 - name: Allow to Delete Pool from Mon
   shell: |
-    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
+    ceph tell mon.\* injectargs --mon-allow-pool-delete true
   register: delete_pool_allowed
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

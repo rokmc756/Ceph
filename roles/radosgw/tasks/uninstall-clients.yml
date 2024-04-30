@@ -1,11 +1,13 @@
+# For Single
 - name: Set Up an Alias for MinIO to Interact With the RADOS Gateway
   shell: |
-    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
   register: mc_alias_set
   ignore_errors: true
   with_items: "{{ rgw.users }}"
+  when: ceph.client.rgw.single == true
 - debug: msg={{ mc_alias_set }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.rgw.single == true
 
 
 - name: Delete Parquet Test Files in S3 Backends
@@ -14,8 +16,32 @@
   register: del_parq_files_s3
   ignore_errors: true
   with_items: "{{ rgw.users }}"
+  when: ceph.client.rgw.single == true
 - debug: msg={{ del_parq_files_s3 }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.rgw.single == true
+
+
+# For Multizone
+- name: Set Up an Alias for MinIO to Interact With the RADOS Gateway
+  shell: |
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+  register: mc_alias_set
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.users }}"
+  when: ceph.client.rgw.multi == true
+- debug: msg={{ mc_alias_set }}
+  when: print_debug == true and ceph.client.rgw.multi == true
+
+
+- name: Delete Parquet Test Files in S3 Backends
+  shell: |
+    /usr/local/bin/mc rm --recursive --force {{ item.mc_alias }}/{{ item.bucket }}/
+  register: del_parq_files_s3
+  ignore_errors: true
+  with_items: "{{ rgw.multisite.users }}"
+  when: ceph.client.rgw.multi == true
+- debug: msg={{ del_parq_files_s3 }}
+  when: print_debug == true and ceph.client.rgw.multi == true
 
 
 - name: Delete S3-Base Test Directory
@@ -24,7 +50,6 @@
     state: absent
   register: del_s3base_dir
   ignore_errors: true
-  with_items: "{{ rgw.users }}"
 - debug: msg={{ del_s3base_dir }}
   when: print_debug == true
 
@@ -38,6 +63,7 @@
 - debug: msg={{ del_mc_dir }}
   when: print_debug == true
 
+
 # Set up an alias for MinIO to interact with the RADOS Gateway
 # mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
 #
@@ -49,3 +75,5 @@
 #
 # Remove the "my-bucket" bucket
 # mc rb --force test/my-bucket
+
+
