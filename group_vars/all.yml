@@ -55,9 +55,9 @@ ceph:
     smb: false
     nfs:
       single: false
-      ganesha: true
+      ganesha: false
     rgw:
-      single: true
+      single: false
       multi: false
   client:
     block:

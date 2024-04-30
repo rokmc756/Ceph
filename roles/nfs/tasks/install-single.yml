@@ -20,9 +20,9 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Create NFS
+- name: Create NFS Service
   shell: |
-    {{ cephadm_cmd }} ceph nfs cluster create {{ item.name }} rk9-node03
+    {{ cephadm_cmd }} ceph nfs cluster create {{ item.name }} {{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
   register: create_nfs
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']

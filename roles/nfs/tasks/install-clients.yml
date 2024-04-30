@@ -1,21 +1,27 @@
-#
 #- name:  Enable Devel Package Repository
 #  shell: |
 #    dnf config-manager --set-enabled devel
 #  register: enable_devel_repo
 #- debug: msg={{ enable_devel_repo }}
-#  when: print_debug == true
+#  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' )
 
-#
+
 - name: Install NFS Client Packages
   become: true
   package: name={{item}} state=present
   with_items:
     - "nfs-utils"
-    - "nfs-client"
-  ignore_errors: true
+  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
 
-#
+
+- name: Install NFS Client Packages
+  become: true
+  package: name={{item}} state=present
+  with_items:
+    - "nfs-client"
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+
 - name: Create Directory to mount NFS
   file:
     path: "{{ item.mount_dir }}"
@@ -26,8 +32,10 @@
     recurse: yes
   register: create_nfs_dir
   with_items: "{{ nfs.client }}"
+  when: ceph.client.nfs.single == true
 - debug: msg={{ create_nfs_dir }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.nfs.single == true
+
 
 # https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
 - name: Mount ephemeral NFS volume
@@ -39,18 +47,68 @@
     state: ephemeral
   register: mount_nfs_dir
   with_items: "{{ nfs.client }}"
-  when: inventory_hostname in groups['clients']
+  when: ceph.client.nfs.single == true
 - debug: msg={{ mount_nfs_dir }}
-  when: print_debug == true
+  when: print_debug == true and ceph.client.nfs.single == true
 
-#
+
 - name: Conditionally create a file if it does not exist
   copy:
-    content: "Hellow Weka NFS-W World!"
+    content: "Hellow Ceph NFS World!"
     dest: "{{ item.mount_dir }}/test-nfs01.txt"
     force: no
     owner: root
     group: root
     mode: 0644
+  register: file_copied
   with_items: "{{ nfs.client }}"
+  when: ceph.client.nfs.single == true
+- debug: msg={{ file_copied }}
+  when: print_debug == true and ceph.client.nfs.single == true
+
+
+
+- name: Create Directory to mount NFS
+  file:
+    path: "{{ item.mount_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+    recurse: yes
+  register: create_nfs_dir
+  with_items: "{{ ganesha.client }}"
+  when: ceph.client.nfs.ganesha == true
+- debug: msg={{ create_nfs_dir }}
+  when: print_debug == true and ceph.client.nfs.ganesha == true
+
+
+# https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
+- name: Mount ephemeral NFS volume
+  mount:
+    src: "{{ item.virtual_ip }}:{{ item.src }}"
+    path: "{{ item.mount_dir }}"
+    opts: ""
+    fstype: nfs
+    state: ephemeral
+  register: mount_nfs_dir
+  with_items: "{{ ganesha.client }}"
+  when: ceph.client.nfs.ganesha == true
+- debug: msg={{ mount_nfs_dir }}
+  when: print_debug == true and ceph.client.nfs.ganesha == true
+
+
+- name: Conditionally create a file if it does not exist
+  copy:
+    content: "Hellow Ceph NFS World!"
+    dest: "{{ item.mount_dir }}/test-nfs01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644
+  register: file_copied
+  with_items: "{{ ganesha.client }}"
+  when: ceph.client.nfs.ganesha == true
+- debug: msg={{ file_copied }}
+  when: print_debug == true and ceph.client.nfs.ganesha == true
 
