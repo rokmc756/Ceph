@@ -5,12 +5,14 @@
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
     netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr1 ) | map(attribute='device') | first }}"
+    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr2 ) | map(attribute='device') | first }}"
   when: inventory_hostname not in groups['clients']
 
 - name: Get interface name from prefix of IP Addresses provided for Weka Nodes
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
     netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr1 ) | map(attribute='device') | first }}"
+    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr2 ) | map(attribute='device') | first }}"
   when: inventory_hostname in groups['clients']
 
 #
@@ -18,22 +20,25 @@
   set_fact:
     ipaddr0: "{{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}"
     ipaddr1: "{{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }}"
+    ipaddr2: "{{ hostvars[inventory_hostname]['ansible_'~netdev2].ipv4.address }}"
 
 # https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
 - name: Define facts for All worker's hostname
   set_fact:
     all_ext1_hostnames: "{{ groups['all'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
-    all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+    all_nodes_hostnames: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
     all_mon_hostnames: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
 
 #
 - debug: msg={{ all_ext1_hostnames }}
-- debug: msg={{ all_nodes_hostname }}
+- debug: msg={{ all_nodes_hostnames }}
+- debug: msg={{ all_mon_hostnames }}
 # all_nodes_hostnames: "{{ groups['all'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
 
 #
-- name: Define fact for all worker's first ip addresses
-  set_fact:
-    all_net0_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev0, 'ipv4', 'address']) | join(',') }}"
-- debug: msg={{ all_net0_ipaddrs }}
+#- name: Define fact for all worker's first ip addresses
+#  set_fact:
+#    all_net0_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev0, 'ipv4', 'address']) | join(',') }}"
+#- debug: msg={{ all_net0_ipaddrs }}
+#
 

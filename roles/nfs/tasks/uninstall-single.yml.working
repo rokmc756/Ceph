@@ -1,0 +1,78 @@
+# Remove NFS Cluster
+- name: Delete Ceph File System NFS Exports
+  shell: |
+    ceph nfs export rm {{ item.name }} /ceph
+  register: delete_cephfs_nfs_exports
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ delete_cephfs_nfs_exports }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
+
+- name: Mark Down for Filesystem
+  shell: |
+    ceph fs set {{ item.name }} down true
+  register: cephfs_marked_down
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ cephfs_marked_down }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+- name: Delete CephFS Volume in NFS
+  shell: |
+    ceph tell mon.\* injectargs --mon-allow-pool-delete true
+    ceph fs rm {{ item.name }} --yes-i-really-mean-it
+  register: delete_cephfs_volume_nfs
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ delete_cephfs_volume_nfs }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # cephadm shell -- ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
+  # ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
+  # ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
+  # ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
+
+#
+- name: Delete CephFS Metadata for NFS Service
+  shell: |
+    ceph orch stop mds.{{ item.fs }}
+    ceph orch rm mds.{{ item.fs }}
+  register: cephfs_metadata_deleted
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ cephfs_metadata_deleted }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+#
+- name: Remove NFS Cluster
+  shell: |
+    ceph nfs cluster rm {{ item.name }}
+  register: remove_nfs_cluster
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ remove_nfs_cluster }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
+# Error EPERM: pool deletion is disabled;
+# you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
+- name: Remove NFS Data and Metadata Services
+  shell: |
+    ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
+    ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
+  register: remove_nfs_data_metadata
+  ignore_errors: true
+  with_items: "{{ nfs.cluster }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ remove_nfs_data_metadata }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  # ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
+
+
+

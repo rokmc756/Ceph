@@ -53,15 +53,19 @@ ceph:
       ipaddr2: "192.168.2.17"
   protocol:
     smb: false
-    nfs: false
+    nfs:
+      single: true
+      ganesha: false
     rgw:
-      single: false
-      multi: true
+      single: true
+      multi: false
   client:
     block:
       rbd: false
       iscsi: false
-    nfs: false
+    nfs:
+      single: false
+      ganesha: false
     cephfs: false
     smb: false
     rgw:

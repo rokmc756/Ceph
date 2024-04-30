@@ -25,18 +25,34 @@
 #    - { name: "jtest-nfs-ganesha01", fs: "jtest-fs01" }
 
 nfs:
-  ganesha:
-    - { name: "jtest-ganesha01", pool: "jtest-nfs-pool01", fs: "jtest-fs01", virtual_ip: "192.168.1.88/24" }
+  cluster:
+    - { name: "jtest-nfs01", pool: "jtest-nfs-pool01", fs: "jtest-nfs-fs01", virtual_ip: "192.168.1.88/24" }
   users:
-    - { cluster: "jtest-ganesha01", name: "jomoon", passwd: "changeme", namespace: "jtest-ns01" }
+    - { cluster: "jtest-nfs01", name: "jomoon", passwd: "changeme", namespace: "jtest-nfs-ns01" }
   auth:
-    - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: "jtest-nfs-pool01", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
+    - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: "jtest-nfs-pool01", namespace: "jtest-nfs-ns01", cephfs: "allow rw tag cephfs", data: "jtest-nfs-fs01", mds: "allow rw", path: "/", key: "jtest-nfs.key" }
   export:
-    - { name: "cephfs", cluster: "jtest-ganesha01", src: "/ceph", fs: "jtest-fs01", dest: "/"  }
+    - { name: "cephfs", cluster: "jtest-nfs01", src: "/ceph", fs: "jtest-nfs-fs01", dest: "/"  }
   client:
-    - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
+    - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-nfs-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
+  rgw:
+    - { cluster: "jtest-nfs01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
+
+
+ganesha:
+  cluster:
+    - { name: "jtest-ganesha01", pool: "jtest-ganesha-pool01", fs: "jtest-ganesha-fs01", virtual_ip: "192.168.1.88/24" }
+  users:
+    - { cluster: "jtest-ganesha01", name: "jomoon", passwd: "changeme", namespace: "jtest-ganesha-ns01" }
+  auth:
+    - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: "jtest-ganesha-pool01", namespace: "jtest-ganesha-ns01", cephfs: "allow rw tag cephfs", data: "jtest-ganesha-fs01", mds: "allow rw", path: "/", key: "jtest-ganesha.key" }
+  export:
+    - { name: "cephfs", cluster: "jtest-ganesha01", src: "/ceph", fs: "jtest-ganesha-fs01", dest: "/"  }
+  client:
+    - { mount_dir: "/mnt/ceph", src: "/ceph", fs: "jtest-ganesha-fs01", dest: "/mnt/ceph", virtual_ip: "192.168.1.88"  }
   rgw:
     - { cluster: "jtest-ganesha01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
+
 
 
 # - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
