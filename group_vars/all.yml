@@ -34,7 +34,7 @@ ceph:
   obs: false
   fs: false
   block:
-    rbd: true
+    rbd: false
     iscsi: false
   net:
     conn: "udp"                     # dpdk or udp
@@ -55,8 +55,8 @@ ceph:
     smb: false
     nfs: false
     rgw:
-      single: true
-      multi: false
+      single: false
+      multi: true
   client:
     block:
       rbd: false
