@@ -54,8 +54,8 @@ ceph:
   protocol:
     smb: false
     nfs:
-      single: true
-      ganesha: false
+      single: false
+      ganesha: true
     rgw:
       single: true
       multi: false

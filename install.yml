@@ -9,9 +9,9 @@
     add_ceph_nodes: false
     add_osd_nodes: false                    # --> Need to check if it works
   roles:
+    - { role: radosgw }
     - { role: nfs }
 
-#    - { role: radosgw }
 #    - { role: cephfs }
 #    - { role: ceph }
 #    - { role: block }

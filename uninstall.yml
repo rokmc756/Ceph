@@ -10,8 +10,8 @@
     remove_cephadm_bin: false
   roles:
     - { role: nfs }
+    - { role: radosgw }
 
-#    - { role: radosgw }
 #    - { role: ceph }
 #    - { role: cephfs }
 #    - { role: block }
