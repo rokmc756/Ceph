@@ -194,3 +194,6 @@ $ make uninstall
 "time=\"2024-04-28T18:25:13+09:00\" level=warning msg=\"Error validating CNI config file /etc/cni/net.d/10-flannel.conflist: [failed to find plugin \\\"flannel\\\" in path [/usr/lib/cni]]\""
 ~~~
 
+## Mount Error
+* https://www.unixe.de/ein-mount-cephfs-issue/
+

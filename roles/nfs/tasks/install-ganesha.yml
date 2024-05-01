@@ -1,4 +1,3 @@
-#
 - name: Get FSID
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
@@ -7,19 +6,19 @@
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Set Fact for cephadm_cmd command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Create a NFS filesystem Volume
   shell: |
     ceph fs volume create {{ item.fs }}
@@ -29,7 +28,7 @@
 - debug: msg={{ create_nfs_vol }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Enable the Ceph Manager NFS module
   shell: |
     {{ cephadm_cmd }} ceph mgr module enable nfs
@@ -38,7 +37,7 @@
 - debug: msg={{ nfs_module_enabled }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Create RADOS Pools
   shell: |
     {{ cephadm_cmd }} ceph osd pool create {{ item.pool }}
@@ -48,7 +47,7 @@
 - debug: msg={{ rados_pools_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Enable Application for NFS
   shell: |
     {{ cephadm_cmd }} ceph osd pool application enable {{ item.pool }} nfs
@@ -58,7 +57,7 @@
 - debug: msg={{ nfs_app_enabled }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Initialize RBD Pool
   shell: |
     {{ cephadm_cmd }} rbd pool init -p {{ item.pool }}
@@ -68,7 +67,7 @@
 - debug: msg={{ rbd_pool_init }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 #- name: Deploy NFS-Ganesha Gateway Using Placement Specification
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch apply nfs {{ item.name }} --placement="{{ ceph.mon_host_num }} {{ all_mon_hostnames }} "
@@ -77,7 +76,7 @@
 #- debug: msg={{ nfs_ganesha_gw_deployed }}
 #  when: print_debug == true
 
-#
+
 - name: Deploy NFS-Ganesha Cluster Using Command Line
   shell: |
     {{ cephadm_cmd }} ceph nfs cluster create {{ item.name }} "{{ ceph.mon_host_num }} {{ all_mon_hostnames }}" --ingress --virtual-ip {{ item.virtual_ip }}
@@ -87,7 +86,7 @@
 - debug: msg={{ nfs_ganesha_gw_deployed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if NFS Ganesha Serivce is still Starting
   shell: |
     ceph orch ps --daemon_type=nfs
@@ -99,7 +98,7 @@
 - debug: msg={{ nfs_ganesha_status }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if NFS Ganesha Serivce is still Starting
   shell: |
     ceph orch ps --daemon_type=nfs
@@ -111,7 +110,7 @@
 - debug: msg={{ nfs_ganesha_status }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: List Services
   shell: |
     {{ cephadm_cmd }} ceph orch ls
@@ -121,7 +120,7 @@
 - debug: msg={{ services_listed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check the Cluster Info Status when Creating NFS
   shell: |
     ceph nfs cluster info {{ item.name }}
@@ -131,7 +130,7 @@
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check the ls status when Creating NFS Ganesha Cluster
   shell: |
     {{ cephadm_cmd }} ceph orch ls --service_name=nfs.{{ item.name }}
@@ -142,6 +141,7 @@
 - debug: msg={{ check_nfs_ls }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - name: Copy Ganesha Configuration File
   template: src=ceph-nfs.conf.j2 dest={{ ceph.base_path }}/ceph-nfs.conf owner=root group=root mode=644 force=yes
   register: ganesha_config_copied
@@ -149,7 +149,7 @@
 - debug: msg={{ ganesha_config_copied }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Create a Configuration File and Apply it to the NFS Cluster
   shell: |
     ceph nfs cluster config set {{ item.name }} -i /root/ceph-nfs.conf
@@ -160,7 +160,7 @@
 - debug: msg={{ nfs_config_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: View customized NFS Ganesha Configuration
   shell: |
     ceph nfs cluster config get {{ item.cluster }}
@@ -170,7 +170,7 @@
 - debug: msg={{ customized_nfs_ganesha_config_viewed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Create a User, nfsclient to Expose CephFS though the NFS server
   shell: |
     ceph auth {{ item.action }} client.{{ item.user }} mon '{{ item.mon }}' \
@@ -184,6 +184,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #  https://docs.ceph.com/en/quincy/mgr/nfs/
 
+
 # Export RGW Bucket
 # ceph nfs export create rgw --cluster-id <cluster_id> --pseudo-path <pseudo_path> --bucket <bucket_name>
 # [--user-id <user-id>] [--readonly] [--client_addr <value>...] [--squash <value>] [--sectype <value>...]
@@ -195,7 +196,7 @@
 # Delete EXPORT
 # ceph nfs export rm <cluster_id> <pseudo_path>
 
-#
+
 - name: Create a CephFS Export
   shell: |
     {{ cephadm_cmd }} ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
@@ -205,9 +206,9 @@
 - debug: msg={{ create_cephfs_export }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
   # ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
-#  # ceph fs subvolume getpath cephfs sub0
+  # ceph fs subvolume getpath cephfs sub0
 
-#
+
 # https://github.com/nfs-ganesha/nfs-ganesha/blob/next/src/config_samples/export.txt
 # ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
 #- name: Create a CephFS Export
@@ -223,7 +224,7 @@
 # ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
 # ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
 
-#
+
 #- name: Transfer Ceph Configuration to Rados Gateway Host
 #  shell: |
 #    {{ cephadm_cmd }} radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
@@ -233,27 +234,29 @@
 #- debug: msg={{ rgw_user_created }}
 #  when: print_debug == true
 
-#
+
 - name: Create a RGW Bucket Export
   shell: |
-    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --bucket {{ item.bucket }} --client_addr {{ item.client_addr }}
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} \
+    --pseudo-path {{ item.pseudo_path }} --bucket {{ item.bucket }} --client_addr {{ item.client_addr }}
   register: rgw_bucket_export_created
   with_items: "{{ ganesha.rgw }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ rgw_bucket_export_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Create a RGW User Export
   shell: |
-    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} --pseudo-path {{ item.pseudo_path }} --user-id {{ item.user_id }} --client_addr {{ item.client_addr }}
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} \
+    --pseudo-path {{ item.pseudo_path }} --user-id {{ item.user_id }} --client_addr {{ item.client_addr }}
   register: rgw_user_export_created
   with_items: "{{ ganesha.rgw }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ rgw_user_export_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: List the NFS exports
   shell: |
     {{ cephadm_cmd }}  ceph nfs export ls {{ item.cluster }}
@@ -263,7 +266,7 @@
 - debug: msg={{ list_nfs_export }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Get the Information of the NFS Export
   shell: |
     {{ cephadm_cmd }} ceph nfs cluster info {{ item.cluster }}
@@ -273,13 +276,13 @@
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Pause until Pools are started to Scrub
   pause:
     seconds: 40
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if Pools are still Unknown
   shell: |
     {{ cephadm_cmd }} ceph pg stat
@@ -291,7 +294,7 @@
 - debug: msg={{ unknown_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Check if Pools are Active+Clean
   shell: |
     {{ cephadm_cmd }} ceph pg stat
@@ -302,39 +305,7 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 # ceph osd map cephfs.jtest-fs01.data jtest-ns01
 # ceph health detail
 # HEALTH_WARN 1 failed cephadm daemon(s)
-
-
-# ceph nfs cluster info
-#{
-#  "jtest-clu01": {
-#    "backend": [
-#      {
-#        "hostname": "rk9-node01",
-#        "ip": "192.168.1.71",
-#        "port": 2049
-#      },
-#      {
-#        "hostname": "rk9-node02",
-#        "ip": "192.168.0.72",
-#        "port": 2049
-#      },
-#      {
-#        "hostname": "rk9-node03",
-#        "ip": "192.168.0.73",
-#        "port": 2049
-#      }
-#    ],
-#    "virtual_ip": null
-#  }
-#}
-
-# ceph orch ps --daemon_type=nfs
-#NAME                                   HOST        PORTS   STATUS  REFRESHED  AGE  MEM USE  MEM LIM  VERSION    IMAGE ID
-#nfs.jtest-clu01.0.0.rk9-node03.vdmxmn  rk9-node03  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
-#nfs.jtest-clu01.1.0.rk9-node02.rwqmyc  rk9-node02  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
-#nfs.jtest-clu01.2.0.rk9-node01.fohytq  rk9-node01  *:2049  error      4m ago  35m        -        -  <unknown>  <unknown>
 

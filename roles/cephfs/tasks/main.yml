@@ -15,7 +15,8 @@
 - name: Create Pool and CephFS
   import_tasks: install.yml
   tags: install
-  when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.fs == true and inventory_hostname in ceph.control_node
+  # when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 #
 - name: Install CephFS Clients
@@ -33,5 +34,6 @@
 - name: Remove CephFS and Pools
   import_tasks: uninstall.yml
   tags: uninstall
-  when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: ceph.fs == true and inventory_hostname in ceph.control_node
+  # when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

@@ -1,4 +1,5 @@
 - name: Delete text file with the Content
+  become_user: root
   shell: |
     rm -f {{ item.mount_dir }}/{{ item.name }}.txt
   register: delete_cephfs_file
@@ -8,7 +9,7 @@
 - debug: msg={{ delete_cephfs_file }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Check if CephFS directory is mounted
   shell: |
     df -h
@@ -20,7 +21,7 @@
 - debug: msg={{ check_cephfs_mounted  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Unmount CephFS directory
   shell: |
     umount {{ item.mount_dir }}
@@ -31,7 +32,7 @@
 - debug: msg={{ unmount_cephfs_dir }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Delete Directory to Mount CephFS
   shell: |
     rm -rf {{ item.mount_dir }}
@@ -42,7 +43,7 @@
 - debug: msg={{ delete_cephfs_dir }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Remove Directory to be mount by CephFS Clients
   shell: |
     rm -rf {{ item.mount_dir }}
@@ -53,7 +54,7 @@
 - debug: msg={{ remove_cephfs_dir  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Uninstall CephFS Client Packages
   become: true
   package: name={{ item }} state=absent
@@ -63,7 +64,7 @@
     - "ceph-fuse"
   when: inventory_hostname in groups['clients']
 
-#
+
 - name: Delete Ceph Config Files
   shell: |
     rm -f {{ item }}
@@ -75,7 +76,7 @@
 - debug: msg={{ delete_ceph_config_file }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Delete Ceph User Auth Key
   shell: |
     rm -f /etc/ceph/ceph.client.{{ item.name }}.keyring
@@ -87,7 +88,7 @@
 - debug: msg={{ ceph_user_auth_key_deleted }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Clear Memory Cache
   shell: |
     sync && echo 3 > /proc/sys/vm/drop_caches

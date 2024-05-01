@@ -9,11 +9,11 @@
     uninstall_ceph: false
     remove_cephadm_bin: false
   roles:
-    - { role: block }
+    - { role: cephfs }
+#    - { role: block }
 #    - { role: nfs }
 #    - { role: radosgw }
 #    - { role: ceph }
-#    - { role: cephfs }
 #    - { role: block }
 #    - { role: init-hosts }
 #    - { role: ceph }

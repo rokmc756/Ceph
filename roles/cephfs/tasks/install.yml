@@ -1,12 +1,12 @@
-#
 - name: Increase max PGs per OSD
   shell: |
-    ceph config set mon mon_max_pg_per_osd 300
+    ceph config set mon mon_max_pg_per_osd 600
   register: max_pgs_increased
 - debug: msg={{ max_pgs_increased }}
   when: print_debug == true
+  # 300
 
-#
+
 - name: Create Pool for Metadata and Data
   shell: |
     ceph osd pool create {{ item.name }}_data {{ item.pg_count }}
@@ -17,7 +17,7 @@
   when: print_debug == true
   # ceph osd pool create {{ item.name }} {{ item.pg_count }}
 
-#
+
 - name: Create Ceph Filesystem
   shell: |
     ceph fs new {{ item.name }}-fs01 {{ item.name }}_metadata {{ item.name }}_data
@@ -26,7 +26,7 @@
 - debug: msg={{ cephfs_created }}
   when: print_debug == true
 
-#
+
 #- name: Create Ceph Filesystem Sub Volumes
 #  shell: |
 #    ceph fs subvolume create {{ item.name }} {{ item.name }}-subvol01
@@ -35,8 +35,8 @@
 #- debug: msg={{ cephfs_subvol_created }}
 #  when: print_debug == true
 
+
 # Note that Ceph only increases the actual number of ranks in the Ceph File Systems if a spare MDS daemon is available to take the new rank.
-#
 - name: Set the max_mds parameter to the desired number of active MDS daemons
   shell: |
     ceph fs set {{ item.name }} max_mds 3
@@ -46,7 +46,7 @@
   when: print_debug == true
 # ceph mds deactivate cephfs:1
 
-#
+
 - name: Verify the number of active MDS daemons
   shell: |
     ceph fs status {{ item.name }}
@@ -55,7 +55,7 @@
 - debug: msg={{ active_mds_daemons_verified }}
   when: print_debug == true
 
-#
+
 - name: Authorize CephFS Client to access new Ceph Filesystem
   shell: |
     ceph fs authorize {{ item.name }} client.{{ item.name }} / r root_squash /temp rw
@@ -67,7 +67,7 @@
   # ceph fs authorize {{ item.name }} client.{{ item.name }} /temp rw
   # ceph fs authorize {{ item.name }} client.{{ item.name }} / r /temp rw
 
-#
+
 - name: Print Authentication Key for Ceph Users
   shell: |
     ceph auth get client.{{ item.name }}
@@ -76,7 +76,7 @@
 - debug: msg={{ ceph_user_key_printed }}
   when: print_debug == true
 
-#
+
 - name: Copy Authentication Key into Ceph Client Nodes for Ceph Users
   shell: |
     ceph auth get client.{{ item.name }} > /etc/ceph/ceph.client.{{ item.name }}.keyring
@@ -85,7 +85,7 @@
 - debug: msg={{ ceph_user_auth_key_copied }}
   when: print_debug == true
 
-#
+
 - name: Check Active Stat
   shell: |
     ceph mds stat
@@ -94,11 +94,25 @@
   when: print_debug == true
 
 
+#- name: Erasure Coded pools as CephFS data pools as long as they have overwrites enabled
+#  shell: |
+#    ceph osd pool set {{ item.name }}_data allow_ec_overwrites true
+#    ceph osd pool set {{ item.name }}_metadata allow_ec_overwrites true
+#  register: ec_overwrites_allowed
+#  with_items: "{{ cephfs.pool }}"
+#- debug: msg={{ ec_overwries_allowed }}
+#  when: print_debug == true
+#  "start": "2024-05-01 07:43:42.711158", "stderr": "Error EINVAL: ec overwrites can only
+#  be enabled for an erasure coded pool\nError EINVAL: ec overwrites can only be enabled
+#  for an erasure coded pool", "stderr_lines": ["Error EINVAL: ec overwrites can only be
+#  enabled for an erasure coded pool", "Error EINVAL: ec overwrites can only be enabled
+#  for an erasure coded pool"], "stdout": "", "stdout_lines": []}
+
+
 # https://docs.ceph.com/en/quincy/cephfs/fs-volumes/
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-file-system-subvolume
 # https://access.redhat.com/documentation/th-th/red_hat_ceph_storage/4/html/file_system_guide/management-of-ceph-file-system-volumes-subvolumes-and-subvolume-groups
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=subvolumes-creating-snapshot-file-system-subvolume
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-ceph-file-systems_fs
-
 

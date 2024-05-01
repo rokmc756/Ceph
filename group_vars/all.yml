@@ -18,6 +18,7 @@ cephadm:
   download: false
 
 ceph:
+  control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
   major_version: "18"
   minor_version: "2"
@@ -66,7 +67,7 @@ ceph:
     nfs:
       single: false
       ganesha: false
-    cephfs: false
+    cephfs: true
     smb: false
     rgw:
       single: false

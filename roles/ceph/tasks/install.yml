@@ -139,6 +139,8 @@
   register: apply_mds
 - debug: msg={{ apply_mds }}
   when: print_debug == true
+  # ceph orch apply mds myfs --placement="15 rk9-node04 rk9-node05 rk9-node06"
+  # ceph orch apply mds myfs --placement="30 rk9-node01 rk9-node02 rk9-node03 rk9-node04 rk9-node05 rk9-node06"
 
 #
 - name: Label the nodes with its role

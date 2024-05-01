@@ -75,6 +75,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 # converged only:
 # ceph config set mgr mgr/cephadm/autotune_memory_target_ratio 0.2
+# ceph orch apply mds myfs --placement="18 rk9-node01 rk9-node02 rk9-node03 rk9-node04 rk9-node05 rk9-node06"
 
 #
 - name: Apply the Role of Monitor for All Nodes

@@ -5,7 +5,6 @@
 # https://www.ibm.com/docs/ko/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
 # https://docs.ceph.com/en/latest/dev/dpdk/
 # https://enterprise-support.nvidia.com/s/article/bring-up-ceph-rdma---developer-s-guide
-#
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 
 # apt-get install ceph-common
@@ -20,15 +19,16 @@
 # root@ubt22-client01:/etc/ceph# mount -t ceph 192.168.1.71:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
 # mount error: no mds server is up or the cluster is laggy
 
-#
+
 - name: Install CephFS Client Packages
   package: name={{item}} state=present
   with_items:
     - "ceph-common"
     - "ceph-fuse"
 
-#
+
 - name: Copy Ceph Configuration for CephFS Clients
+  become_user: root
   synchronize:
     src:  "{{ item }}"
     dest: "{{ item }}"
@@ -44,8 +44,9 @@
 - debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Copy Ceph Configuration for CephFS Clients
+  become_user: root
   synchronize:
     src: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
     dest: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
@@ -60,7 +61,7 @@
 - debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Change Permission for /etc/ceph/ceph.conf
   shell: |
     chmod 644 /etc/ceph/ceph.conf
@@ -70,7 +71,7 @@
 - debug: msg={{ ceph_conf_perm_changed }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Change Permission for /etc/ceph/ceph.client.*.keyring
   shell: |
     chmod 644 /etc/ceph/ceph.client.{{ item.name }}.keyring
@@ -81,7 +82,7 @@
 - debug: msg={{ ceph_client_keyring_perm_changed }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Create Directory to Mount CephFS Client
   shell: |
     mkdir {{ item.mount_dir }}
@@ -91,25 +92,32 @@
 - debug: msg={{ create_cephfs_dir  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+# mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} \
+# -o name={{ item.name }},fs={{ item.name }},secret=`cat /etc/ceph/ceph.client.{{ item.name }}.keyring | grep key | awk '{print $3}'`
 - name: Mount Stateless CephFS Clients
   shell: |
-    mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/ {{ item.mount_dir }} \
-    -o name={{ item.name }},fs={{ item.name }}
+    mount -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
   register: mount_cephfs_dir
   with_items: "{{ cephfs.fs }}"
   when: print_debug == true and inventory_hostname in groups['clients']
 - debug: msg={{ mount_cephfs_dir }}
   when: print_debug == true and inventory_hostname in groups['clients']
-  # mount.ceph admin@09afe574-fa70-11ee-80b0-00505693d59b.cephfs-p01-fs01=/ /mnt/cephfs/
-  # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
-  # 10.66.10.1:6789,10.66.10.4:6789,10.66.10.6:6789:/       /mnt/cephfs     ceph    name=vmuser,secretfile=/etc/ceph/vmuser.secret,noatime,_netdev  0       2
-  # ceph-fuse -n client.{{ item.name }} {{ item.mount_dir }}
-  # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
-  # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/temp {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
-  # ,secret=`cat /etc/ceph/ceph.client.admin.keyring | grep key | awk '{print $3}'`
 
-#
+
+# mount -v -t ceph splunk@.splunkfs=/ -o secret=$KEY
+# mount -t ceph splunk@.splunkfs=/ /mnt/splunk -o secretfile=/etc/ceph/ceph.client.splunk.key
+# mount -v -t ceph $HOST:6789:/ /mnt/splunk -o name=splunk,fs=splunkfs,secretfile=/etc/ceph/ceph.client.splunk.key
+# mount -v -t ceph splunk@$FSID.splunkfs=/ /mnt/splunk -o 'secretfile=/etc/ceph/ceph.client.splunk.key,mon_addr=$IP'
+
+# mount.ceph admin@09afe574-fa70-11ee-80b0-00505693d59b.cephfs-p01-fs01=/ /mnt/cephfs/
+# mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+# 10.66.10.1:6789,10.66.10.4:6789,10.66.10.6:6789:/       /mnt/cephfs     ceph    name=vmuser,secretfile=/etc/ceph/vmuser.secret,noatime,_netdev  0       2
+# ceph-fuse -n client.{{ item.name }} {{ item.mount_dir }}
+# mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+# mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/temp {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+# ,secret=`cat /etc/ceph/ceph.client.admin.keyring | grep key | awk '{print $3}'`
+
+
 - name: Check if CephFS Directory is Mounted
   shell: |
     df -h
@@ -121,8 +129,9 @@
 - debug: msg={{ check_cephfs_mounted  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Creat text file with the content
+  become_user: root
   shell: |
     touch {{ item.mount_dir }}/{{ item.name }}.txt
     echo "Hello World in {{ item.name }}" >  {{ item.mount_dir }}/{{ item.name }}.txt
@@ -132,8 +141,8 @@
   when: inventory_hostname in groups['clients']
 - debug: msg={{ create_cephfs_file }}
   when: print_debug == true and inventory_hostname in groups['clients']
-# Need to test switch mode of iptime in order to expand ports from 5 to 10
 
+# Need to test switch mode of iptime in order to expand ports from 5 to 10
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
 
@@ -148,16 +157,6 @@
 #    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T05:12:24.529620Z
 #    mds.myfs.rk9-node03.zfdrvq crashed on host rk9-node03 at 2024-04-15T14:20:04.912266Z
 #    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:26:45.042720Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:27:39.103306Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:28:48.257557Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:29:21.007154Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:35:24.452769Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:00:33.398964Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:01:26.213958Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:01:55.846795Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:03:11.561699Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:06:30.522966Z
-#    mgr.rk9-node03.mxtbsr crashed on host rk9-node03 at 2024-04-15T15:07:29.531248Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T16:22:32.394957Z
+#    ~~ snip
 #[WRN] SLOW_OPS: 12 slow ops, oldest one blocked for 3183 sec, osd.7 has slow ops
 
