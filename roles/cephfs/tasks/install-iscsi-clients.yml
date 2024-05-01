@@ -1,16 +1,24 @@
 ---
-# iscsiadm -m node --op=update --name node.session.auth.authmethod --value=CHAP
-# iscsiadm -m node --op=update --name node.session.auth.username --value=jomoon-rk9-node01
-# iscsiadm -m node --op=update --name node.session.auth.password --value=changemechangeme
+# Install iSCSI initiator
 
-- name: Install iSCSI Initiator
-  package:
-    name: "{{ item }}"
-    state: present
+- name: Install iSCSI initiator for RedHat/CentOS/Rocky or OpenSUSE
+  package: name={{item}} state=present
   register: iscsi_initiator_installed
   with_items:
     - "iscsi-initiator-utils"
+  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
 - debug: msg={{ iscsi_initiator_installed }}
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+
+- name: Install iSCSI initiator for Ubuntu or Debian
+  package: name={{item}} state=present
+  register: iscsi_initiator_installed
+  with_items:
+    - "open-iscsi"
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+- debug: msg={{ iscsi_initiator_installed }}
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 
 - name: Copy iSCSI Initiator Config File
@@ -46,7 +54,7 @@
 
 
 - name: Discover Target
-  command: iscsiadm -m discovery -t sendtargets -p {{ hostvars[groups['clients'][0]].ansible_ssh_host }}
+  command: iscsiadm -m discovery -t sendtargets -p {{ hostvars[groups['iscsi-storage'][0]].ansible_ssh_host }}
   register: target_discovered
 - debug: msg={{ target_discovered }}
 
@@ -60,7 +68,7 @@
 - name: Login to the Target
   command: |
     iscsiadm --mode node --target iqn.2022-12.io.pivotal.jtest:{{ rhel_version }}.{{ inventory_hostname }} \
-    --portal {{ hostvars[groups['clients'][0]].ansible_ssh_host }} --login
+    --portal {{ hostvars[groups['iscsi-storage'][0]].ansible_ssh_host }} --login
   register: target_logined
 - debug: msg={{ target_logined }}
 
@@ -77,7 +85,7 @@
 - debug: msg={{ partitions_confirmed }}
 
 
-- name: Install Parted
+- name: Install parted
   yum:
     name: parted
     state: present
@@ -85,7 +93,7 @@
 - debug: msg={{ parted_installed }}
 
 
-- name: "Add new partition /dev/sdb1"
+- name: Add New Partition
   parted:
     device: /dev/sdb
     number: 1
@@ -114,8 +122,8 @@
   register: directory_created
 - debug: msg={{ directory_created }}
 
-#
-- name: Mount the Partition
+
+- name: Mount the Partition to
   mount:
     fstype: xfs
     src: /dev/sdb1

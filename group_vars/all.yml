@@ -36,7 +36,7 @@ ceph:
   fs: false
   block:
     rbd: false
-    iscsi: false
+    iscsi: true
   net:
     conn: "udp"                     # dpdk or udp
     gateway: "192.168.0.1"
@@ -67,7 +67,7 @@ ceph:
     nfs:
       single: false
       ganesha: false
-    cephfs: true
+    cephfs: false
     smb: false
     rgw:
       single: false

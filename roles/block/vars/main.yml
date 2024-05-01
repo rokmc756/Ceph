@@ -31,18 +31,15 @@ iscsi:
   targets:
     - {
          wwn: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", pg_name: "jtest-iscsi-pool01", pg_num: 32, pgp_num: 32,
-         replica: "replicated replicated_rule", image: jtest-iscsi-img01, image_size: 2G, trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63,192.168.0.0/24",
+         replica: "replicated replicated_rule", image: "jtest-iscsi-img01", image_size: 2G, trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63",
          init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
       }
   initiators:
     - {
-         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changeme",
-         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changeme"
+         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "jomoon", password: "changemechangeme",
+         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changemechangeme", pg_name: "jtest-iscsi-pool01", image: "jtest-iscsi-img01"
       }
-    - {
-         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changeme",
-         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changeme"
-      }
+      #   wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changemechangeme",
   portals:
     - { ip: 192.168.0.11 }
 

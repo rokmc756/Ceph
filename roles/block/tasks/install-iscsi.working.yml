@@ -118,7 +118,7 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io {{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }} skipchecks=true
+    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io {{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}
     exit
     EOF
   register: iscsi_target_created
@@ -149,7 +149,9 @@
 - debug: msg={{ pool_image_created }}
   when: print_debug == true and inventory_hostname in groups['mon']
 
-
+# cd iscsi-targets/iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
+# cd hosts
+# create iqn.2024-04.io.weka.jtest:iscsi-client1
 - name: Create iSCSI Initiator
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
@@ -167,7 +169,7 @@
 - name: Setup User and Password for iSCSI Initiators
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+    cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
     auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
     exit
     EOF
@@ -186,13 +188,11 @@
     exit
     EOF
   register: disk_added
-  with_items: "{{ iscsi.initiators }}"
-  when: inventory_hostname in groups['mon']
+  with_items: "{{ iscsi.targets }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ disk_added }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # https://github.com/ceph/ceph-ansible/issues/3870
 # ceph-ansible installs ceph-iscsi and tcmu-runner, but the initial configuration is broken (see my comments above, python errors while installing). When I manually configure gwcli (target, target IPs), ceph-ansible runs flawlessly afterwards. I try to track down the problem:

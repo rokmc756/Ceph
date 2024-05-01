@@ -21,7 +21,7 @@
     exit
     EOF
   register: pool_disk_removed
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.targets }}"
   ignore_errors: true
   when: inventory_hostname in groups['mon']
 - debug: msg={{ pool_disk_removed }}
@@ -37,10 +37,11 @@
     EOF
   register: nochap_auth
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ nochap_auth }}
   when: print_debug == true and inventory_hostname in groups['mon']
+  # loop: "{{ iscsi.targets }}"
 
 
 - name: Delete iSCSI Client
@@ -52,10 +53,11 @@
     EOF
   register: iscsi_client_deleted
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_client_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
+  # loop: "{{ iscsi.targets }}"
 
 
 - name: Delete Disk
