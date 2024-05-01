@@ -23,7 +23,6 @@
 - debug: msg={{ hosts_listed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-
 # ceph tell osd.* config get osd_heartbeat_grace
 # ceph tell osd.* config get osd_heartbeat_interval
 # ceph tell osd.* config get osd_client_watch_timeout
@@ -118,7 +117,7 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io {{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }} skipchecks=true
+    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
     exit
     EOF
   register: iscsi_target_created
@@ -176,6 +175,7 @@
   when: inventory_hostname in groups['mon']
 - debug: msg={{ user_password_setup }}
   when: print_debug == true and inventory_hostname in groups['mon']
+  # auth nochap
 
 
 - name: Add Disk
