@@ -58,14 +58,13 @@
 
 - name: Authorize CephFS Client to access new Ceph Filesystem
   shell: |
-    ceph fs authorize {{ item.name }} client.{{ item.name }} / r root_squash /temp rw
+    ceph fs authorize {{ item.name }} client.{{ item.name }} / rw root_squash / rw
   register: cephfs_client_authorized
   with_items: "{{ cephfs.fs }}"
 - debug: msg={{ cephfs_client_authorized }}
   when: print_debug == true
-  # ceph fs authorize {{ item.name }} client.{{ item.name }} / rw root_squash /volumes rw
-  # ceph fs authorize {{ item.name }} client.{{ item.name }} /temp rw
-  # ceph fs authorize {{ item.name }} client.{{ item.name }} / r /temp rw
+# ceph fs authorize {{ item.name }} client.{{ item.name }} /temp rw
+# ceph fs authorize {{ item.name }} client.{{ item.name }} / r /temp rw
 
 
 - name: Print Authentication Key for Ceph Users

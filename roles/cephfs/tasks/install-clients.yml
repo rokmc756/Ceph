@@ -96,7 +96,7 @@
 # -o name={{ item.name }},fs={{ item.name }},secret=`cat /etc/ceph/ceph.client.{{ item.name }}.keyring | grep key | awk '{print $3}'`
 - name: Mount Stateless CephFS Clients
   shell: |
-    mount -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+    mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
   register: mount_cephfs_dir
   with_items: "{{ cephfs.fs }}"
   when: print_debug == true and inventory_hostname in groups['clients']
