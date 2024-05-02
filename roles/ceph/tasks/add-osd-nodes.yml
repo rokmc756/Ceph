@@ -53,7 +53,7 @@
 - pause:
     minutes: 1
 
-#
+
 # https://docs.ceph.com/en/quincy/cephadm/services/osd/
 - name: Disable the Automatic Creation of OSDs on Avaialble Devices
   shell: |
@@ -70,7 +70,7 @@
 #- pause:
 #    minutes: 2
 
-#
+
 - name: Maually Create OSDs with Specific Devices on Specific Hosts
   shell: |
     {{ cephadm_cmd }} ceph orch daemon add osd \
@@ -99,7 +99,7 @@
 
 #- meta: end_play
 - pause:
-    minutes: 2
+    minutes: 1
 
 #
 - name: Label the OSD Nodes with It's Role

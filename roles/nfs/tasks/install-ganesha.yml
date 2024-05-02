@@ -87,7 +87,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Check if NFS Ganesha Serivce is still Starting
+- name: Check if NFS Ganesha Serivce is Still Starting
   shell: |
     ceph orch ps --daemon_type=nfs
   register: nfs_ganesha_status
@@ -99,7 +99,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Check if NFS Ganesha Serivce is still Starting
+- name: Check if NFS Ganesha Serivce is Still Starting
   shell: |
     ceph orch ps --daemon_type=nfs
   register: nfs_ganesha_status
@@ -131,7 +131,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Check the ls status when Creating NFS Ganesha Cluster
+- name: Check the ls Status when Creating NFS Ganesha Cluster
   shell: |
     {{ cephadm_cmd }} ceph orch ls --service_name=nfs.{{ item.name }}
     {{ cephadm_cmd }} ceph orch ps --service_name=nfs.{{ item.name }}
@@ -150,7 +150,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Create a Configuration File and Apply it to the NFS Cluster
+- name: Create a Configuration File and Apply It to the NFS Cluster
   shell: |
     ceph nfs cluster config set {{ item.name }} -i /root/ceph-nfs.conf
   ignore_errors: true
@@ -161,7 +161,7 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: View customized NFS Ganesha Configuration
+- name: View Customized NFS Ganesha Configuration
   shell: |
     ceph nfs cluster config get {{ item.cluster }}
   register: customized_nfs_ganesha_config_viewed
@@ -277,13 +277,13 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Pause until Pools are started to Scrub
+- name: Pause until Pools are Started to Scrub
   pause:
     seconds: 40
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
-- name: Check if Pools are still Unknown
+- name: Check if Pools are Still Unknown
   shell: |
     {{ cephadm_cmd }} ceph pg stat
   register: unknown_pool_checked

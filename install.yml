@@ -10,9 +10,9 @@
     add_osd_nodes: false                    # --> Need to check if it works
   roles:
     - { role: block }
-#    - { role: cephfs }
 #    - { role: radosgw }
 #    - { role: nfs }
+#    - { role: cephfs }
 #    - { role: ceph }
 #    - { role: init-hosts }
 #    - { role: custom }

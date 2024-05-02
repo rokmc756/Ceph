@@ -22,16 +22,18 @@
   delegate_to: "{{ item }}"
   delegate_facts: True
   with_items: "{{ groups['all'] }}"
+  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Delete Buckets
   shell: |
-    /usr/local/bin/mc alias set {{ item.mc_alias }} http://192.168.0.73:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:7480 {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
     /usr/local/bin/mc rb --force {{ item.mc_alias}}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: buckets_created
+  ignore_errors: true
   with_items: "{{ rgw.users }}"
   when: inventory_hostname in groups['rgw']
 - debug: msg={{ buckets_created }}
@@ -41,8 +43,8 @@
 - name: Remove Users in the Ceph Object Gateway
   shell: |
     radosgw-admin user rm --uid={{ item.user_name }} --purge-data
-  ignore_errors: true
   register: rgw_user_removed
+  ignore_errors: true
   with_items: "{{ rgw.users }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ rgw_user_removed }}
@@ -52,8 +54,8 @@
 - name: Remove Zone in the Ceph Object Gateway
   shell: |
     {{ cephadm_cmd }} ceph orch rm rgw.test_realm.test_zone_bb
-  ignore_errors: true
   register: rgw_zone_removed
+  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ rgw_zone_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -63,8 +65,8 @@
   shell: |
     systemctl stop --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
     systemctl disable --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-  ignore_errors: true
   register: rgw_service_disabled
+  ignore_errors: true
   when: inventory_hostname in groups['rgw']
 - debug: msg={{ rgw_service_disabled }}
   when: print_debug == true and inventory_hostname in groups['rgw']
@@ -75,8 +77,8 @@
     path: /etc/ceph/ceph.conf
     regexp: "{{ item }}"
     state: absent
-  ignore_errors: true
   register: rgw_config_removed
+  ignore_errors: true
   with_items:
     - "^\\[client."
     - "^host =*"
@@ -92,8 +94,8 @@
   file:
     path: "{{ item }}"
     state: absent
-  ignore_errors: true
   register: ceph_config_removed
+  ignore_errors: true
   with_items:
     - "/etc/ceph/ceph.conf"
     - "/etc/ceph/ceph.client.admin.keyring"
@@ -105,8 +107,8 @@
 - name: Allow to Delete Pool from Mon
   shell: |
     {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
-  ignore_errors: true
   register: delete_pool_allowed
+  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ delete_pool_allowed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -115,11 +117,11 @@
 - name: Remove Rados Gateway Pools
   shell: |
     {{ cephadm_cmd }} ceph osd pool rm {{ item }} {{ item }} --yes-i-really-really-mean-it
-  ignore_errors: true
   register: rgw_pool_removed
   until: rgw_pool_removed is succeeded
   retries: 10
   delay: 20
+  ignore_errors: true
   with_items:
     - ".rgw.root"
     - "default.rgw.buckets.index"
@@ -138,6 +140,7 @@
   until: unknown_pool_checked.stdout.find("unknown") == -1
   retries: 30
   delay: 10
+  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ unknown_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -150,6 +153,7 @@
   until: scrub_pool_checked.stdout.find("scrubbing") == -1
   retries: 20
   delay: 15
+  ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ scrub_pool_checked }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -169,5 +173,6 @@
 
 - name: Uninstall MC for S3 Client
   import_tasks: uninstall-mc-client.yml
+  ignore_errors: true
 
 
