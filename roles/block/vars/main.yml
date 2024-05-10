@@ -51,6 +51,7 @@ iscsi:
       target_ip: "192.168.1.71"
       pg_name: "jtest-iscsi-pool01"
       image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+      mount_dir: "/mnt/iscsi-dir-client01"
     client02:
       name: "{{ hostvars[groups['clients'][1]]['ansible_hostname'] }}"
       wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
@@ -61,6 +62,7 @@ iscsi:
       target_ip: "192.168.1.72"
       pg_name: "jtest-iscsi-pool01"
       image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
+      mount_dir: "/mnt/iscsi-dir-client02"
     client03:
       name: "{{ hostvars[groups['clients'][2]]['ansible_hostname'] }}"
       wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
@@ -71,6 +73,7 @@ iscsi:
       target_ip: "192.168.1.73"
       pg_name: "jtest-iscsi-pool01"
       image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
+      mount_dir: "/mnt/iscsi-dir-client03"
   portals:
     - { ip: 192.168.0.11 }
 
