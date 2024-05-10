@@ -113,21 +113,6 @@
 - debug: msg={{ iscsid_stopped }}
 
 
-#- name: Rollback iscsid.conf for Authentication Method and Username / Password
-#  lineinfile:
-#    dest: /etc/iscsi/iscsid.conf
-#    regexp: "{{ item.regexp }}"
-#    line: "{{ item.line }}"
-#    state: "{{ item.state }}"
-#    backrefs: "{{ item.backrefs }}"
-#  register: iscsid_config_rollbacked
-#  with_items:
-#    - { regexp: "^node.session.auth.authmethod = CHAP", line: "#node.session.auth.authmethod = CHAP", state: present, backrefs: yes }
-#    - { regexp: "^node.session.auth.username = username", line: "#node.session.auth.username = {{ iscsiuser }}", state: present, backrefs: yes }
-#    - { regexp: "^node.session.auth.password = password", line: "#node.session.auth.password = {{ iscsipass }}", state: present, backrefs: yes }
-#- debug: msg={{ iscsid_config_rollbacked }}
-
-
 - name: Delete Config Files of iSCSI Initiator
   file:
     path: "{{ item }}"
