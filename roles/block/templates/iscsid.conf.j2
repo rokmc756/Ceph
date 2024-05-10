@@ -70,8 +70,8 @@ node.session.auth.authmethod = CHAP
 # authentication by the target(s), uncomment the following lines:
 #node.session.auth.username = username
 #node.session.auth.password = password
-node.session.auth.username = {{ iscsi.initiators[0].auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-node.session.auth.password = {{ iscsi.initiators[0].password }}
+node.session.auth.username = {{ item.value['auth_id'] }}
+node.session.auth.password = {{ item.value['password'] }}
 
 # To set a CHAP username and password for target(s)
 # authentication by the initiator, uncomment the following lines:

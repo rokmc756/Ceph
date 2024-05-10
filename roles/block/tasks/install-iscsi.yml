@@ -126,12 +126,6 @@
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
-# cd iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw
-# ls
-# cd gateways
-# create rk9-node01.jtest.weka.io 192.168.0.71
-
-
 - name: Create Pool and Images
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli

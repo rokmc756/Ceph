@@ -1,0 +1,48 @@
+rbd:
+  pool:
+    - { name: "default-p01", pg_count: 100 }
+    - { name: "cephfs-p01", pg_count: 100 }
+    - { name: "block-p01", pg_count: 100 }
+    - { name: "rgw-p01", pg_count: 100 }
+    - { name: "nfs-p01", pg_count: 100 }
+  image:
+    default:
+      - { name: "default-img01", pool: "default-p01", size: "1G" }
+      - { name: "default-img02", pool: "default-p01", size: "1G" }
+      - { name: "default-img03", pool: "default-p01", size: "1G" }
+    cephfs:
+      - { name: "cephfs-img01", pool: "cephfs-p01", size: "1G" }
+      - { name: "cephfs-img02", pool: "cephfs-p01", size: "1G" }
+      - { name: "cephfs-img03", pool: "cephfs-p01", size: "1G" }
+    block:
+      - { name: "block-img01", pool: "block-p01", size: "1G" }
+      - { name: "block-img02", pool: "block-p01", size: "1G" }
+      - { name: "block-img03", pool: "block-p01", size: "1G" }
+    rgw:
+      - { name: "rgw-img01", pool: "rgw-p01", size: "1G" }
+      - { name: "rgw-img02", pool: "rgw-p01", size: "1G" }
+      - { name: "rgw-img03", pool: "rgw-p01", size: "1G" }
+    nfs:
+      - { name: "nfs-img01", pool: "nfs-p01", size: "1G" }
+      - { name: "nfs-img02", pool: "nfs-p01", size: "1G" }
+      - { name: "nfs-img03", pool: "nfs-p01", size: "1G" }
+
+iscsi:
+  targets:
+    - wwn: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw"
+      init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
+      pg_name: "jtest-iscsi-pool01"
+      pg_num: 32
+      pgp_num: 32
+      replica: "replicated replicated_rule"
+      image: "jtest-iscsi-img01"
+      image_size: 2G
+      trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63"
+  initiators:
+    - {
+         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "jomoon", password: "changemechangeme",
+         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changemechangeme",
+         pg_name: "jtest-iscsi-pool01", image: "jtest-iscsi-img01", target_ip: "192.168.1.7"
+      }
+  portals:
+    - { ip: 192.168.0.11 }

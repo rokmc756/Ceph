@@ -30,15 +30,15 @@
 
 
 - name: Install iSCSI Clients
-  import_tasks: install-clients.yml
+  import_tasks: install-iscsi-clients.yml
   tags: install
-  when: ceph.client.block.iscsi == true and inventory_hostname in groups['clients']
+  when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
 
 
 - name: Uninstall iSCSI Clients
-  import_tasks: uninstall-clients.yml
+  import_tasks: uninstall-iscsi-clients.yml
   tags: uninstall
-  when: ceph.client.block.iscsi == true and inventory_hostname in groups['clients']
+  when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
 
 
 - name: Delete iSCSI Targets
@@ -51,3 +51,4 @@
   import_tasks: uninstall.yml
   tags: uninstall
   when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+

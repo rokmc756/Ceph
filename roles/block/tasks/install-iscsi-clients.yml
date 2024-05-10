@@ -3,33 +3,59 @@
 # iscsiadm -m node --op=update --name node.session.auth.username --value=jomoon-rk9-node01
 # iscsiadm -m node --op=update --name node.session.auth.password --value=changemechangeme
 
-- name: Install iSCSI Initiator
-  package:
-    name: "{{ item }}"
-    state: present
-  register: iscsi_initiator_installed
-  with_items:
-    - "iscsi-initiator-utils"
-- debug: msg={{ iscsi_initiator_installed }}
-
-
 #- name: Install iSCSI Initiator
 #  package:
 #    name: "{{ item }}"
 #    state: present
 #  register: iscsi_initiator_installed
 #  with_items:
-#    - "open-iscsi"
+#    - "iscsi-initiator-utils"
+#  when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'openSUSE Leap'
 #- debug: msg={{ iscsi_initiator_installed }}
+#  when: print_debug == true and ( ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'openSUSE Leap' )
+
+
+- name: Install iSCSI Initiator
+  package:
+    name: "{{ item }}"
+    state: present
+  register: iscsi_initiator_installed
+  with_items:
+    - "open-iscsi"
+  when: ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
+- debug: msg={{ iscsi_initiator_installed }}
+  when: print_debug == true and ( ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu' )
+
+#  shell: |
+#    echo "{{ item.value['wwn'] }}"
+- name: Copy iSCSI Initiator Config Files
+  template: src=iscsid.conf.j2 dest=/etc/iscsi/iscsid.conf owner=root group=root mode=644 force=yes
+  register: iscsid_conf_copied
+  with_dict: "{{ iscsi.clients }}"
+  when: item.value['name'] == inventory_hostname
+- debug: msg={{ iscsid_conf_copied }}
 
 
 - name: Copy iSCSI Initiator Config Files
-  template: src={{ item }}.j2 dest=/etc/iscsi/{{ item }} owner=root group=root mode=644 force=yes
-  register: iscsi_initiator_config_copied
-  with_items:
-    - "initiatorname.iscsi"
-    - "iscsid.conf"
-- debug: msg={{ iscsi_initiator_config_copied }}
+  template: src=initiatorname.iscsi.j2 dest=/etc/iscsi/initiatorname.iscsi owner=root group=root mode=644 force=yes
+  register: initiatorname_copied
+  with_dict: "{{ iscsi.clients }}"
+  when: item.value['name'] == inventory_hostname
+- debug: msg={{ initiatorname_copied }}
+
+
+#- debug: msg={{ iscsi_initiator_config_copied }}
+#  when: print_debug == true and item.key == inventory_hostname and inventory_hostname in groups['clients'] 
+
+
+- meta: end_play
+
+#- name: Copy iSCSId Config Files
+#  template: src=iscsid.{{ hostvars[inventory_hostname]['ansible_hostname'].split('-')[1] }}.conf.j2 dest=/etc/iscsi/iscsid.conf owner=root group=root mode=644 force=yes
+#  register: iscsid_conf_copied
+#- debug: msg={{ iscsid_conf_copied }}
+
+
 
 
 #- name: Modify iscsid.conf for Authentication Method and Username / Password
@@ -47,7 +73,6 @@
 #- debug: msg={{ iscsid_config_modified }}
 
 
-
 - name: Enable and Start iSCSId
   systemd:
     name: iscsid
@@ -56,34 +81,33 @@
   until: iscsid_restarted is succeeded
   retries: 3
   delay: 10
-- debug: msg={{ iscsid_started }}
+#- debug: msg={{ iscsid_started }}
 
 
-
-- name: Discover Target
-  command: iscsiadm -m discovery -t sendtargets -p {{ hostvars[groups['clients'][0]].ansible_ssh_host }}
-  register: target_discovered
-- debug: msg={{ target_discovered }}
-
-
-- name: Confirm Status after Discovery
-  command: iscsiadm -m node -o show
-  register: discovery_status_confirmed
-- debug: msg={{ discovery_status_confirmed }}
+#- name: Discover Target
+#  command: iscsiadm -m discovery -t sendtargets -p {{ hostvars[groups['clients'][0]].ansible_ssh_host }}
+#  register: target_discovered
+#- debug: msg={{ target_discovered }}
 
 
-- name: Login to the Target
-  command: |
-    iscsiadm --mode node --target iqn.2022-12.io.pivotal.jtest:{{ rhel_version }}.{{ inventory_hostname }} \
-    --portal {{ hostvars[groups['clients'][0]].ansible_ssh_host }} --login
-  register: target_logined
-- debug: msg={{ target_logined }}
+#- name: Confirm Status after Discovery
+#  command: iscsiadm -m node -o show
+#  register: discovery_status_confirmed
+#- debug: msg={{ discovery_status_confirmed }}
 
 
-- name: Confirm the Established Session
-  command: iscsiadm -m session -o show
-  register: established_session_confirmed
-- debug: msg={{ established_session_confirmed }}
+#- name: Login to the Target
+#  command: |
+#    iscsiadm --mode node --target iqn.2022-12.io.pivotal.jtest:{{ rhel_version }}.{{ inventory_hostname }} \
+#    --portal {{ hostvars[groups['clients'][0]].ansible_ssh_host }} --login
+#  register: target_logined
+#- debug: msg={{ target_logined }}
+
+
+#- name: Confirm the Established Session
+#  command: iscsiadm -m session -o show
+#  register: established_session_confirmed
+#- debug: msg={{ established_session_confirmed }}
 
 
 #- name: Confirm the Partitions
