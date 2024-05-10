@@ -11,11 +11,10 @@
   roles:
     - { role: block }
 #    - { role: radosgw }
-#    - { role: nfs }
+#    - { role: ceph }
 #    - { role: cephfs }
+#    - { role: nfs }
 #    - { role: block }
-#    - { role: ceph }
 #    - { role: init-hosts }
-#    - { role: ceph }
 #    - { role: custom }
 

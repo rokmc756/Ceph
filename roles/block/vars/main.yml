@@ -37,7 +37,7 @@ iscsi:
   initiators:
     - {
          wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "jomoon", password: "changemechangeme",
-         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changemechangeme", pg_name: "jtest-iscsi-pool01", image: "jtest-iscsi-img01"
+         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changemechangeme", pg_name: "jtest-iscsi-pool01", image: "jtest-iscsi-img01", target_ip: "192.168.1.7"
       }
       #   wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "iqn.2024-04.io.weka.jtest:iscsi-client1", password: "changemechangeme",
   portals:

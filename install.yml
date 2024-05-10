@@ -11,9 +11,9 @@
   roles:
     - { role: block }
 #    - { role: radosgw }
-#    - { role: nfs }
-#    - { role: cephfs }
 #    - { role: ceph }
+#    - { role: cephfs }
+#    - { role: nfs }
 #    - { role: init-hosts }
 #    - { role: custom }
 

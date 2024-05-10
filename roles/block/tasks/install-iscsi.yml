@@ -22,10 +22,10 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ hosts_listed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 # ceph tell osd.* config get osd_heartbeat_grace
 # ceph tell osd.* config get osd_heartbeat_interval
 # ceph tell osd.* config get osd_client_watch_timeout
+
 
 # To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
 # The suggested values are 20, 5 and 15, respectively.
@@ -79,7 +79,7 @@
 
 
 - pause:
-    seconds: 60
+    seconds: 30
 
 
 - name: Get iSCSI Gateway Container ID
@@ -95,7 +95,6 @@
   set_fact:
     podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
   when: inventory_hostname in groups['mon']
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Create iSCSI Target
@@ -131,8 +130,6 @@
 # ls
 # cd gateways
 # create rk9-node01.jtest.weka.io 192.168.0.71
-# create rk9-node02.jtest.weka.io 192.168.0.72
-# create rk9-node03.jtest.weka.io 192.168.0.73
 
 
 - name: Create Pool and Images
@@ -191,8 +188,6 @@
 - debug: msg={{ disk_added }}
   when: print_debug == true and inventory_hostname in groups['mon']
 
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # https://github.com/ceph/ceph-ansible/issues/3870
 # ceph-ansible installs ceph-iscsi and tcmu-runner, but the initial configuration is broken (see my comments above, python errors while installing). When I manually configure gwcli (target, target IPs), ceph-ansible runs flawlessly afterwards. I try to track down the problem:
