@@ -30,15 +30,24 @@ rbd:
 iscsi:
   targets:
     - {
-         wwn: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", pg_name: "jtest-iscsi-pool01", pg_num: 32, pgp_num: 32,
-         replica: "replicated replicated_rule", image: "jtest-iscsi-img01", image_size: 2G, trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63",
+         wwn: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw",
+         pg_name: "jtest-iscsi-pool01",
+         pg_num: 32,
+         pgp_num: 32,
+         replica: "replicated replicated_rule",
+         image: "jtest-iscsi-img01",
+         image_size: 2G,
+         trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63",
          init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
       }
   initiators:
     - {
-         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1", auth_id: "jomoon", password: "changemechangeme",
-         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw", mutual_passwd: "changemechangeme",
-         pg_name: "jtest-iscsi-pool01", image: "jtest-iscsi-img01", target_ip: "192.168.1.7"
+         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1",
+         auth_id: "jomoon", password: "changemechangeme",
+         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw",
+         mutual_passwd: "changemechangeme",
+         pg_name: "jtest-iscsi-pool01",
+         image: "jtest-iscsi-img01"
       }
   clients:
     client01:
@@ -49,8 +58,6 @@ iscsi:
       mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
       target_ip: "192.168.1.71"
-      pg_name: "jtest-iscsi-pool01"
-      image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       mount_dir: "/mnt/iscsi-dir-client01"
     client02:
       name: "{{ hostvars[groups['clients'][1]]['ansible_hostname'] }}"
@@ -60,8 +67,6 @@ iscsi:
       mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
       target_ip: "192.168.1.72"
-      pg_name: "jtest-iscsi-pool01"
-      image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
       mount_dir: "/mnt/iscsi-dir-client02"
     client03:
       name: "{{ hostvars[groups['clients'][2]]['ansible_hostname'] }}"
@@ -71,8 +76,6 @@ iscsi:
       mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
       target_ip: "192.168.1.73"
-      pg_name: "jtest-iscsi-pool01"
-      image: "jtest-iscsi-img01-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
       mount_dir: "/mnt/iscsi-dir-client03"
   portals:
     - { ip: 192.168.0.11 }
