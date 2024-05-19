@@ -115,24 +115,24 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-- name: Delete Default Zone
-  shell: |
-    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
-  register: default_zone_deleted
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ default_zone_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- name: Delete Default Zone
+#  shell: |
+#    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
+#  register: default_zone_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ default_zone_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-- name: Delete Default Zone Group
-  shell: |
-    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
-  register: default_zone_group_deleted
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ default_zone_group_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- name: Delete Default Zone Group
+#  shell: |
+#    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
+#  register: default_zone_group_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ default_zone_group_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Allow to Delete Pool from Mon

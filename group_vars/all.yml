@@ -35,8 +35,8 @@ ceph:
   obs: false
   fs: true
   block:
-    rbd: true
-    iscsi: false
+    rbd: false
+    iscsi: true
   net:
     conn: "dpdk"                     # dpdk or udp
     gateway: "192.168.0.1"
@@ -58,7 +58,7 @@ ceph:
       single: false
       ganesha: false
     rgw:
-      single: false
+      single: true
       multi: false
   client:
     cephfs: false

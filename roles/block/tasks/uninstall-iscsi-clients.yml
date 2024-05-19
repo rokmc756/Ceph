@@ -6,6 +6,17 @@
 - debug: msg={{ device_name_attached.stdout }}
 
 
+- name: Delete text file
+  file:
+    path: "{{ item.value['mount_dir'] }}/test-iscsi01.txt"
+    state: absent
+  register: delete_iscsi_files
+  ignore_errors: true
+  with_dict: "{{ iscsi.clients }}"
+  when: item.value['name'] == inventory_hostname
+- debug: msg={{ delete_iscsi_files }}
+
+
 - name: Unmount the Partition and Remove Entry in /etc/fstab
   mount:
     path: "{{ item.value['mount_dir'] }}"

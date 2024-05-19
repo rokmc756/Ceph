@@ -136,3 +136,16 @@
 - debug: msg={{ partition_mounted }}
 
 
+- name: Conditionally create a file if it does not exist
+  copy:
+    content: "Hellow Ceph iSCSI World!"
+    dest: "{{ item.value['mount_dir'] }}/test-iscsi01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644
+  register: file_copied
+  with_dict: "{{ iscsi.clients }}"
+  when: item.value['name'] == inventory_hostname
+- debug: msg={{ file_copied }}
+

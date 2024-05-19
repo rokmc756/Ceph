@@ -47,7 +47,8 @@ iscsi:
          mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw",
          mutual_passwd: "changemechangeme",
          pg_name: "jtest-iscsi-pool01",
-         image: "jtest-iscsi-img01"
+         image: "jtest-iscsi-img01",
+         init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
       }
   clients:
     client01:
