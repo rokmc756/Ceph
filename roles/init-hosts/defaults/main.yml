@@ -25,4 +25,3 @@ official_suse_pkgs: "pdsh"
 
 update_cache: false
 upgrade_packages: false
-

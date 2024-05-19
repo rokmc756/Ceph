@@ -4,14 +4,14 @@
   fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
-#
+
 - name: Set facts for network and packages informations for Linux Distribution
   import_tasks: set-ceph-facts.yml
   tags:
     - install
     - uninstall
 
-#
+
 - name: Upload Cephadm Binary
   import_tasks: upload-cephadm-bin.yml
   tags: install
@@ -20,55 +20,54 @@
     - ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
-#
 - name: Install Ceph Software
   import_tasks: install-ceph.yml
   tags: install
   when: install_ceph == true and inventory_hostname not in groups['clients']
 
-#
+
 - name: Initialize Ceph
   import_tasks: init-ceph.yml
   tags: install
   when: init_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Add Ceph Mon/MGR/MDS Nodes
   import_tasks: add-ceph-nodes.yml
   tags: install
   when: add_ceph_nodes == true and inventory_hostname in groups['mon']
 
-#
+
 - name: Add OSD Nodes
   import_tasks: add-osd-nodes.yml
   tags: install
   when: add_osd_nodes == true and inventory_hostname not in groups['clients']
 
-#
+
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
   tags: uninstall
   when: remove_osd_nodes == true and inventory_hostname not in groups['clients']
 
-#
+
 - name: Remove Ceph Mon/MGR/MDS Nodes
   import_tasks: remove-ceph-nodes.yml
   tags: uninstall
   when: remove_ceph_nodes == true and inventory_hostname in groups['mon']
 
-#
+
 - name: Purge Ceph Cluster
   import_tasks: purge-ceph.yml
   tags: uninstall
-  when: purge_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: purge_ceph == true and ( inventory_hostname in groups['mon'] or inventory_hostname in groups['osd'] )
 
-#
+
 - name: Uninstall Ceph Software
   import_tasks: uninstall-ceph.yml
   tags: uninstall
   when: uninstall_ceph == true and inventory_hostname not in groups['clients']
 
-#
+
 - name: Remove Cephadm Binary
   import_tasks: remove-cephadm-bin.yml
   tags: uninstall

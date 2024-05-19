@@ -72,15 +72,15 @@
     - ssh_copy_user_id_execution.rc != 0
 
 #
-- name: Add user to "{{ wheel_group }}" group
-  shell: usermod -aG "{{ wheel_group }}" "{{ sudo_user }}"
+- name: Add user to "{{ rh_wheel_group }}" group
+  shell: usermod -aG "{{ rh_wheel_group }}" "{{ sudo_user }}"
   args:
     executable: /bin/bash
   when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky'
 
 #
-- name: Add user to "{{ wheel_group }}" group
-  shell: usermod -aG "sudo" "{{ sudo_user }}"
+- name: Add user to "{{ ubt_wheel_group }}" group
+  shell: usermod -aG "{{ ubt_wheel_group }}" "{{ sudo_user }}"
   args:
     executable: /bin/bash
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'

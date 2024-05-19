@@ -3,13 +3,13 @@
 # Initialize installation for Ansible on a given hosts
 #
 # Written by: Andreas 'ads' Scherbaum <andreas@scherbaum.la>
-# Modified by: Jack Moon <rokmc756@gmail.com><jomoon@pivotal.io> for multiple greenplum hosts
+# Modified by: Jack Moon <rokmc756@gmail.com> for multiple hosts
 #
 # Usage:
 #    ./init_host.sh <IP address> <user name>
 #
 # Note: NEVER use this script to init a host in an untrusted network!
-#
+
 
 set -e
 

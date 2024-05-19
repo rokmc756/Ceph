@@ -6,15 +6,15 @@
     remove_osd_nodes: false
     remove_ceph_nodes: false
     purge_ceph: false
-    uninstall_ceph: false
-    remove_cephadm_bin: false
+    uninstall_ceph: true
+    remove_cephadm_bin: true
   roles:
-    - { role: block }
-#    - { role: radosgw }
+    - { role: init-hosts }
 #    - { role: ceph }
+#    - { role: block }
 #    - { role: cephfs }
+#    - { role: radosgw }
 #    - { role: nfs }
 #    - { role: block }
-#    - { role: init-hosts }
 #    - { role: custom }
 

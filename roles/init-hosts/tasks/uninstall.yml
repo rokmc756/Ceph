@@ -1,13 +1,22 @@
 ---
-#
 - name: Rollback defatul group to /etc/sudoers file
   lineinfile:
     dest: /etc/sudoers
     state: present
-    regexp: '^%{{ wheel_group }}'
-    line: '%{{ wheel_group }}  ALL=(ALL)        ALL'
+    regexp: '^%{{ rh_wheel_group }}'
+    line: '%{{ rh_wheel_group }}  ALL=(ALL)        ALL'
+  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky'
 
-#
+
+- name: Rollback defatul group to /etc/sudoers file
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%{{ ubt_wheel_group }}'
+    line: '%{{ ubt_wheel_group }}  ALL=(ALL)        ALL'
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+
 - name: Remove bash_history and .ssh directory
   file:
     path: "{{ item }}"
@@ -18,7 +27,7 @@
     - "/root/.ssh"
     - "/home/{{ sudo_user }}/.ssh"
 
-#
+
 - name: Remove hostname entries in /etc/hosts file
   lineinfile:
     dest: /etc/hosts
@@ -30,14 +39,15 @@
   when: hostvars[ item ][ 'ansible_'~netdev0 ]['ipv4']['address'] is defined
   with_items: "{{ groups['all'] }}"
 
-#
+
 - name: Delete "{{ sudo_user }}" user and group
   user:
     name: "{{ sudo_user }}"
     group: "{{ sudo_group }}"
     state: absent
+    remove: true
 
-#
+
 - name: Uninstall Prerequest Software Packages
   package:
     name: "{{ item }}"
@@ -45,10 +55,11 @@
   with_items: "{{ install_pkgs }}"
   when: uninstall_deps_pkgs == true
 
-#
+
 - name: Disable Development Package Repository for RedHat Based Linux Distribution
   shell: |
     yum-config-manager --disable {{ item }}
   with_items:
     - "devel"
   when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+

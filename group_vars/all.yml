@@ -33,9 +33,9 @@ ceph:
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
   obs: false
-  fs: false
+  fs: true
   block:
-    rbd: false
+    rbd: true
     iscsi: false
   net:
     conn: "dpdk"                     # dpdk or udp
@@ -65,7 +65,7 @@ ceph:
     smb: false
     block:
       rbd: false
-      iscsi: true
+      iscsi: false
     nfs:
       single: false
       ganesha: false

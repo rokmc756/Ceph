@@ -75,4 +75,3 @@
 - set_fact:
     install_pkgs: "{{ suse_install_pkgs }}"
   when: ansible_distribution == "openSUSE Leap"
-
