@@ -5,7 +5,7 @@
 #- debug: msg={{ all_ops_stopped.stdout }}
 #  when: print_debug == true
 
-#
+
 #- name: Get FSID for Setting Fact
 #  shell: |
 #    ceph fsid
@@ -13,30 +13,34 @@
 #- debug: msg={{ get_fsid.stdout }}
 #  when: print_debug == true
 
-#
+
 - name: Get FSID for Setting Fact
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
-- name: Set Fact for FSID
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
 
-#
 #- name: Set fact for cephadm_cmd command
 #  set_fact:
 #    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
-#[root@rk9-node01 ~]# ceph mgr module disable cephadm
-#[root@rk9-node01 ~]# ceph fsid
-#fbba1d40-f56a-11ee-a2ec-00505693d59b
-#[root@rk9-node01 ~]# cephadm rm-cluster --force --zap-osds --fsid fbba1d40-f56a-11ee-a2ec-00505693d59b
 
-#
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items:
+    - "{{ groups['mon'] }}"
+    - "{{ groups['osd'] }}"
+  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- debug: msg={{ _fsid }}
+  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
+
 - name: Remove the Ceph Cluster
   shell: |
     cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
@@ -45,16 +49,6 @@
   when: print_debug == true
 
 
-#- name: Repeat to remove the Ceph Cluster
-#  shell: |
-#    {{ cephadm_cmd }} cephadm rm-cluster --force --zap-osds --fsid {{ fsid01 }}
-#  register: ceph_cluster_removed
-#  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ ceph_cluster_checked }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-#
 - name: Check the Ceph Cluster
   shell: |
     cephadm ls

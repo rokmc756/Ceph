@@ -32,8 +32,9 @@
   synchronize:
     src:  "{{ item }}"
     dest: "{{ item }}"
+    set_remote_user: false
     rsync_opts:
-      - "-e ssh"   #  - "-e ssh -i /remote/path/to/mykey"
+      - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: ceph_config_dir_created
@@ -50,8 +51,9 @@
   synchronize:
     src: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
     dest: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
+    set_remote_user: false
     rsync_opts:
-      - "-e ssh"   #  - "-e ssh -i /remote/path/to/mykey"
+      - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: ceph_config_dir_created

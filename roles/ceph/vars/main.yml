@@ -6,12 +6,4 @@ pool:
   pg_custom_volume_name: volume01
   pg_custom_volume_size: 1G
   cephfs_name: myfs
-#  rgw:
-#    user_name: "jmoon"
-#    display_name: "jack.moon"
-#    email: "rokmc756@gmail.com"
-#  nfs:
-#    cluster_name: jtest-nfs-clu01
-#    cephfs_name: cephfs-nfs
-#    user_name: nfsclient
-#    namespace: singletest
+

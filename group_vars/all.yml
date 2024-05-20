@@ -33,10 +33,10 @@ ceph:
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
   obs: false
-  fs: true
+  fs: false
   block:
-    rbd: false
-    iscsi: true
+    rbd: true
+    iscsi: false
   net:
     conn: "dpdk"                     # dpdk or udp
     gateway: "192.168.0.1"
@@ -55,10 +55,10 @@ ceph:
   protocol:
     smb: false
     nfs:
-      single: false
+      single: true
       ganesha: false
     rgw:
-      single: true
+      single: false
       multi: false
   client:
     cephfs: false
