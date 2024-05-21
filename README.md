@@ -66,7 +66,7 @@ ANSIBLE_TARGET_PASS="changeme"  # It should be changed with password of sudo use
 ```
 
 ## How to deploy Ceph Cluster by ansible playbook
-#### 1) The Archiecture example to deploy Ceph Storage Cluster
+#### 01) The Archiecture example to deploy Ceph Storage Cluster
 <table border='0'>
 <tr><td align='center' border='0'><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png" width="80%" height="80%" align="center"></img></td></tr>
 </table>
