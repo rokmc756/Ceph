@@ -38,7 +38,7 @@ We are using raw devices without any filesystem in this guide. All the required 
 * MacOS or Fedora/CentOS/RHEL should have installed ansible as ansible host.
 * Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt
 
-## Prepare ansible host to run vmware-postgres ansible playbook
+## Prepare ansible host to run Ceph ansible playbook
 * MacOS
 ```
 $ xcode-select --install
