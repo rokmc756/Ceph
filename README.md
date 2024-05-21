@@ -158,8 +158,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
-### 05) Install Ceph Software
-- Install ceph software into all hosts.
+### 05) Install Ceph Software into all Hosts.
 ```
 $ vi install.yml
 - hosts: all
@@ -176,8 +175,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
 
 
-### 06) Deploy Mon and Mgr services into Ceph Cluster
-- Initialize Ceph as deploying mon and mgr services.
+### 06) Initialize Ceph as deploying MON and MGR services
 ```
 $ vi install.yml
 - hosts: all
@@ -193,8 +191,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/2DhiWXthQBU/hqdefault.jpg)](https://www.youtube.com/watch?v=2DhiWXthQBU)
 
 
-### 07) Add Ceph nodes
-- Add ceph nodes for high availablity in ceph cluster
+### 07) Add Ceph Nodes for High Availablity
 ```
 $ vi install.yml
 - hosts: all
@@ -211,7 +208,6 @@ $ make install
 
 
 ### 08) Add OSD nodes into Ceph Cluster
-- Add OSD nodes into a existing ceph cluster
 ```
 $ vi install.yml
 - hosts: all
@@ -227,8 +223,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
-### 09) Create Pools and RBDs in Ceph
-- Create pools and rbd in ceph storage cluster
+### 09) Create Pools and RBDs in Ceph Cluster
 ```
 $ vi group_vars/all.yml
 ~~ snip
@@ -257,8 +252,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
-### 10) Creating CephFS and POSIX Clients
-- Create cephfs posix clients in ceph cluster.
+### 10) Creating CephFS and POSIX Clients in Ceph Cluster
 ```
 $ vi group_vars/all.yml
 ~~ snip
