@@ -143,6 +143,7 @@ ceph:
 ```
 
 ### 04) - Initialize Linux Hosts
+- how to initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
 $ vi install.yml
 - hosts: all
