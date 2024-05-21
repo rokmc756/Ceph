@@ -71,7 +71,6 @@ ANSIBLE_TARGET_PASS="changeme"  # It should be changed with password of sudo use
 <tr><td align='center' border='0'><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png" width="80%" height="80%" align="center"></img></td></tr>
 </table>
 
-
 #### 02) Configure inventory for Ceph
 ```
 $ vi ansible-hosts
@@ -143,7 +142,7 @@ ceph:
 ```
 
 ### 04) - Initialize Linux Hosts
-- how to initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
+- Initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
 $ vi install.yml
 - hosts: all
@@ -160,6 +159,7 @@ $ make install
 
 
 ### 05) Install Ceph Software
+- Install ceph software into all hosts.
 ```
 $ vi install.yml
 - hosts: all
@@ -177,6 +177,7 @@ $ make install
 
 
 ### 06) Deploy Mon and Mgr services into Ceph Cluster
+- Initialize Ceph as deploying mon and mgr services.
 ```
 $ vi install.yml
 - hosts: all
@@ -193,6 +194,7 @@ $ make install
 
 
 ### 07) Add Ceph nodes
+- Add ceph nodes for high availablity in ceph cluster
 ```
 $ vi install.yml
 - hosts: all
@@ -209,6 +211,7 @@ $ make install
 
 
 ### 08) Add OSD nodes into Ceph Cluster
+- Add OSD nodes into a existing ceph cluster
 ```
 $ vi install.yml
 - hosts: all
@@ -225,6 +228,7 @@ $ make install
 
 
 ### 09) Create Pools and RBDs in Ceph
+- Create pools and rbd in ceph storage cluster
 ```
 $ vi group_vars/all.yml
 ~~ snip
@@ -254,6 +258,7 @@ $ make install
 
 
 ### 10) Creating CephFS and POSIX Clients
+- Create cephfs posix clients in ceph cluster.
 ```
 $ vi group_vars/all.yml
 ~~ snip
@@ -271,8 +276,6 @@ ceph:
   client:
     cephfs: true
 ~~ snip
-```
-```
 
 $ vi install.yml
 - hosts: all
@@ -286,7 +289,8 @@ $ make install
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
-## High Availability service for RGW
+
+## High Availability Service for RGW
 <img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/haroxy_for_rgw.svg" width="80%" height="80%" align="center"></img>
 
 ## YouTube Video Demo
