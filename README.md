@@ -313,3 +313,4 @@ $ make install
 - https://cyuu.tistory.com/145
 - https://reintech.io/blog/setting-up-pxe-boot-server-windows-deployment-ubuntu
 - https://medium.com/jacklee26/set-up-pxe-server-on-ubuntu20-04-and-window-10-e69733c1de87
+- https://blog.zabbix.com/installing-the-zabbix-server-with-ansible/13317/
