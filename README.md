@@ -45,10 +45,12 @@ $ xcode-select --install
 $ brew install ansible
 $ brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
 ```
+
 * Fedora/CentOS/RHEL
 ```
 $ sudo yum install ansible
 ```
+
 ## Prepareing OS
 * Configure Yum / Local & Additional Repostiories
 
@@ -69,7 +71,8 @@ ANSIBLE_TARGET_PASS="changeme"  # It should be changed with password of sudo use
 <tr><td align='center' border='0'><img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/ceph_vm_architecture.png" width="80%" height="80%" align="center"></img></td></tr>
 </table>
 
-#### 2) Configure inventory for Ceph
+
+#### 02) Configure inventory for Ceph
 ```
 $ vi ansible-hosts
 [all:vars]
@@ -95,7 +98,8 @@ ubt22-client01 ansible_ssh_host=192.168.0.61
 ubt22-client02 ansible_ssh_host=192.168.0.62
 ubt22-client03 ansible_ssh_host=192.168.0.63
 ```
-#### 3) Configure variables for deploying Ceph
+
+#### 03) Configure variables for deploying Ceph
 ```
 $ vi roles/init-hosts/vars/main.yml
 ansible_ssh_pass: "changeme"
@@ -138,18 +142,14 @@ ceph:
 ~~ snip
 ```
 
-### 4) - Initialize Linux Hosts
+### 04) - Initialize Linux Hosts
 ```
 $ vi install.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    upload_cephadm: false
-    install_ceph: false
-    init_ceph: false
-    add_ceph_nodes: false
-    add_osd_nodes: false
+~~ snip
   roles:
     - { role: init-hosts }
 
