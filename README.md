@@ -50,8 +50,9 @@ $ brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Libr
 $ sudo yum install ansible
 ```
 ## Prepareing OS
-* Configure Yum / Local & EPEL Repostiory
-## Download / configure / run VMware Postgres
+* Configure Yum / Local & Additional Repostiories
+
+## Download / configure / run Ceph Ansible Playbook
 ```
 $ git clone https://github.com/rokmc756/Ceph
 $ cd Ceph
@@ -137,21 +138,48 @@ ceph:
 ~~ snip
 ```
 
-#### 4) Deploy Ceph Storage Cluster
+### 4) - Initialize Linux Hosts
 ```
 $ vi install.yml
----
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    install_cephadm: true
+    upload_cephadm: false
+    install_ceph: false
+    init_ceph: false
+    add_ceph_nodes: false
+    add_osd_nodes: false
   roles:
     - { role: init-hosts }
 
 $ make install
-
 ```
+[![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
+
+
+### 05) Install Ceph Software
+```
+$ vi install.yml
+- hosts: all
+  become: yes
+  vars:
+    print_debug: true
+    upload_cephadm: true
+    install_ceph: true
+    init_ceph: false
+    add_ceph_nodes: false
+    add_osd_nodes: false
+  roles:
+    - { role: ceph }
+
+$ make install
+```
+[
+[![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
+
+
+
 #### 5) Destroy Ceph Storage Cluster
 ```
 $ vi uninstall.yml
