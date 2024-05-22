@@ -207,7 +207,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/I2lmJJWNGD8/hqdefault.jpg)](https://www.youtube.com/watch?v=I2lmJJWNGD8)
 
 
-### 08) Add OSD nodes into Ceph Cluster
+### 08) Add OSD nodes
 ```
 $ vi install.yml
 - hosts: all
@@ -223,7 +223,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
-### 09) Create Pools and RBDs in Ceph Cluster
+### 09) Create Pools and RBDs
 ```
 $ vi group_vars/all.yml
 ~~ snip
@@ -252,7 +252,7 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
-### 10) Creating CephFS and POSIX Clients in Ceph Cluster
+### 10) Creating Ceph Filesystems and CephFS POSIX Clients
 ```
 $ vi group_vars/all.yml
 ~~ snip
