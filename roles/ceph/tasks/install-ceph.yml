@@ -7,55 +7,28 @@
   when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
-#- name: Add Repo for Ceph Reef for SUSE
-#  shell: |
-#   {{ cephadm.base_path }}/cephadm add-repo --release reef
-#  register: add_repo
-#  when: ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int >= 9
-#- debug: msg={{ add_repo }}
-#  when: print_debug == true and ansible_distribution == "openSUSE Leap" and ansible_distribution_major_version|int >= 9
-
-
 - name: Install Podman and Civetweb
   package:
     name: "{{ item }}"
     state: present
   with_items: "{{ ceph_pkgs }}"
-  # - "centos-release-ceph-reef"
-  # - "centos-release-storage-common"
-  # - "centos-release-nfs-ganesha5"
-  # - "nfs-ganesha"
-  # - "nfs-ganesha-ceph"
-
-
-# dnf -y install centos-release-nfs-ganesha4
-# sed -i -e "s/enabled=1/enabled=0/g" /etc/yum.repos.d/CentOS-NFS-Ganesha-4.repo
-# dnf --enablerepo=centos-nfs-ganesha-4 -y install nfs-ganesha-ceph
-
 
 #
 - name: Install Ceph CLI Tools On the Host
   shell: |
     {{ cephadm.base_path }}/cephadm install ceph-common
   register: install_ceph_cli_tools
+  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ install_ceph_cli_tools }}
-  when: print_debug == true
+  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 #
 - name: Install Ceph Reef
   shell: |
     {{ cephadm.base_path }}/cephadm install
   register: install_ceph
-
+  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ install_ceph }}
-  when: print_debug == true
+  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
-#
-#- name: Initialize Ceph Cluster Monitor On Ceph Admin Node
-#  shell: |
-#    {{ cephadm.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev0]['ipv4']['address'] }} --allow-overwrite
-#  register: init_ceph
-#  ignore_errors: true
-#- debug: msg={{ init_ceph }}
-#  when: print_debug == true
 
