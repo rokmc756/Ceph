@@ -29,7 +29,7 @@
 - name: Initialize Ceph
   import_tasks: init-ceph.yml
   tags: install
-  when: init_ceph == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: init_ceph == true and inventory_hostname in groups['control']
 
 
 - name: Add Ceph Mon/MGR/MDS Nodes

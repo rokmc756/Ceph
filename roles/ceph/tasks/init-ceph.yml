@@ -1,12 +1,11 @@
-#
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev1]['ipv4']['address'] }} \
+    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]]['ansible_'~netdev1]['ipv4']['address'] }} \
     --cluster-network 192.168.1.0/24 \
     --dashboard-password-noupdate \
     --initial-dashboard-user {{ ceph.admin_user }} \
     --initial-dashboard-password {{ ceph.admin_passwd }} \
-    --allow-overwrite \
+    --allow-overwrite
   register: init_ceph
 - debug: msg={{ init_ceph }}
   when: print_debug == true
@@ -19,7 +18,7 @@
 #--single-host-defaults
 # cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
 
-#
+
 - name: Activate the Telemetry Module
   shell: |
     ceph telemetry on --license sharing-1-0
@@ -29,7 +28,7 @@
   when: print_debug == true
   # ceph telemetry off
 
-#
+
 - name: Check if Container is Created
   shell: |
     podman images
@@ -37,7 +36,7 @@
 - debug: msg={{ check_containers }}
   when: print_debug == true
 
-#
+
 - name: List the Containers If Using Podman
   shell: |
     podman ps
@@ -45,7 +44,7 @@
 - debug: msg={{ list_podman }}
   when: print_debug == true
 
-#
+
 - name: List the Containers If Using Podman
   shell: |
     systemctl list-units 'ceph*'

@@ -30,6 +30,7 @@ ceph:
   admin_user: admin
   admin_passwd: changeme
   bin_type: tar
+  nvme: true
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
   obs: false

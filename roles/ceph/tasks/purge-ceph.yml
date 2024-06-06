@@ -18,32 +18,40 @@
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  ignore_errors: true
+  when: inventory_hostname in groups['control']
 - debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in groups['control']
 
 
-#- name: Set fact for cephadm_cmd command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+- name: Set fact for cephadm_cmd command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+  ignore_errors: true
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  with_items:
+    - "{{ groups['mon'] }}"
+    - "{{ groups['osd'] }}"
+  when: inventory_hostname in groups['control']
 
 
 - name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
+  ignore_errors: true
   delegate_to: "{{ item }}"
   delegate_facts: True
   with_items:
     - "{{ groups['mon'] }}"
     - "{{ groups['osd'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ _fsid }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in groups['control']
 
 
 - name: Remove the Ceph Cluster
   shell: |
     cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
+  ignore_errors: true
   register: ceph_cluster_removed
 - debug: msg={{ ceph_cluster_removed }}
   when: print_debug == true
@@ -52,8 +60,25 @@
 - name: Check the Ceph Cluster
   shell: |
     cephadm ls
-  register: ceph_cluster_checked
   ignore_errors: true
-- debug: msg={{ ceph_cluster_checked }}
-  when: print_debug == true
+  register: check_ceph
+  when: inventory_hostname in groups['control']
+- debug: msg={{ check_ceph.stdout }}
+  when: print_debug == true and inventory_hostname in groups['control']
+
+
+- name: Reboot Required
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  ignore_errors: true
+  register: reboot_required
+  async: 120
+  poll: 0
+  notify:
+    - Waiting for server to come back after restart
+  when: inventory_hostname in groups['mon'] or inventory_hostname in groups['osd']
+
+
+- meta: flush_handlers
+  when: inventory_hostname in groups['mon'] or inventory_hostname in groups['osd']
+
 

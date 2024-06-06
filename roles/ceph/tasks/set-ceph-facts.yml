@@ -86,3 +86,37 @@
     ceph_pkgs: "{{ rh_ceph_pkgs }}"
   when: ansible_distribution == "openSUSE Leap"
 
+
+
+# Handling NVME Devices about define number and list
+#
+- name: Get NVME Devices List
+  shell: |
+    nvme list | sed 1,2d | awk '{print $1}' | paste -sd "," -
+  register: nvme_device_list0
+  when: ceph.nvme == true
+- debug: msg={{ nvme_device_list0.stdout_lines }}
+  when: print_debug == true
+
+
+- set_fact:
+    nvme_device_list: "{{ nvme_device_list0.stdout }}"
+  when: ceph.nvme == true
+- debug: msg={{ nvme_device_list }}
+  when: print_debug == true
+
+
+- name: Get NVME Devices Array
+  shell: |
+    nvme list | sed 1,2d | awk '{print $1}'
+  register: nvme_device_array0
+  when: ceph.nvme == true
+- debug: msg={{ nvme_device_array0.stdout_lines }}
+  when: print_debug == true
+
+- set_fact:
+    nvme_device_array: "{{ nvme_device_array0.stdout_lines }}"
+  when: ceph.nvme == true
+- debug: msg={{ nvme_device_array }}
+  when: print_debug == true
+

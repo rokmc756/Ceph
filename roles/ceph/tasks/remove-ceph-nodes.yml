@@ -1,33 +1,32 @@
-#
 - name: Get FSID for Setting Fact
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in groups['control']
 - debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in groups['control']
   # Get the Name of MGR Node
-  #  ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
+  # ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
 
-#
+
 - name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
   delegate_to: "{{ item }}"
   delegate_facts: True
-  with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['control']
 
-#
+
 - name: Set Fact for Cephadm_cmd Command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
   delegate_to: "{{ item }}"
   delegate_facts: True
-  with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  with_items: "{{ groups['all'] }}"
+  when: inventory_hostname in groups['control']
 
-#
+
 - name: Unlabel the MGR/MDS/Mon Nodes with Its Role
   shell: |
     {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[inventory_hostname]['ansible_hostname'] }} {{ hostvars[inventory_hostname]['ansible_hostname'] }}-mgr
@@ -36,11 +35,12 @@
   delegate_to: "{{ groups['mon'][0] }}"
   delegate_facts: True
   register: ceph_nodes_unlabeled
-  when: inventory_hostname != groups['mon'][0]
+  when: inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname']
 - debug: msg={{ ceph_nodes_unlabeled }}
-  when: print_debug == true and inventory_hostname != groups['mon'][0]
+  when: print_debug == true and ( inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname'] )
   # ceph orch daemon stop node-exporter.rk9-node01  # ceph-exporter,crash,mon,mgr
   # ceph orch apply {{ item }} "1 rk9-node01"
+
 
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
 - name: Remove the Cluster Hosts and Check if There is Ceph Daemon Running
@@ -53,12 +53,40 @@
   delegate_facts: True
   register: cluster_hosts_removed
   ignore_errors: true
-  when: inventory_hostname != groups['mon'][0]
+  when: inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname']
 - debug: msg={{ cluster_hosts_removed }}
-  when: print_debug == true and inventory_hostname != groups['mon'][0]
+  when: print_debug == true and ( inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname'] )
   # {{ cephadm_cmd }} ceph orch host ls
   # ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
 
+
+#- name: Remove the Ceph Cluster
+#  shell: |
+#    cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
+#  ignore_errors: true
+#  register: ceph_cluster_removed
+#  when: inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname']
+#- debug: msg={{ ceph_cluster_removed }}
+#  when: print_debug == true and ( inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname'] )
+
+
+- name: Reboot Required
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  ignore_errors: true
+  register: reboot_required
+  async: 120
+  poll: 0
+  notify:
+    - Waiting for server to come back after restart
+  when: inventory_hostname in groups['mon']
+
+
+- meta: flush_handlers
+  when: inventory_hostname in groups['mon']
+
+
+# [ Command Examples ]
+#
 # ceph mon stat
 # cephadm ls | grep mon | grep name | grep -v service_name | awk '{print $2}' | sed -e s/\"//g | sed -e s/,$//g
 # cephadm unit --name {{ mon_hostname }} stop

@@ -31,4 +31,3 @@
 - debug: msg={{ install_ceph }}
   when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
-
