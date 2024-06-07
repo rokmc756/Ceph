@@ -36,7 +36,7 @@
 
 
 - pause:
-    minutes: 1
+    minutes: 2
 
 
 - name: List Ceph Cluster Nodes
@@ -125,6 +125,20 @@
   loop: "{{ groups['osd'] }}"
   when: inventory_hostname in groups['control']
 - debug: msg={{ osd_nodes_labeled }}
+  when: print_debug == true and inventory_hostname in groups['control']
+
+
+- name: Check if OSDs are still Down
+  shell: |
+    ceph osd df | sed 1d | awk '{print" "$NF}' | sed 's/[[:space:]]//g' | grep down | uniq
+  register: check_osd_down
+  until: check_osd_down.stdout.find("") != -1
+  retries: 100
+  delay: 20
+  ignore_errors: true
+  # changed_when: check_osd_down.rc != 1 and check_osd_down.rc != 0
+  when: inventory_hostname in groups['control']
+- debug: msg={{ check_osd_down }}
   when: print_debug == true and inventory_hostname in groups['control']
 
 
