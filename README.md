@@ -525,7 +525,6 @@ $ make install
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 
-* Test
 ifdef::env-github[]
 image: http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg[link=https://www.youtube.com/watch?v=wunlKs8cLug]
 endif::[]
