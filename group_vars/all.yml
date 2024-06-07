@@ -62,7 +62,7 @@ ceph:
       single: false
       multi: false
   client:
-    cephfs: false
+    cephfs: true
     smb: false
     block:
       rbd: false

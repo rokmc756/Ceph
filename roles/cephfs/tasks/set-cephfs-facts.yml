@@ -1,4 +1,8 @@
 ---
+- name: Define Filename of Cephadm
+  set_fact:
+    cephadm_file_name: cephadm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}
+
 # https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
 - name: Get Network Interface Name from Prefix of IP Addresses Provided in Variables
   set_fact:

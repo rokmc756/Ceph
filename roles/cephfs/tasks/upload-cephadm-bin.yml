@@ -1,0 +1,114 @@
+#
+- name: Check if Cephadm Binary is Already Existed
+  stat: path={{ cephadm.base_path }}/cephadm
+  register: cephadm_bin_exists
+
+#
+- name: Print Cephadm Existence
+  debug: msg={{ cephadm_bin_exists }}
+  when: print_debug == true
+
+#
+#- name: Copy Cephadm binary from Local Directory, Roles/ceph/files
+#  copy: src={{ cephadm_file_name }}.gz dest=/tmp/{{ cephadm_file_name }}.gz mode=0644 owner=root group=root
+#  register: local_copy_cephadm
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#
+- name: Check if Ceph tarball file is already existed
+  stat: path={{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }}
+  register: cephadm_tarball_exists
+- debug: msg={{ cephadm_tarball_exists }}
+
+
+- name: Sanity check for existence of "{{ cephadm.base_path }}/{{ cephadm_file_name }}".tar file or "{{ cephadm.base_path }}/{{ cephadm_file_name }}" directory
+  debug: msg="Both {{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }} file or cephadm binary already exists"
+  changed_when: cephadm_tarball_exists.stat.exists == True or cephadm_bin_exists.stat.exists == True
+
+#
+- name: Copy Ceph tarball from local directory, roles/ceph/files
+  copy: src={{ cephadm_file_name }}.{{ cephadm.bin_type }} dest={{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }} mode=0644 owner=root group=root
+  register: local_copy_cephadm
+  when: cephadm.download == false and cephadm_tarball_exists.stat.exists != True
+
+#
+- name: Unarchive Cephadm gzip
+  unarchive:
+    src: "{{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }}"
+    dest: "{{ cephadm.base_path }}"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+    remote_src: yes
+  register: unarchive_cephadm_tarball
+  when: cephadm.download == false and cephadm_tarball_exists.stat.exists != True
+
+#- name: Download ceph tools zip file from github
+#  get_url:
+#    url: "{{ server_url }}"  # github url
+#    dest: "{{ ceph.base_path }}/{{ ceph_tools_file_name }}.zip"
+#    owner: root
+#    group: root
+#    mode: 0755
+#  when: ceph.tools.download == true and ceph_tarball_exists.stat.exists == false
+
+#- name: Clone Cephadm from Github
+#  git:
+#    repo: https://github.com/ceph
+#    dest: /tmp/{{ cephadm.name }}
+#    force: yes
+#    clone: yes
+#  when: ceph.tools.download == false and ceph_tools_dir_exists.stat.exists == false
+
+
+#
+# omitt --silent --remote-name
+- name: Download Ceph CLI Tools On the Host
+  shell: |
+    curl --location https://download.ceph.com/rpm-reef/el9/noarch/cephadm -o /root/cephadm
+  async: 60
+  poll: 5
+  register: download_ceph_cli_tools
+  when: cephadm.download == true
+- debug: msg={{ download_ceph_cli_tools }}
+  when: print_debug == true and cephadm.download == true
+
+#
+- name: Change Executable Permisssion for Cephadm
+  file:
+    path: "/root/cephadm"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+
+#- name: Unarchive Cephadm gz File
+#  unarchive:
+#    src: "/tmp/{{ cephadm_file_name }}.gz"
+#    dest: "/root"
+#    owner: "root"
+#    group: "root"
+#    mode: "0755"
+#    remote_src: yes
+#  register: unarchive_cephadm
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#- name: Hard Link the File Into Directory
+#  file:
+#    src: "/root/{{ cephadm_file_name }}"
+#    dest: "/root/cephadm"
+#    owner: "root"
+#    group: "root"
+#    mode: "0755"
+#    state: hard
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == false
+
+#
+#- name: Download Cephadm
+#  get_url:
+#    url: "{{ server_url }}"
+#    dest: "{{ cephadm.bin }}"
+#    owner: root
+#    group: root
+#    mode: 0755
+#  when: cephadm_bin_exists.stat.exists == false and download_cephadm == true
+
