@@ -53,6 +53,7 @@
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - set_fact:
     install_pkgs: "{{ rh_install_pkgs }}"
+    wheel_group: "{{ rh_wheel_group }}"
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" )
 
 
@@ -67,6 +68,7 @@
   when: ( ansible_distribution == "Ubuntu" or ansible_distribution == "Debian" ) and ansible_distribution_major_version|int >= 23
 - set_fact:
     install_pkgs: "{{ ubt_install_pkgs }}"
+    wheel_group: "{{ ubt_wheel_group }}"
   when: ( ansible_distribution == "Ubuntu" or ansible_distribution == "Debian" )
 
 

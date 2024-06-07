@@ -64,6 +64,9 @@
   when: print_debug == true
 
 
+- name: Uninstall MC S3 Client Packages
+  import_tasks: uninstall-mc-client.yml
+
 # Set up an alias for MinIO to interact with the RADOS Gateway
 # mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
 #

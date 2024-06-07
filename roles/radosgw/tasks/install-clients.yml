@@ -1,5 +1,5 @@
-#- name: Install MC S3 Client Packages
-#  import_tasks: install-mc-client.yml
+- name: Install MC S3 Client Packages
+  import_tasks: install-mc-client.yml
 
 
 - name: Create S3 Base Directory for Download

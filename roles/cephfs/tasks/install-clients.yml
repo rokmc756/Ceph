@@ -22,10 +22,7 @@
 
 - name: Upload Cephadm Binary
   import_tasks: upload-cephadm-bin.yml
-  register: upload_cephadm_bin
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-- debug: msg={{ upload_cephadm_bin }}
-  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
 - name: Add Repo for Ceph Reef for RedHat/Rocky/CentOS

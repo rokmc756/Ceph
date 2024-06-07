@@ -89,6 +89,20 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 
 
+- name: Remove the Ceph Software Package Repository
+  shell: |
+    cephadm rm-repo
+  register: remove_ceph_repo
+  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+- debug: msg={{ remove_ceph_repo }}
+  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+
+
+- name: Remove Cephadm Binary
+  import_tasks: remove-cephadm-bin.yml
+  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+
+
 - name: Clear Memory Cache
   shell: |
     sync && echo 3 > /proc/sys/vm/drop_caches
