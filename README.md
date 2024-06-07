@@ -525,14 +525,6 @@ $ make install
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 
-ifdef::env-github[]
-image: http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg[link=https://www.youtube.com/watch?v=wunlKs8cLug]
-endif::[]
-
-ifndef::env-github[]
-video::wunlKs8cLug[youtube]
-endif::[]
-
 
 ## High Availability Service for RGW
 <img src="https://github.com/rokmc756/Ceph/blob/main/roles/ceph/files/haroxy_for_rgw.svg" width="80%" height="80%" align="center"></img>
