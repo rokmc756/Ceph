@@ -105,7 +105,6 @@
     exit
     EOF
   register: iscsi_target_created
-  ignore_errors: true
   with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_created }}
@@ -116,7 +115,7 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
+    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
     exit
     EOF
   register: iscsi_target_created

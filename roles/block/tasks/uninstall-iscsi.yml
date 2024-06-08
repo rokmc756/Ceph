@@ -2,6 +2,7 @@
   shell: |
     podman ps | grep ceph | grep tcmu | awk '{print" "$NF}'
   register: iscsi_gw_cont_id
+  ignore_errors: true
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_gw_cont_id }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -10,6 +11,7 @@
 - name: Set command line for Podman iSCSI Gateway Container
   set_fact:
     podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
+  ignore_errors: true
   when: inventory_hostname in groups['mon']
 
 
@@ -21,6 +23,7 @@
     exit
     EOF
   register: pool_disk_removed
+  ignore_errors: true
   with_items: "{{ iscsi.targets }}"
   ignore_errors: true
   when: inventory_hostname in groups['mon']
@@ -79,7 +82,7 @@
   shell: |
     cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
     cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways;
-    delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.weka.io confirm=true
+    delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.suse.com confirm=true
     exit
     EOF
   register: iscsi_target_deleted
@@ -142,7 +145,7 @@
 
 - name: Remove iSCSI Gateway
   shell: |
-    ceph dashboard iscsi-gateway-rm {{ item }}.jtest.weka.io
+    ceph dashboard iscsi-gateway-rm {{ item }}.{{ ceph.domain }}
   register: iscsi_gw_removed
   ignore_errors: true
   with_items: "{{ groups['mon'] }}"
@@ -150,7 +153,7 @@
 - debug: msg={{ iscsi_gw_removed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Delete iSCSI Gateway Users
   shell: |
     for i in $(ceph auth list | grep client.iscsi); do ceph auth del $i; done

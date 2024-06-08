@@ -556,3 +556,27 @@ $ make install
 - https://medium.com/jacklee26/set-up-pxe-server-on-ubuntu20-04-and-window-10-e69733c1de87
 - https://blog.zabbix.com/installing-the-zabbix-server-with-ansible/13317/
 
+
+## TODO
+- Create iSCSI Gateways on Ubuntu 22
+~~~
+$ vi test.sh
+
+cat << EOF | podman exec -it ceph-ef9ce558-25f6-11ef-915f-c74300a53678-iscsi-jtest-iscsi-pool01-ubt22-node02-gmiiet-tcmu gwcli
+cd /iscsi-targets/iqn.2024-04.com.suse.jtest.iscsi-gw:iscsi-igw-ubt22-node02/gateways
+create ubt22-node02.jtest.suse.com 192.168.1.62 skipchecks=true
+exit
+EOF
+~~
+
+- Error to run script with sudo user jomoon. It looks there might need onther cnonfigure for cgroup
+$ sh test.sh
+~~~
+WARN[0000] The cgroupv2 manager is set to systemd but there is no systemd user session available
+WARN[0000] For using systemd, you may need to login using an user session
+WARN[0000] Alternatively, you can enable lingering with: `loginctl enable-linger 1000` (possibly as root)
+WARN[0000] Falling back to --cgroup-manager=cgroupfs
+WARN[0000] XDG_RUNTIME_DIR is pointing to a path which is not writable. Most likely podman will fail.
+Error: error creating tmpdir: mkdir /run/user/1000: permission denied
+~~~
+

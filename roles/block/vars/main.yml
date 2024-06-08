@@ -27,56 +27,58 @@ rbd:
       - { name: "nfs-img02", pool: "nfs-p01", size: "1G" }
       - { name: "nfs-img03", pool: "nfs-p01", size: "1G" }
 
+
 iscsi:
   targets:
     - {
-         wwn: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw",
+         wwn: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw",
          pg_name: "jtest-iscsi-pool01",
          pg_num: 32,
          pgp_num: 32,
          replica: "replicated replicated_rule",
          image: "jtest-iscsi-img01",
          image_size: 2G,
-         trusted_ips: "192.168.0.61,192.168.0.62,192.168.0.63",
-         init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
+         trusted_ips: "{{ all_clients_net1_ipaddrs }}",
+         init_wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1"
+         # trusted_ips: "192.168.0.71,192.168.0.72,192.168.0.73",
       }
   initiators:
     - {
-         wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1",
+         wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1",
          auth_id: "jomoon", password: "changemechangeme",
-         mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw",
+         mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw",
          mutual_passwd: "changemechangeme",
          pg_name: "jtest-iscsi-pool01",
          image: "jtest-iscsi-img01",
-         init_wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1"
+         init_wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1"
       }
   clients:
     client01:
       name: "{{ hostvars[groups['clients'][0]]['ansible_hostname'] }}"
-      wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+      wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       auth_id: "jomoon-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       password: "changemechangeme"
-      mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+      mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
-      target_ip: "192.168.1.71"
+      target_ip: "{{ hostvars[groups['mon'][0]]['ansible_'~netdev1].ipv4.address }}"
       mount_dir: "/mnt/iscsi-dir-client01"
     client02:
       name: "{{ hostvars[groups['clients'][1]]['ansible_hostname'] }}"
-      wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
+      wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
       auth_id: "jomoon-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
       password: "changemechangeme"
-      mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
+      mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
-      target_ip: "192.168.1.72"
+      target_ip: "{{ hostvars[groups['mon'][1]]['ansible_'~netdev1].ipv4.address }}"
       mount_dir: "/mnt/iscsi-dir-client02"
     client03:
       name: "{{ hostvars[groups['clients'][2]]['ansible_hostname'] }}"
-      wwn: "iqn.2024-04.io.weka.jtest:iscsi-client1-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
+      wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
       auth_id: "jomoon-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
       password: "changemechangeme"
-      mutual_id: "iqn.2024-04.io.weka.jtest.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
+      mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
-      target_ip: "192.168.1.73"
+      target_ip: "{{ hostvars[groups['mon'][2]]['ansible_'~netdev1].ipv4.address }}"
       mount_dir: "/mnt/iscsi-dir-client03"
   portals:
     - { ip: 192.168.0.11 }

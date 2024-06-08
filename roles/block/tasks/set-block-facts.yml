@@ -38,6 +38,7 @@
 - name: Define fact for all worker's first ip addresses
   set_fact:
     all_net0_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev0, 'ipv4', 'address']) | join(',') }}"
+    all_clients_net1_ipaddrs: "{{ groups['clients'] | map('extract', hostvars, ['ansible_'~netdev1, 'ipv4', 'address']) | join(',') }}"
 - debug: msg={{ all_net0_ipaddrs }}
 
 
