@@ -11,7 +11,7 @@ ubt_common_pkgs: "sshpass,s3cmd,cifs-utils,nfs-client,libnl-*,elfutils*,lsof,rpc
 ubt_common_devel_pkgs: "git,make,gcc,tcl,tk"
 
 ubt20_common_devel_pkgs: "perl"
-ubt22_common_devel_pkgs: "perl"
+ubt22_common_devel_pkgs: "perl,software-properties-common,git,curl,vim,bash-completion,ansible"
 ubt23_common_devel_pkgs: "perl"
 
 suse_common_pkgs: "firewalld,sshpass,cifs-utils,nfs-utils,lsof,glibc-devel,rpcbind,xfsprogs,kernel-devel,jq,expect,net-tools,uuid,tar,rsync,wget"

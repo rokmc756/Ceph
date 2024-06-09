@@ -16,28 +16,33 @@
 
 
 - name:  Remove Pool and Disk
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    disk remove {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      disk remove {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: pool_disk_removed
   ignore_errors: true
   with_items: "{{ iscsi.targets }}"
-  ignore_errors: true
   when: inventory_hostname in groups['mon']
 - debug: msg={{ pool_disk_removed }}
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
 - name: Auth Nochap
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    auth nochap
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      auth nochap
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: nochap_auth
   ignore_errors: true
   with_items: "{{ iscsi.initiators }}"
@@ -48,12 +53,15 @@
 
 
 - name: Delete iSCSI Client
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-    delete {{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+      delete {{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_client_deleted
   ignore_errors: true
   with_items: "{{ iscsi.initiators }}"
@@ -64,12 +72,15 @@
 
 
 - name: Delete Disk
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/disks
-    delete {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/disks
+      delete {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: disk_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
@@ -79,12 +90,15 @@
 
 
 - name: Delete iSCSI Gateways
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways;
-    delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.suse.com confirm=true
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways;
+      delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.suse.com confirm=true
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_target_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
@@ -94,12 +108,15 @@
 
 
 - name: Delete iSCSI Target
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets
-    delete {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets
+      delete {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_target_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"

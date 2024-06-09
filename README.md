@@ -580,3 +580,59 @@ WARN[0000] XDG_RUNTIME_DIR is pointing to a path which is not writable. Most lik
 Error: error creating tmpdir: mkdir /run/user/1000: permission denied
 ~~~
 
+- Disable Firewall used by UFW in Ubuntu
+~~~
+$ ./conn-ceph.sh 61 "systemctl stop ufw; systemctl disable ufw"
+Synchronizing state of ufw.service with SysV service script with /lib/systemd/systemd-sysv-install.
+
+Executing: /lib/systemd/systemd-sysv-install disable ufw
+
+$ ./conn-ceph.sh 61 "iptables -nL"
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+CNI-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* CNI firewall plugin rules */
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain CNI-ADMIN (1 references)
+target     prot opt source               destination
+
+Chain CNI-FORWARD (1 references)
+target     prot opt source               destination
+CNI-ADMIN  all  --  0.0.0.0/0            0.0.0.0/0            /* CNI firewall plugin admin overrides */
+
+$ ./conn-ceph.sh 61 "iptables -F"
+
+$ ./conn-ceph.sh 61 "iptables -nL"
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain CNI-ADMIN (0 references)
+target     prot opt source               destination
+
+Chain CNI-FORWARD (0 references)
+target     prot opt source               destination
+jomoon@LAPTOP-OS28E8H5:~/Ceph$
+
+
+$ ufw status
+Status: inactive
+
+$ ufw disable
+
+~~~
+
+- https://www.suse.com/ko-kr/support/kb/doc/?id=000021071
+- https://superuser.com/questions/1788594/podman-the-cgroupv2-manager-is-set-to-systemd-but-there-is-no-systemd-user-sess
+
+

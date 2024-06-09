@@ -28,3 +28,12 @@
 - name: Disable and Stop Firewalld
   service: name=firewalld state=stopped
   when: inventory_hostname in groups['master'] or inventory_hostname in groups['standby'] or inventory_hostname in groups['workers']
+
+- name: Disable and Stop UFW
+  systemd:
+    name: ufw
+    enabled: no
+    state: stopped
+  when:
+    - ( ansible_distribution == "Ubuntu" or ansible_distribution == "Debian" )
+    - inventory_hostname in groups['master'] or inventory_hostname in groups['standby'] or inventory_hostname in groups['workers']

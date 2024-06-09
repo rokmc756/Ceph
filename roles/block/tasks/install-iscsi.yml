@@ -98,13 +98,17 @@
 
 
 - name: Create iSCSI Target
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets
-    create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets
+      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_target_created
+  ignore_errors: true
   with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_created }}
@@ -112,13 +116,17 @@
 
 
 - name: Create iSCSI Gateways
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-    create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
+      create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_target_created
+  ignore_errors: true
   with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_created }}
@@ -126,12 +134,15 @@
 
 
 - name: Create Pool and Images
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /disks
-    create pool={{ item.pg_name }} image={{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} size={{ item.image_size }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /disks
+      create pool={{ item.pg_name }} image={{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} size={{ item.image_size }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: pool_image_created
   with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in groups['mon']
@@ -140,12 +151,15 @@
 
 
 - name: Create iSCSI Initiator
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-    create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: iscsi_initiator_created
   with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
@@ -154,12 +168,15 @@
 
 
 - name: Setup User and Password for iSCSI Initiators
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-    auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
-    exit
-    EOF
+  shell:
+    cmd:
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+      auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: user_password_setup
   with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
@@ -169,12 +186,15 @@
 
 
 - name: Add Disk
-  shell: |
-    cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
-    cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-    disk add {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-    exit
-    EOF
+  shell:
+    cmd: |
+      cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+      disk add {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      exit
+      EOF
+  args:
+    executable: /bin/bash
   register: disk_added
   with_items: "{{ iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
