@@ -40,7 +40,6 @@ iscsi:
          image_size: 2G,
          trusted_ips: "{{ all_clients_net1_ipaddrs }}",
          init_wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1"
-         # trusted_ips: "192.168.0.71,192.168.0.72,192.168.0.73",
       }
   initiators:
     - {

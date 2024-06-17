@@ -38,7 +38,7 @@ We are using raw devices without any filesystem in this guide. All the required 
 * MacOS or Fedora/CentOS/RHEL should have installed ansible as ansible host.
 * Supported OS for ansible target host should be prepared with package repository configured such as yum, dnf and apt
 
-## Prepare ansible host to run vmware-postgres ansible playbook
+## Prepare ansible host to run Ceph Ansible Playbook
 * MacOS
 ```
 $ xcode-select --install
@@ -635,4 +635,8 @@ $ ufw disable
 - https://www.suse.com/ko-kr/support/kb/doc/?id=000021071
 - https://superuser.com/questions/1788594/podman-the-cgroupv2-manager-is-set-to-systemd-but-there-is-no-systemd-user-sess
 
+
+### Podman Issue
+- https://www.server-world.info/en/note?os=Ubuntu_22.04&p=podman&f=12
+- https://unix.stackexchange.com/questions/731645/podman-w-docker-compose-run-as-user
 

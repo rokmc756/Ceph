@@ -21,7 +21,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       disk remove {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash
@@ -39,7 +39,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       auth nochap
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash
@@ -58,7 +58,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
       delete {{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash
@@ -77,7 +77,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/disks
       delete {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash
@@ -95,7 +95,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways;
       delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.suse.com confirm=true
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash
@@ -113,7 +113,7 @@
       cat << EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets
       delete {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit
+      exit 0
       EOF
   args:
     executable: /bin/bash

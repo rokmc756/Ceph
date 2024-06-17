@@ -58,6 +58,7 @@
     wipefs -a {{ item }}
     sgdisk --zap-all --delete {{ item }}
     blkdiscard {{ item }}
+    rm -f 90-ceph-*-haproxy.conf
   register: cleanup_ceph_block_devices
   with_items: "{{ nvme_device_array }}"
   when: inventory_hostname in groups['osd']
