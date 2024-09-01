@@ -1,4 +1,3 @@
-#
 - name: Install Ceph Reef
   shell: |
     {{ ceph.base_path }}/cephadm install
@@ -6,10 +5,10 @@
 - debug: msg={{ install_ceph }}
   when: print_debug == true
 
-#
+
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]]['ansible_'~netdev0]['ipv4']['address'] }} --allow-overwrite
+    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]][_netdev]['ipv4']['address'] }} --allow-overwrite
   register: init_ceph
   ignore_errors: true
 
@@ -50,7 +49,7 @@
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true
 
-#
+
 - name: Set fact for fsid
   set_fact:
     fsid01: "{{ get_fsid.stdout }}"
@@ -104,7 +103,7 @@
 - debug: msg={{ confirm_label }}
   when: print_debug == true
 
-#
+
 #- name: Manually add monitors and disable automated monitor deployment
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch apply mon --unmanaged
@@ -112,7 +111,7 @@
 #- debug: msg={{ add_monitors }}
 #  when: print_debug == true
 
-#
+
 # Ceph Monitor 데몬은 클러스터 구성원 자격, 구성 및 상태에 대한 매우 안정적이고 지속적인 저장을 제공하기 위하여 모든 노드에 MON 역할을 부여합니다.
 # 역시 모든 노드에 MON 역할을 부여합니다.
 - name: Apply the role of monitor for all nodes
@@ -122,6 +121,7 @@
 - debug: msg={{ apply_monitors }}
   when: print_debug == true
 
+
 # Ceph Manager 데몬은 모니터 데몬과 함께 실행되어 외부 모니터링 및 관리 시스템에 추가적인 모니터링 및 인터페이스를 제공합니다.
 # 역시 모든 노드에 MGR 역할을 부여합니다.
 - name: Apply the role of mgr for all nodes
@@ -130,6 +130,7 @@
   register: apply_mgr
 - debug: msg={{ apply_mgr }}
   when: print_debug == true
+
 
 # CephRBD 뿐 아니라 CephFS 도 사용하기 위해 MDS 를 생성합니다. 미리 모든 노드에 MDS 역할을 부여 합니다.
 # 여기에서는 파일시스템을 식별하기 위해 myfs 라는 이름으로 생성 하였습니다.
@@ -142,7 +143,7 @@
   # ceph orch apply mds myfs --placement="15 rk9-node04 rk9-node05 rk9-node06"
   # ceph orch apply mds myfs --placement="30 rk9-node01 rk9-node02 rk9-node03 rk9-node04 rk9-node05 rk9-node06"
 
-#
+
 - name: Label the nodes with its role
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
@@ -151,7 +152,7 @@
 - debug: msg={{ label_mgr }}
   when: print_debug == true
 
-#
+
 - name:  Confirm the label
   become: true
   become_user: root
@@ -161,7 +162,7 @@
 - debug: msg={{ confirm_label }}
   when: print_debug == true
 
-#
+
 #- name: Deploy each additional monitor:
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch daemon add mon *<host1:ip>
@@ -169,7 +170,7 @@
 #
 #- debug: msg={{ deploy_additional_monitor }}
 
-#
+
 - name: Add the OSD Nodes to the cluster
   shell: |
     {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
@@ -179,7 +180,7 @@
   when: print_debug == true
   #  {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb,/dev/vdc,/dev/vdd
 
-#
+
 - name: Label the OSD nodes with its role
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
@@ -196,7 +197,7 @@
 - debug: msg={{ list_ceph_nodes }}
   when: print_debug == true
 
-#
+
 - name: List the devices that are available on the OSD nodes for creating OSDs using the command below;
   shell: |
     {{ cephadm_cmd }} ceph orch device ls
@@ -204,7 +205,7 @@
 - debug: msg={{ list_devices }}
   when: print_debug == true
 
-#
+
 - name: Attach all devices at once
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --method raw
@@ -212,6 +213,7 @@
   # --method {raw|lvm}
 - debug: msg={{ attach_all_devices }}
   when: print_debug == true
+
 
 #- name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
 #  become: true
@@ -222,6 +224,7 @@
 #
 #- debug: msg={{ disable_auto_create_osds }}
 #  when: print_debug == true
+
 
 #- name: Ceate manullay an OSD from a specific device on a specific host
 #  become: true

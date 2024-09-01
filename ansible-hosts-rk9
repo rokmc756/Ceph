@@ -4,19 +4,20 @@ remote_machine_username="jomoon"
 remote_machine_password="changeme"
 
 [rgw]
-rk9-node03 ansible_ssh_host=192.168.0.73
+rk9-node03 ansible_ssh_host=192.168.1.73
+
+[control]
+rk9-node01 ansible_ssh_host=192.168.1.71
 
 [mon]
-rk9-node01 ansible_ssh_host=192.168.0.71
-rk9-node02 ansible_ssh_host=192.168.0.72
-rk9-node03 ansible_ssh_host=192.168.0.73
+rk9-node01 ansible_ssh_host=192.168.1.71
+rk9-node02 ansible_ssh_host=192.168.1.72
+rk9-node03 ansible_ssh_host=192.168.1.73
 
 [osd]
-rk9-node04 ansible_ssh_host=192.168.0.74
-rk9-node05 ansible_ssh_host=192.168.0.75
-rk9-node06 ansible_ssh_host=192.168.0.76
+rk9-node04 ansible_ssh_host=192.168.1.74
+rk9-node05 ansible_ssh_host=192.168.1.75
+rk9-node06 ansible_ssh_host=192.168.1.76
 
 [clients]
-ubt22-client01 ansible_ssh_host=192.168.0.61
-ubt22-client02 ansible_ssh_host=192.168.0.62
-ubt22-client03 ansible_ssh_host=192.168.0.63
+rk9-node07 ansible_ssh_host=192.168.1.77

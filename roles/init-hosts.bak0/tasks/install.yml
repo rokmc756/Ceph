@@ -3,7 +3,6 @@
   package: name={{ item }} state=present
   with_items:
     - "dnf-utils"
-    - "epel-release"
   ignore_errors: true
   when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
   # "yum-utils"
@@ -22,7 +21,7 @@
   with_items: "{{ install_pkgs }}"
 
 
-- name: Add the Inventory Into /etc/hosts
+- name: Add the Inventory into /etc/hosts
   template:
     src: hosts.j2
     dest: /etc/hosts
@@ -31,13 +30,13 @@
     mode: 0644
 
 
-- name: Ensure Group "{{ sudo_group }}" Exists
+- name: Ensure group "{{ sudo_group }}" exists
   group:
     name: "{{ sudo_group }}"
     state: present
 
 
-- name: Create "{{ sudo_user }}" User
+- name: Create "{{ sudo_user }}" user
   user:
     name: "{{ sudo_user }}"
     state: present
@@ -49,25 +48,23 @@
 
 
 # This will overwrite the first line which starts with %wheel
-- name: Add Group to /etc/sudoers File Without Password
-  become_user: root
+- name: Add group to /etc/sudoers file without password
   lineinfile: "dest=/etc/sudoers state=present regexp='^%{{ sudo_user }}' line='%{{ sudo_user }} ALL=(ALL) NOPASSWD: ALL'"
 
 
-- name: Read /etc/group Entries
-  # become: true
+- name: Read /etc/group entries
   shell: "/usr/bin/getent group | grep ^sudo{{':'}} | cut -f4 -d{{':'}}"
   register: etc_group
   changed_when: false
 
 
-- name: Split Group Members
+- name: Split group members
   set_fact:
     etc_group_members: "{{ etc_group.stdout.split(',') }}"
     changed_when: false
 
 
-- name: Add User to 'sudo' Group (Debian)
+- name: Add user to 'sudo' group (Debian)
   user:
     name: "{{ sudo_user }}"
     groups: sudo
@@ -76,14 +73,14 @@
     createhome: true
   when: ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
 
-#
-- name: Check Needed OS Tools Exist
+
+- name: Check needed OS tools exist
   shell: which sshpass ssh-keygen ssh-copy-id
   register: os_tools_exist
   ignore_errors: true
 
-#
-- name: Fail Execution If Any Of the Needed OS Tools Is Missing
+
+- name: Fail execution if any of the needed OS tools is missing
   fail:
     msg: "One or more of the: sshpass, ssh-keygen, ssh-copy-id are missing on this machine. Please install them - using your distribution's recommended method - before continuing."
   when: os_tools_exist.rc != 0

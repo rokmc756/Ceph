@@ -26,4 +26,3 @@
     - "{{ cephadm.base_path }}/cephadm"
     - "{{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }}"
   when: cephadm_tarball_exists.stat.exists == True or cephadm_bin_exists.stat.exists == True
-

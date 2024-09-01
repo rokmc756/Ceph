@@ -4,7 +4,7 @@ rh_common_devel_pkgs: "git"
 
 rh7_common_devel_pkgs: "make,perl,gcc,tcl,tk,libnl,nvme-cli,gdisk"
 rh8_common_devel_pkgs: "make,perl,gcc,tcl,tk,libnl3,nvme-cli,pdsh,python3-pip,gdisk"
-rh9_common_devel_pkgs: "make,perl,gcc,tcl,tk,libnl3,nvme-cli,pdsh,python3-pip,gdisk,podman"
+rh9_common_devel_pkgs: "make,perl,gcc,tcl,tk,libnl3,nvme-cli,pdsh,python3-pip,gdisk"
 
 suse_common_pkgs: "firewalld,sshpass,cifs-utils,nfs-utils,lsof,glibc-devel,rpcbind,xfsprogs,kernel-devel,jq,expect,net-tools,uuid,tar,rsync,wget,mc"
 suse_common_devel_pkgs: "git"

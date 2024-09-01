@@ -4,16 +4,16 @@
     print_debug: true
     remove_osd_nodes: false
     remove_ceph_nodes: false
-    purge_ceph: true
+    purge_ceph: false
     uninstall_ceph: true
     remove_cephadm_bin: true
   roles:
     - { role: ceph }
 #    - { role: block }
-#    - { role: nfs }
-#    - { role: radosgw }
 #    - { role: cephfs }
 #    - { role: init-hosts }
+#    - { role: nfs }
+#    - { role: radosgw }
 #    - { role: block }
 #    - { role: custom }
 

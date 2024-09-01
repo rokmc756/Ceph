@@ -1,6 +1,6 @@
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]]['ansible_'~netdev1]['ipv4']['address'] }} \
+    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]][_netdev]['ipv4']['address'] }} \
     --cluster-network 192.168.1.0/24 \
     --dashboard-password-noupdate \
     --initial-dashboard-user {{ ceph.admin_user }} \
@@ -19,14 +19,31 @@
 # cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
 
 
+- name: Get FSID for Setting Fact
+  shell: |
+    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+
+
+- name: Set Fact for cephadm_cmd Command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+
+
 - name: Activate the Telemetry Module
   shell: |
-    ceph telemetry on --license sharing-1-0
-    ceph telemetry enable channel perf
+    {{ cephadm_cmd }} ceph telemetry on --license sharing-1-0
+    {{ cephadm_cmd }} ceph telemetry enable channel perf        # or ceph telemetry off
   register: activate_telemetry_module
 - debug: msg={{ activate_telemetry_module }}
   when: print_debug == true
-  # ceph telemetry off
 
 
 - name: Check if Container is Created
@@ -51,4 +68,3 @@
   register: list_containers
 - debug: msg={{ list_containers }}
   when: print_debug == true
-

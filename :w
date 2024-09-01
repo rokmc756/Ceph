@@ -13,10 +13,6 @@
     - upload
     - init
     - purge
-    - add-ceph
-    - remove-ceph
-    - add-osd
-    - remove-osd
 
 
 - name: Upload Cephadm Binary
@@ -79,6 +75,6 @@
   import_tasks: remove-cephadm-bin.yml
   tags: uninstall
   when:
-    - remove_cephadm_bin is defined and remove_cephadm_bin == true and inventory_hostname not in groups['clients']
+    - remove_cephadm_bin == true and inventory_hostname not in groups['clients']
     - ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 

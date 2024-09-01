@@ -7,7 +7,7 @@
   when: print_debug == true and inventory_hostname in groups['control']
 
 
-- name: Set Fact for FSDI
+- name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
   delegate_to: "{{ item }}"
@@ -16,7 +16,7 @@
   when: inventory_hostname in groups['control']
 
 
-- name: Set Fact for cephadm command
+- name: Set Fact for cephadm Command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
   delegate_to: "{{ item }}"

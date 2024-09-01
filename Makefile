@@ -3,6 +3,8 @@ USERNAME=jomoon
 COMMON="yes"
 ANSIBLE_HOST_PASS="changeme"
 ANSIBLE_TARGET_PASS="changeme"
+ANSIBLE_PLAYBOOK_CMD="ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts'"
+
 # include ./*.mk
 
 GPHOSTS := $(shell grep -i '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' ./ansible-hosts | sed -e "s/ ansible_ssh_host=/,/g")
@@ -21,41 +23,109 @@ all:
 	@echo ""
 	@for GPHOST in ${GPHOSTS}; do \
 		IP=$${GPHOST#*,}; \
-	    	HOSTNAME=$${LINE%,*}; \
+		HOSTNAME=$${LINE%,*}; \
 		echo "Current used hostname: $${HOSTNAME}"; \
 		echo "Current used IP: $${IP}"; \
 		echo "Current used user: ${USERNAME}"; \
 		echo ""; \
 	done
 
-init:	setup-hosts.yml update-hosts.yml
-	# $(shell sed -i -e '2s/.*/ansible_become_pass: ${ANSIBLE_TARGET_PASS}/g' ./group_vars/all.yml)
-	@echo ""
-	@for GPHOST in ${GPHOSTS}; do \
-		IP=$${GPHOST#*,}; \
-	    	HOSTNAME=$${LINE%,*}; \
-		echo "It will init host $${IP} and install ssh key and basic packages"; \
-		echo ""; \
-		echo "Note: NEVER use this step to init a host in an untrusted network!"; \
-		echo "Note: this will OVERWRITE any existing keys on the host!"; \
-		echo ""; \
-		echo "3 seconds to abort ..."; \
-		echo ""; \
-		sleep 3; \
-		echo "IP : $${IP} , HOSTNAME : $${HOSTNAME} , USERNAME : ${USERNAME}"; \
-		./init_host.sh "$${IP}" "${USERNAME}"; \
-	done
-	ansible-playbook -i ansible-hosts -u ${USERNAME} --ssh-common-args='-o UserKnownHostsFile=./known_hosts -o VerifyHostKeyDNS=true' install-ansible-prereqs.yml
+#init:	setup-hosts.yml update-hosts.yml
+#	# $(shell sed -i -e '2s/.*/ansible_become_pass: ${ANSIBLE_TARGET_PASS}/g' ./group_vars/all.yml)
+#	@echo ""
+#	@for GPHOST in ${GPHOSTS}; do \
+#		IP=$${GPHOST#*,}; \
+#	    	HOSTNAME=$${LINE%,*}; \
+#		echo "It will init host $${IP} and install ssh key and basic packages"; \
+#		echo ""; \
+#		echo "Note: NEVER use this step to init a host in an untrusted network!"; \
+#		echo "Note: this will OVERWRITE any existing keys on the host!"; \
+#		echo ""; \
+#		echo "3 seconds to abort ..."; \
+#		echo ""; \
+#		sleep 3; \
+#		echo "IP : $${IP} , HOSTNAME : $${HOSTNAME} , USERNAME : ${USERNAME}"; \
+#		./init_host.sh "$${IP}" "${USERNAME}"; \
+#	done
+#	ansible-playbook -i ansible-hosts -u ${USERNAME} --ssh-common-args='-o UserKnownHostsFile=./known_hosts -o VerifyHostKeyDNS=true' install-ansible-prereqs.yml
 
-# - https://ansible-tutorial.schoolofdevops.com/control_structures/
-install: role-update install.yml
-	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} install.yml --tags="install"
 
-uninstall: role-update uninstall.yml
-	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} uninstall.yml --tags="uninstall"
+# https://ansible-tutorial.schoolofdevops.com/control_structures/
+download: role-update download-ceph.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} download-ceph.yml --tags="download"
+init: role-update init-hosts.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} init-hosts.yml --tags="init"
+uninit: role-update init-hosts.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} init-hosts.yml --tags="uninit"
+boot: role-update control-vms.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=powered-on power_title=Power-On VMs"
+shutdown: role-update control-vms.yml
+	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=shutdown-guest power_title=Shutdown VMs"
 
-upgrade: role-update upgrade-hosts.yml
-	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} upgrade-hosts.yml --tags="upgrade"
+ceph:
+	@if [ "${r}" = "upload" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
+	elif [ "${r}" = "install" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
+	elif [ "${r}" = "uninstall" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{uninstall_ceph: True}' --tags='uninstall';\
+	elif [ "${r}" = "init" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{init_ceph: True}' --tags='init';\
+	elif [ "${r}" = "purge" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{purge_ceph: True}' --tags='purge';\
+	elif [ "${r}" = "add-ceph" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_ceph_nodes: True}' --tags='add-ceph';\
+	elif [ "${r}" = "remove-ceph" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_ceph_nodes: True}' --tags='remove-ceph';\
+	elif [ "${r}" = "add-osd" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_osd_nodes: True}' --tags='add-osd';\
+	elif [ "${r}" = "remove-osd" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_osd_nodes: True}' --tags='remove-osd';\
+	elif [ "${r}" = "uninstall" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} uninstall.yml --tags='uninstall';\
+	else\
+		echo "No Actions for Ceph";\
+		exit;\
+	fi
+
+
+
+cephfs:
+	@if [ "${r}" = "install" ]; then\
+		if [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' -e '{enable_cephfs_client: True}' --tags='install';\
+		elif [ ! -z ${c} ] && [ "${c}" != "enable" ]; then\
+			echo "No Actions for Installing CephFS with Client";\
+		else\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' --tags='install';\
+		fi;\
+	elif [ "${r}" = "uninstall" ]; then\
+		if [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' -e '{enable_cephfs_client: True}' --tags='uninstall';\
+		elif [ ! -z ${c} ] && [ "${c}" != "enable" ]; then\
+			echo "No Actions for Uninstalling CephFS with Client";\
+		else\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' --tags='uninstall';\
+		fi;\
+	elif [ -z ${r} ] && [ "${c}" = "enable" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs_client: True}' --tags='install';\
+	elif [ -z ${r} ] && [ "${c}" = "disable" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs_client: True}' --tags='uninstall';\
+	else\
+		echo "No Actions for CephFS";\
+		exit;\
+	fi
+
+
+
+#install: role-update install.yml
+#	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} install.yml --tags="install"
+
+#uninstall: role-update uninstall.yml
+#	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} uninstall.yml --tags="uninstall"
+
+#upgrade: role-update upgrade-hosts.yml
+#	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ansible-hosts -u ${USERNAME} upgrade-hosts.yml --tags="upgrade"
 
 update:
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -i ${IP}, -u ${USERNAME} update-hosts.yml

@@ -4,36 +4,39 @@
   fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
-#
-- name: Set facts for network and packages informations for Linux Distribution
+
+- name: Set facts for Network and Packages Informations
   import_tasks: set-cephfs-facts.yml
   tags:
     - install
     - uninstall
 
-#
+
 - name: Create Pool and CephFS
   import_tasks: install.yml
   tags: install
-  when: ceph.fs == true and inventory_hostname in ceph.control_node
-  # when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: enable_cephfs is defined and enable_cephfs == true and inventory_hostname in ceph.control_node
+  # when: ceph.fs == true and inventory_hostname in ceph.control_node
 
-#
+
 - name: Install CephFS Clients
   import_tasks: install-clients.yml
   tags: install
-  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+  when: enable_cephfs_client is defined and enable_cephfs_client == true and inventory_hostname in groups['clients']
+  # when: enable_cephfs_client == true and inventory_hostname in groups['clients']
+  # when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Uninstall CephFS Clients
   import_tasks: uninstall-clients.yml
   tags: uninstall
-  when: ceph.client.cephfs == true and inventory_hostname in groups['clients']
+  when: enable_cephfs_client is defined and enable_cephfs_client == true and inventory_hostname in groups['clients']
 
-#
+
 - name: Remove CephFS and Pools
   import_tasks: uninstall.yml
   tags: uninstall
-  when: ceph.fs == true and inventory_hostname in ceph.control_node
+  when: enable_cephfs is defined and enable_cephfs == true and inventory_hostname in ceph.control_node
+  # when: ceph.fs == true and inventory_hostname in ceph.control_node
   # when: ceph.fs == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

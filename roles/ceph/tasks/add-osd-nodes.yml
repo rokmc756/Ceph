@@ -52,7 +52,7 @@
 
 
 - pause:
-    minutes: 2
+    minutes: 1
 
 
 - name: List Ceph Cluster Nodes
@@ -74,7 +74,7 @@
 
 
 - pause:
-    minutes: 2
+    minutes: 1
 
 
 # https://docs.ceph.com/en/quincy/cephadm/services/osd/

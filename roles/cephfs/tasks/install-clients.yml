@@ -108,6 +108,7 @@
 - debug: msg={{ create_cephfs_dir  }}
   when: print_debug == true and inventory_hostname in groups['clients']
 
+
 # mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} \
 # -o name={{ item.name }},fs={{ item.name }},secret=`cat /etc/ceph/ceph.client.{{ item.name }}.keyring | grep key | awk '{print $3}'`
 - name: Mount Stateless CephFS Clients
@@ -118,12 +119,11 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 - debug: msg={{ mount_cephfs_dir }}
   when: print_debug == true and inventory_hostname in groups['clients']
-
-
 # mount -v -t ceph splunk@.splunkfs=/ -o secret=$KEY
 # mount -t ceph splunk@.splunkfs=/ /mnt/splunk -o secretfile=/etc/ceph/ceph.client.splunk.key
 # mount -v -t ceph $HOST:6789:/ /mnt/splunk -o name=splunk,fs=splunkfs,secretfile=/etc/ceph/ceph.client.splunk.key
 # mount -v -t ceph splunk@$FSID.splunkfs=/ /mnt/splunk -o 'secretfile=/etc/ceph/ceph.client.splunk.key,mon_addr=$IP'
+
 
 # mount.ceph admin@09afe574-fa70-11ee-80b0-00505693d59b.cephfs-p01-fs01=/ /mnt/cephfs/
 # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
