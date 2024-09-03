@@ -23,4 +23,3 @@
   register: mc_tar_deleted
   when: mc_tar_exists.stat.exists == true
 - debug: msg={{ mc_tar_deleted }}
-
