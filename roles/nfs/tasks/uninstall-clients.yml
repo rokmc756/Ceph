@@ -1,16 +1,18 @@
-- name: Delete text file
+- name: Delete Text File
   file:
     state: absent
     path: "{{ item.mount_dir }}/test-nfs01.txt"
   register: delete_nfs_files
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( disable_single_client is defined and disable_single_client == true )
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ delete_nfs_files }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( disable_single_client is defined and disable_single_client == true )
+  # when: print_debug == true and ceph.client.nfs.single == true
 
 
-- name: Umount NFS directory
+- name: Umount NFS Directory
   mount:
     path: "{{ item.mount_dir }}"
     state: unmounted
@@ -19,41 +21,44 @@
   register: umount_nfs_dir
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( disable_single_client is defined and disable_single_client == true )
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ umount_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( disable_single_client is defined and disable_single_client == true )
+  # when: print_debug == true and ceph.client.nfs.single == true
   # ignore_errors: true
   # umount -f -l {{ smb.fs.mount_dir }}
 
-#
-- name: Delete directory to mount NFS
+
+- name: Delete Directory to mount NFS
   file:
     state: absent
     path: "{{ item.mount_dir }}"
   register: delete_nfs_dir
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( disable_single_client is defined and disable_single_client == true )
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ delete_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( disable_single_client is defined and disable_single_client == true )
+  # when: print_debug == true and ceph.client.nfs.single == true
 
 
-
-#
-- name: Delete text file
+- name: Delete Text File
   file:
     state: absent
     path: "{{ item.mount_dir }}/test-nfs01.txt"
   register: delete_nfs_files
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( disable_multi_client is defined and disable_multi_client == true )
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ delete_nfs_files }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
 
 
-#
-- name: Umount NFS directory
+- name: Umount NFS Directory
   mount:
     path: "{{ item.mount_dir }}"
     state: unmounted
@@ -62,23 +67,27 @@
   register: umount_nfs_dir
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( disable_multi_client is defined and disable_multi_client == true )
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ umount_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
   # ignore_errors: true
   # umount -f -l {{ smb.fs.mount_dir }}
 
 
-- name: Delete directory to mount NFS
+- name: Delete Directory to Mount NFS
   file:
     state: absent
     path: "{{ item.mount_dir }}"
   register: delete_nfs_dir
   ignore_errors: true
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( disable_multi_client is defined and disable_multi_client == true )
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ delete_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
 
 
 - name: Uninstall NFS Client Packages

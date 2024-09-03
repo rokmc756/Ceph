@@ -7,7 +7,7 @@
 
 
 - name: Install NFS Client Packages
-  become: true
+  # become: true
   package: name={{item}} state=present
   with_items:
     - "nfs-utils"
@@ -15,7 +15,7 @@
 
 
 - name: Install NFS Client Packages
-  become: true
+  # become: true
   package: name={{item}} state=present
   with_items:
     - "nfs-client"
@@ -32,9 +32,11 @@
     recurse: yes
   register: create_nfs_dir
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( enable_single_client is defined and enable_single_client == true )
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ create_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( enable_single_client is defined and enable_single_client == true )
+  # when: print_debug == true and ceph.client.nfs.single == true
 
 
 # https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
@@ -47,9 +49,12 @@
     state: ephemeral
   register: mount_nfs_dir
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( enable_single_client is defined and enable_single_client == true )
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ mount_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( enable_single_client is defined and enable_single_client == true )
+  # when: print_debug == true and enable_single_client == true
+  # when: print_debug == true and ceph.client.nfs.single == true
 
 
 - name: Conditionally create a file if it does not exist
@@ -62,9 +67,13 @@
     mode: 0644
   register: file_copied
   with_items: "{{ nfs.client }}"
-  when: ceph.client.nfs.single == true
+  when: ( enable_single_client is defined and enable_single_client == true )
+  # when: enable_single_client == true
+  # when: ceph.client.nfs.single == true
 - debug: msg={{ file_copied }}
-  when: print_debug == true and ceph.client.nfs.single == true
+  when: print_debug == true and ( enable_single_client is defined and enable_single_client == true )
+  # when: print_debug == true and enable_single_client == true
+  # when: print_debug == true and ceph.client.nfs.single == true
 
 
 
@@ -78,9 +87,13 @@
     recurse: yes
   register: create_nfs_dir
   with_items: "{{ ganesha.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( enable_multi_client is defined and enable_multi_client == true )
+  # when: enable_multi_client == true
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ create_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( enable_multi_client is defined and enable_multi_client == true )
+  # when: print_debug == true and enable_multi_client == true
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
 
 
 # https://docs.ansible.com/ansible/latest/collections/ansible/posix/mount_module.html
@@ -93,9 +106,13 @@
     state: ephemeral
   register: mount_nfs_dir
   with_items: "{{ ganesha.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( enable_multi_client is defined and enable_multi_client == true )
+  # when: enable_multi_client == true
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ mount_nfs_dir }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( enable_multi_client is defined and enable_multi_client == true )
+  # when: print_debug == true and enable_multi_client == true
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
 
 
 - name: Conditionally create a file if it does not exist
@@ -108,7 +125,11 @@
     mode: 0644
   register: file_copied
   with_items: "{{ ganesha.client }}"
-  when: ceph.client.nfs.ganesha == true
+  when: ( enable_multi_client is defined and enable_multi_client == true )
+  # when: enable_multi_client == true
+  # when: ceph.client.nfs.ganesha == true
 - debug: msg={{ file_copied }}
-  when: print_debug == true and ceph.client.nfs.ganesha == true
+  when: print_debug == true and ( enable_multi_client is defined and enable_multi_client == true )
+  # when: print_debug == true and enable_multi_client == true
+  # when: print_debug == true and ceph.client.nfs.ganesha == true
 
