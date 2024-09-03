@@ -37,16 +37,12 @@
   import_tasks: install-clients.yml
   tags: install
   when: (( enable_single_client is defined and enable_single_client == true ) or ( enable_multi_client is defined and enable_multi_client == true )) and inventory_hostname in groups['clients']
-  # when: inventory_hostname in groups['clients']
-  # when: ( enable_single_client == true or enable_multi_client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall S3 Clients
   import_tasks: uninstall-clients.yml
   tags: uninstall
   when: (( disable_single_client is defined and disable_single_client == true ) or ( disable_multi_client is defined and disable_multi_client == true )) and inventory_hostname in groups['clients']
-  # when: inventory_hostname in groups['clients']
-  # when: ( disable_single_client == true or disable_multi_client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall Multisite Rados Gateway
