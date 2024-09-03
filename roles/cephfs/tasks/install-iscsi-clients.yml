@@ -1,7 +1,7 @@
 ---
 # Install iSCSI initiator
 
-- name: Install iSCSI initiator for RedHat/CentOS/Rocky or OpenSUSE
+- name: Install iSCSI Initiator for RedHat/CentOS/Rocky or OpenSUSE
   package: name={{item}} state=present
   register: iscsi_initiator_installed
   with_items:
@@ -11,7 +11,7 @@
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 
-- name: Install iSCSI initiator for Ubuntu or Debian
+- name: Install iSCSI Initiator for Ubuntu or Debian
   package: name={{item}} state=present
   register: iscsi_initiator_installed
   with_items:
@@ -85,7 +85,7 @@
 - debug: msg={{ partitions_confirmed }}
 
 
-- name: Install parted
+- name: Install Parted
   yum:
     name: parted
     state: present

@@ -1,4 +1,4 @@
-- name: Increase max PGs per OSD
+- name: Increase Max PGs per OSD
   shell: |
     ceph config set mon mon_max_pg_per_osd 600
   register: max_pgs_increased

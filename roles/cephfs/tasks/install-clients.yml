@@ -146,7 +146,7 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 
 
-- name: Creat text file with the content
+- name: Creat Text File with the Content
   become_user: root
   shell: |
     touch {{ item.mount_dir }}/{{ item.name }}.txt

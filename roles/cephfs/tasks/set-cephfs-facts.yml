@@ -3,6 +3,7 @@
   set_fact:
     cephadm_file_name: cephadm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}
 
+
 # https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
 - name: Get Network Interface Name from Prefix of IP Addresses Provided in Variables
   set_fact:
@@ -12,7 +13,7 @@
   when: inventory_hostname not in groups['clients']
 
 
-- name: Get interface name from prefix of IP Addresses provided for Ceph Nodes
+- name: Get Network Interface Name from Prefix of IP Addresses Provided for Ceph Nodes
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
     netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr1 ) | map(attribute='device') | first }}"
@@ -20,7 +21,7 @@
   when: inventory_hostname in groups['clients']
 
 
-- name: Get IP Address from provided network device name
+- name: Get IP Address from Network Device Name Provided
   set_fact:
     ipaddr0: "{{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}"
     ipaddr1: "{{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }}"
@@ -28,7 +29,7 @@
 
 
 # https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
-- name: Define facts for all worker's hostname
+- name: Define Facts for All Worker's Hostname
   set_fact:
     all_ext1_hostnames: "{{ groups['all'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
     all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"

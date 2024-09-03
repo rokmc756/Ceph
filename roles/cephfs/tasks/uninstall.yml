@@ -1,4 +1,3 @@
-#
 - name: Mark Down for Filesystem
   shell: |
     ceph fs set {{ item.name }} down true
@@ -9,7 +8,7 @@
 - debug: msg={{ cephfs_marked_down }}
   when: print_debug == true
 
-#
+
 - name: Check Active Status
   shell: |
     ceph fs status
@@ -18,7 +17,7 @@
 - debug: msg={{ fs_status_checked }}
   when: print_debug == true
 
-#
+
 #- name: Remove Sub Volumnes of Ceph Filesystem
 #  shell: |
 #    ceph fs subvolume rm {{ item.name }} {{ item.name }}-subvol01
@@ -28,7 +27,7 @@
 #- debug: msg={{ cephfs_subvol_removed }}
 #  when: print_debug == true
 
-#
+
 - name: Remove Ceph Filesystem
   shell: |
     ceph fs rm {{ item.name }} --yes-i-really-mean-it
@@ -38,14 +37,15 @@
 - debug: msg={{ cephfs_removed }}
   when: print_debug == true
 
-#
-- name: Verify Filesystem has been Removed
+
+- name: Verify Filesystem Has Been Removed
   shell: |
     ceph fs ls
   register: fs_removed
   ignore_errors: true
 - debug: msg={{ fs_removed }}
   when: print_debug == true
+
 
 # Error EPERM: pool deletion is disabled;
 # you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
@@ -57,7 +57,7 @@
 - debug: msg={{ pool_delete_allow }}
   when: print_debug == true
 
-#
+
 - name: Delete Pool for Metadata and Data
   shell: |
     ceph osd pool rm {{ item.name }}_data {{ item.name }}_data --yes-i-really-really-mean-it
@@ -68,7 +68,7 @@
 - debug: msg={{ pool_metadata_deleted }}
   when: print_debug == true
 
-#
+
 - name: Remove Authentication Key for Ceph Users
   shell: |
     ceph auth rm client.{{ item.name }}

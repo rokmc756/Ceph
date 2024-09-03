@@ -1,4 +1,4 @@
-- name: Delete text file with the Content
+- name: Delete Text File with the Content
   become_user: root
   shell: |
     rm -f {{ item.mount_dir }}/{{ item.name }}.txt
@@ -10,7 +10,7 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 
 
-- name: Check if CephFS directory is mounted
+- name: Check if CephFS Directory is Mounted
   shell: |
     df -h
     ls -al {{ item.mount_dir }}
@@ -22,7 +22,7 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 
 
-- name: Unmount CephFS directory
+- name: Unmount CephFS Directory
   shell: |
     umount {{ item.mount_dir }}
   register: unmount_cephfs_dir
@@ -44,7 +44,7 @@
   when: print_debug == true and inventory_hostname in groups['clients']
 
 
-- name: Remove Directory to be mount by CephFS Clients
+- name: Remove Directory to Be Mount by CephFS Clients
   shell: |
     rm -rf {{ item.mount_dir }}
   register: remove_cephfs_dir
