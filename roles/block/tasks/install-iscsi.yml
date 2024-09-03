@@ -101,15 +101,19 @@
 - name: Create iSCSI Target
   shell:
     cmd: |
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets
+      delete {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit 0
+      exit
       EOF
   args:
     executable: /bin/bash
   register: iscsi_target_created
   ignore_errors: true
+  until: iscsi_target_created is succeeded
+  retries: 10
+  delay: 5
   with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_created }}
@@ -119,10 +123,10 @@
 - name: Create iSCSI Gateways
   shell:
     cmd: |
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
       create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname][_netdev].ipv4.address }} skipchecks=true
-      exit 0
+      exit
       EOF
   args:
     executable: /bin/bash
@@ -137,10 +141,10 @@
 - name: Create Pool and Images
   shell:
     cmd: |
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /disks
       create pool={{ item.pg_name }} image={{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} size={{ item.image_size }}
-      exit 0
+      exit
       EOF
   args:
     executable: /bin/bash
@@ -154,10 +158,10 @@
 - name: Create iSCSI Initiator
   shell:
     cmd: |
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit 0
+      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }};
+      exit
       EOF
   args:
     executable: /bin/bash
@@ -171,10 +175,10 @@
 - name: Setup User and Password for iSCSI Initiators
   shell:
     cmd:
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
       auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
-      exit 0
+      exit
       EOF
   args:
     executable: /bin/bash
@@ -189,10 +193,10 @@
 - name: Add Disk
   shell:
     cmd: |
-      cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
+      cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
       disk add {{ item.pg_name }}/{{ item.image }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-      exit 0
+      exit
       EOF
   args:
     executable: /bin/bash

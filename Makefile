@@ -63,6 +63,7 @@ shutdown: role-update control-vms.yml
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=shutdown-guest power_title=Shutdown VMs"
 
 
+#	make -f makefile_configs/Makefile.ceph r=${r} s=${s} c=${c}
 ceph:
 	@if [ "${r}" = "upload" ]; then\
 		 ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
