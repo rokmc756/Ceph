@@ -18,8 +18,8 @@ cephadm:
   download: false
 
 ceph:
-  domain: "jtest.suse.com"
-  rdomain: "com.suse.jtest"
+  domain: "jtest.pivotal.io"
+  rdomain: "io.pivotal.jtest"
   control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
   major_version: "18"

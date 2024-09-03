@@ -1,7 +1,7 @@
 #- name: Disable Cephadm to stop all orchestration operations (so we avoid deploying new daemons)
 #  shell: |
 #    ceph mgr module disable cephadm
-#register: all_ops_stopped
+#  register: all_ops_stopped
 #- debug: msg={{ all_ops_stopped.stdout }}
 #  when: print_debug == true
 
@@ -44,7 +44,12 @@
   shell: |
     cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
   ignore_errors: true
+  # delegate_to: "{{ item }}"
+  # delegate_facts: true
   register: ceph_cluster_removed
+  with_items:
+    - "{{ groups['mon'] }}"
+    - "{{ groups['osd'] }}"
   when: inventory_hostname in groups['control']
 - debug: msg={{ ceph_cluster_removed }}
   when: print_debug == true and inventory_hostname in groups['control']
@@ -73,3 +78,5 @@
 
 - meta: flush_handlers
   when: inventory_hostname in groups['mon'] or inventory_hostname in groups['osd']
+
+

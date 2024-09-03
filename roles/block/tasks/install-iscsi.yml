@@ -15,7 +15,7 @@
 # yum localinstall -y ceph-iscsi-3.7*.rpm tcmu-runner-1.5.4-4.el9s.x86_64.rpm libtcmu*.rpm
 
 
-- name: List hosts for iSCSI Gateway
+- name: List Hosts for iSCSI Gateway
   shell: |
     ceph orch host ls
   register: hosts_listed
@@ -29,7 +29,7 @@
 
 # To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
 # The suggested values are 20, 5 and 15, respectively.
-- name: Avoid initiator timeout
+- name: Avoid Initiator Timeout
   shell: |
     ceph config set osd osd_heartbeat_grace 20
     ceph config set osd osd_heartbeat_interval 5
@@ -66,10 +66,11 @@
   shell: |
     ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'
   register: iscsi_gw_deployed
-  with_items: "{{ iscsi.targets }}"
+  with_items: '{{ iscsi.targets }}'
   when: inventory_hostname in ceph.control_node
 - debug: msg={{ iscsi_gw_deployed }}
   when: print_debug == true and inventory_hostname in ceph.control_node
+
 
 # ceph orch ls --service_type=iscsi
 # ceph orch ps --daemon_type=iscsi
@@ -84,14 +85,14 @@
 
 - name: Get iSCSI Gateway Container ID
   shell: |
-    podman ps | grep ceph | grep tcmu | awk '{print" "$NF}' | tr -d "^[:blank:]"
+    podman ps | grep ceph | grep tcmu | awk '{print" "$NF}' | tr -d '^[:blank:]'
   register: iscsi_gw_cont_id
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_gw_cont_id }}
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
-- name: Set command line for Podman iSCSI Gateway Container
+- name: Set Command Line for Podman iSCSI Gateway Container
   set_fact:
     podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
   when: inventory_hostname in groups['mon']
@@ -120,7 +121,7 @@
     cmd: |
       cat <<\EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-      create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }} skipchecks=true
+      create {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} {{ hostvars[inventory_hostname][_netdev].ipv4.address }} skipchecks=true
       exit 0
       EOF
   args:

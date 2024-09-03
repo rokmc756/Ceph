@@ -59,28 +59,10 @@ iscsi:
       password: "changemechangeme"
       mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
       mutual_passwd: "changemechangeme"
-      target_ip: "{{ hostvars[groups['mon'][0]]['ansible_'~netdev1].ipv4.address }}"
+      target_ip: "{{ hostvars[groups['mon'][0]][_netdev].ipv4.address }}"
       mount_dir: "/mnt/iscsi-dir-client01"
-    client02:
-      name: "{{ hostvars[groups['clients'][1]]['ansible_hostname'] }}"
-      wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
-      auth_id: "jomoon-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
-      password: "changemechangeme"
-      mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][1]]['ansible_hostname'] }}"
-      mutual_passwd: "changemechangeme"
-      target_ip: "{{ hostvars[groups['mon'][1]]['ansible_'~netdev1].ipv4.address }}"
-      mount_dir: "/mnt/iscsi-dir-client02"
-    client03:
-      name: "{{ hostvars[groups['clients'][2]]['ansible_hostname'] }}"
-      wwn: "iqn.2024-04.{{ ceph.rdomain }}:iscsi-client1-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
-      auth_id: "jomoon-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
-      password: "changemechangeme"
-      mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw-{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}"
-      mutual_passwd: "changemechangeme"
-      target_ip: "{{ hostvars[groups['mon'][2]]['ansible_'~netdev1].ipv4.address }}"
-      mount_dir: "/mnt/iscsi-dir-client03"
   portals:
-    - { ip: 192.168.0.11 }
+    - { ip: 192.168.1.11 }
 
 
 # https://stackoverflow.com/questions/46583601/conditionally-dependant-on-variables-in-yaml-file

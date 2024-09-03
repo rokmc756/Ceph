@@ -65,7 +65,7 @@ shutdown: role-update control-vms.yml
 
 ceph:
 	@if [ "${r}" = "upload" ]; then\
-		 ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
 	elif [ "${r}" = "install" ]; then\
 		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
 	elif [ "${r}" = "uninstall" ]; then\
