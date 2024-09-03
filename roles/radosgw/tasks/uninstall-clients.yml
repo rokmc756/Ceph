@@ -5,9 +5,9 @@
   register: mc_alias_set
   ignore_errors: true
   with_items: "{{ rgw.users }}"
-  when: ceph.client.rgw.single == true
+  when: ( disable_single_client is defined and disable_single_client == true )
 - debug: msg={{ mc_alias_set }}
-  when: print_debug == true and ceph.client.rgw.single == true
+  when: print_debug == true and ( disable_single_client is defined and disable_single_client == true )
 
 
 - name: Delete Parquet Test Files in S3 Backends
@@ -16,9 +16,9 @@
   register: del_parq_files_s3
   ignore_errors: true
   with_items: "{{ rgw.users }}"
-  when: ceph.client.rgw.single == true
+  when: ( disable_single_client is defined and disable_single_client == true )
 - debug: msg={{ del_parq_files_s3 }}
-  when: print_debug == true and ceph.client.rgw.single == true
+  when: print_debug == true and ( disable_single_client is defined and disable_single_client == true )
 
 
 # For Multizone
@@ -28,9 +28,9 @@
   register: mc_alias_set
   ignore_errors: true
   with_items: "{{ rgw.multisite.users }}"
-  when: ceph.client.rgw.multi == true
+  when: ( disable_multi_client is defined and disable_multi_client == true )
 - debug: msg={{ mc_alias_set }}
-  when: print_debug == true and ceph.client.rgw.multi == true
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
 
 
 - name: Delete Parquet Test Files in S3 Backends
@@ -39,9 +39,9 @@
   register: del_parq_files_s3
   ignore_errors: true
   with_items: "{{ rgw.multisite.users }}"
-  when: ceph.client.rgw.multi == true
+  when: ( disable_multi_client is defined and disable_multi_client == true )
 - debug: msg={{ del_parq_files_s3 }}
-  when: print_debug == true and ceph.client.rgw.multi == true
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
 
 
 - name: Delete S3-Base Test Directory

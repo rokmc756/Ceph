@@ -62,6 +62,7 @@ boot: role-update control-vms.yml
 shutdown: role-update control-vms.yml
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=shutdown-guest power_title=Shutdown VMs"
 
+
 ceph:
 	@if [ "${r}" = "upload" ]; then\
 		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
@@ -113,6 +114,84 @@ cephfs:
 		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs_client: True}' --tags='uninstall';\
 	else\
 		echo "No Actions for CephFS";\
+		exit;\
+	fi
+
+
+block:
+	@if [ "${r}" = "install" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='install';\
+		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='install';\
+		else\
+			echo "No Actions for Installing Block";\
+		fi;\
+	elif [ "${r}" = "uninstall" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='uninstall';\
+		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='uninstall';\
+		else\
+			echo "No Actions for Uninstalling Block";\
+		fi;\
+	else\
+		echo "No Actions for Block";\
+		exit;\
+	fi
+
+
+rgw:
+	@if [ "${r}" = "install" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_rgw: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_rgw: True}' -e '{enable_single_client: True }' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_client: True }' --tags='install';\
+			else\
+				echo "No Actions for Installing Single Rados Gateway with Client";\
+			fi\
+		elif [ ! -z ${r} ] && [ "${s}" = "multi" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_rgw: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_rgw: True}' -e '{enable_multi_client: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_client: True}' --tags='install';\
+			else\
+				echo "No Actions for Installing Multi Rados Gateway with Client";\
+			fi\
+		else\
+			echo "No Actions for Installing Rados Gateway";\
+		fi;\
+	elif [ "${r}" = "uninstall" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_rgw: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_rgw: True}' -e '{disable_single_client: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_client: True}' --tags='uninstall';\
+			else\
+				echo "No Actions for Uninstalling Multi Rados Gateway with Client";\
+			fi\
+		elif [ ! -z ${r} ] && [ "${s}" = "multi" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_rgw: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_rgw: True}' -e '{disable_multi_client: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_client: True}' --tags='uninstall';\
+			else\
+				echo "No Actions for Uninstalling Multi Rados Gateway with Client";\
+			fi\
+		else\
+			echo "No Actions for Uninstalling Rados Gateway";\
+		fi;\
+	else\
+		echo "No Actions for Rados Gateway";\
 		exit;\
 	fi
 

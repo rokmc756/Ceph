@@ -73,7 +73,7 @@ do
 
     killall conmon
     killall podman
-    ssh root@rk9-node$i "dnf -y remove conmon *podman* ceph-radosgw"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "dnf -y remove ceph-conmon *podman* ceph-radosgw"
     # ssh root@rk9-node$i "for j in \$(echo 'sdb sdc sdd'); do wipefs -a /dev/\$j; done"
     # ssh root@rk9-node$i "for j in \$(echo 'sdb sdc sdd'); do dd if=/dev/zero of=/dev/\$j bs=512 count=1; done"
 
@@ -83,11 +83,11 @@ for i in `echo "01 02 03 04 05 06"`
 do
 
     # Cleanup the ceph configuration files
-    ssh root@rk9-node$i "rm -rf /etc/ceph"
-    ssh root@rk9-node$i "rm -rf /var/lib/ceph*"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "rm -rf /etc/ceph"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "rm -rf /var/lib/ceph*"
 
     # Cleanup the ceph block devices
-    ssh root@rk9-node$i "lsblk"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "lsblk"
 
 done
 
@@ -97,18 +97,18 @@ do
 
     killall conmon
     killall podman
-    ssh root@rk9-node$i "dnf remove -y conmon *podman* ceph-radosgw"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "dnf remove -y ceph-conmon *podman* ceph-radosgw"
     # ssh root@rk9-node$i "for j in \$(echo 'sdb sdc sdd'); do wipefs -a /dev/\$j; done"
     # ssh root@rk9-node$i "for j in \$(echo 'sdb sdc sdd'); do dd if=/dev/zero of=/dev/\$j bs=512 count=1; done"
 
 done
 
 
-for i in `echo "06 05 04 03 02"`
+for i in `echo "06 05 04 03 02 01"`
 do
 
     # Cleanup the ceph block devices
-    ssh root@rk9-node$i "reboot"
+    sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "reboot"
 
 done
 

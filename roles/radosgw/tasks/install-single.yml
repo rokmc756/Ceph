@@ -73,7 +73,7 @@
   with_items:
     - ""
     - "[client.{{ hostvars[inventory_hostname]['ansible_hostname'] }}]"
-    - "host = {{ hostvars[inventory_hostname]['ansible_'~netdev0]['ipv4']['address'] }}"
+    - "host = {{ hostvars[inventory_hostname][_netdev]['ipv4']['address'] }}"
     - "rgw dns name = {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ rgw.users[0].domain }}"
     - "keyring = /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}/keyring"
     - "log file = /var/log/ceph/radosgw.gateway.log"

@@ -1,12 +1,11 @@
----
-- name: Check if mc exists
+- name: Check if MC Exists
   stat: path={{ minio.client_bin }}
   register: mc_bin_exists
 - debug: msg={{ mc_bin_exists }}
   when: print_debug == true
 
 
-- name: Copy minio client binary from local directory, roles/minio/files
+- name: Copy Minio Client Binary from Local Directory, roles/minio/files
   copy: src=mc-{{ minio.release_date }}.tar.gz dest=/tmp/mc-{{ minio.release_date }}.tar.gz mode=0644 owner=root group=root
   register: mc_local_copy
   when: mc_bin_exists.stat.exists == false and minio.download == false
@@ -14,7 +13,7 @@
   when: print_debug == true and mc_bin_exists.stat.exists == false and minio.download == false
 
 
-- name: Unarchive minio client tarball
+- name: Unarchive MinIO Client Tarball
   unarchive:
     src: "mc-{{ minio.release_date }}.tar.gz"
     dest: "/usr/local/bin"
@@ -27,7 +26,7 @@
   when: print_debug == true and ( mc_bin_exists.stat.exists == false and minio.download == false )
 
 
-- name: Download minio client
+- name: Download MinIO Client
   get_url:
     url: "{{ minio.client_url }}"
     dest: "{{ minio.client_bin }}"
@@ -40,7 +39,7 @@
   when: print_debug == true and ( minio.client_url.endswith('mc') or minio.client_url.endswith('Z') ) and ( mc_bin_exists.stat.exists == false and minio.download == true )
 
 
-- name: Unarchive minio client binary
+- name: Unarchive MinIO Client Binary
   unarchive:
     src: "{{ minio.client_url }}"
     dest: "{{ minio.client_bin | dirname }}"

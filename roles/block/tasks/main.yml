@@ -20,35 +20,42 @@
 - name: Create Rados Block Devices with Pools
   import_tasks: install.yml
   tags: install
-  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: enable_rbd is defined and enable_rbd == true and inventory_hostname in ceph.control_node
+  # when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Create iSCSI Targets
   import_tasks: install-iscsi.yml
   tags: install
-  when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
+  when: enable_iscsi is defined and enable_iscsi == true and inventory_hostname not in groups['clients']
+  # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
 - name: Install iSCSI Clients
   import_tasks: install-iscsi-clients.yml
   tags: install
-  when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
+  when: enable_iscsi_client is defined and enable_iscsi_client == true and inventory_hostname in groups['clients']
+  # when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
 
 
 - name: Uninstall iSCSI Clients
   import_tasks: uninstall-iscsi-clients.yml
   tags: uninstall
-  when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
+  when: enable_iscsi_client is defined and enable_iscsi_client == true and inventory_hostname in groups['clients']
+  # when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
 
 
 - name: Delete iSCSI Targets
   import_tasks: uninstall-iscsi.yml
   tags: uninstall
-  when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
+  when: enable_iscsi is defined and enable_iscsi == true and inventory_hostname not in groups['clients']
+  # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
 - name: Delete Rados Block Devices with Pools
   import_tasks: uninstall.yml
   tags: uninstall
-  when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: enable_rbd is defined and enable_rbd == true and inventory_hostname in ceph.control_node
+  # when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
 

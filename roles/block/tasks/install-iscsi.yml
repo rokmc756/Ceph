@@ -19,9 +19,9 @@
   shell: |
     ceph orch host ls
   register: hosts_listed
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
 - debug: msg={{ hosts_listed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
 # ceph tell osd.* config get osd_heartbeat_grace
 # ceph tell osd.* config get osd_heartbeat_interval
 # ceph tell osd.* config get osd_client_watch_timeout
@@ -35,9 +35,9 @@
     ceph config set osd osd_heartbeat_interval 5
     ceph config set osd osd_client_watch_timeout 15
   register: initiator_timeout_avoided
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
 - debug: msg={{ initiator_timeout_avoided }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
 
 
 # Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
@@ -46,9 +46,9 @@
     ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
   register: replica_pool_created
   with_items: "{{ iscsi.targets }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
 - debug: msg={{ replica_pool_created }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
   # replicated
 
 
@@ -57,9 +57,9 @@
     rbd pool init {{ item.pg_name }}
   register: rbd_pool_inited
   with_items: "{{ iscsi.targets }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
 - debug: msg={{ rbd_pool_inited }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
 
 
 - name:  Deploy iSCSI Container Services
@@ -67,9 +67,9 @@
     ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'
   register: iscsi_gw_deployed
   with_items: "{{ iscsi.targets }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
 - debug: msg={{ iscsi_gw_deployed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
 
 # ceph orch ls --service_type=iscsi
 # ceph orch ps --daemon_type=iscsi

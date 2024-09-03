@@ -1,4 +1,3 @@
-#
 - name: Initialize Ansible Installation on a Given Hosts
   become_user: "{{ local_sudo_user }}"
   shell: "{{ playbook_dir }}/roles/init-hosts/files/init_hosts.sh {{ hostvars[item][_netdev]['ipv4']['address'] }} {{ remote_machine_username }}"

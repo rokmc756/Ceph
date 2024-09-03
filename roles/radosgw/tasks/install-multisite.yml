@@ -5,17 +5,20 @@
 # Lets define some variables. You can provide your own variable names and use your own IPs and hostnames
 
 ---
-- name: Check if ceph config dir exists
+- name: Check if Ceph Config Directory Exists
   stat: path=/etc/ceph
   register: ceph_conf_dir_exists
 - debug: msg={{ ceph_conf_dir_exists }}
   when: print_debug == true
 
-#
+
 - name: Create a Ceph Directory
   file:
     path: /etc/ceph
-    state: present
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
   register: ceph_dir_created
   ignore_errors: true
   when: ceph_conf_dir_exists.stat.exists == false and inventory_hostname not in groups['clients']
@@ -39,7 +42,7 @@
 - debug: msg={{ ceph_config_dir_created }}
   when: print_debug == true and not inventory_hostname in groups['clients']
 
-#
+
 - name: Create a Realm
   shell: |
     radosgw-admin realm create --rgw-realm={{ item.rgw_realm }} --default
@@ -50,7 +53,7 @@
 - debug: msg={{ realm_created }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
-#
+
 - name: Create a Zonegroup
   shell: |
     radosgw-admin zonegroup create --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
@@ -108,7 +111,7 @@
 - debug: msg={{ zone_keys_updated }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
-#
+
 - name: Commit the Changes
   shell: |
     radosgw-admin period update --commit

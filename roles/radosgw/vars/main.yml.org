@@ -10,7 +10,7 @@ rgw:
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
   multisite:
     primary:
-      - { zone: "jz01", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['mon'][2]]['ansible_'~netdev0].ipv4.address }}", user_full_name: "jack.moon", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", bucket: "jtest-bucket01", mc_alias: "test01", rgw_port: 80 }
+      - { zone: "jz01", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['mon'][2]]['_netdev].ipv4.address }}", user_full_name: "jack.moon", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", bucket: "jtest-bucket01", mc_alias: "test01", rgw_port: 80 }
     secondary:
-      - { zone: "jz02", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['osd'][2]]['ansible_'~netdev0].ipv4.address }}", user_full_name: "rose.moon", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", mc_alias: "test01", rgw_port: 80 }
+      - { zone: "jz02", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['osd'][2]]['_netdev].ipv4.address }}", user_full_name: "rose.moon", rep_user: "jtest-rep-user", access_key: "changeme", secret_key: "changeme", mc_alias: "test01", rgw_port: 80 }
 
