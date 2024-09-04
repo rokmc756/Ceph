@@ -129,7 +129,7 @@
 
 #- meta: end_play
 - pause:
-    minutes: 2
+    minutes: 1
 
 
 - name: Label the OSD Nodes with It's Role

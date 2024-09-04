@@ -77,7 +77,7 @@
   async: 120
   poll: 0
   notify:
-    - Waiting for server to come back after restart
+    - Waiting for Server to Come Back after Restart
   when: print_debug == true and inventory_hostname != ceph.control_node
 
 

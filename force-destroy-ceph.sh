@@ -111,4 +111,3 @@ do
     sshpass -p "changeme" ssh -o StrictHostKeyChecking=no root@rk9-node$i "reboot"
 
 done
-

@@ -170,7 +170,7 @@
 #  async: 120
 #  poll: 0
 #  notify:
-#    - Waiting for server to come back after restart
+#    - Waiting for Server to Come Back after Restart
 #  ignore_errors: true
 #  when: inventory_hostname in groups['mon']
 

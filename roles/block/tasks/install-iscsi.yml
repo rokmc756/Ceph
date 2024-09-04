@@ -160,7 +160,7 @@
     cmd: |
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
-      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }};
+      create {{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       exit
       EOF
   args:
@@ -172,11 +172,21 @@
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
+# cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }};
+#          mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw",
+#
+# cat <<EOF | podman exec -it $podman_iscsi_gw_cmd gwcli
+# cd /iscsi-targets/iqn.2024-04.io.pivotal.jtest.iscsi-gw:iscsi-igw-rk9-node01/hosts/iqn.2024-04.io.pivotal.jtest:iscsi-client1-rk9-node01;
+# auth username=jomoon-rk9-node01 password=changemechangeme
+# exit
+# EOF
+
+
 - name: Setup User and Password for iSCSI Initiators
   shell:
     cmd:
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
-      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts
+      cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
       exit
       EOF
