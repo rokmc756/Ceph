@@ -76,7 +76,7 @@
 - debug: msg={{ target_logined }}
 
 
-- name: Check the device name attached
+- name: Check the Device Name Attached
   shell: |
     iscsiadm -m session -P 3 | grep 'Target\|disk' | grep Attached | awk '{print $4}'
   register: device_name_attached
@@ -136,7 +136,7 @@
 - debug: msg={{ partition_mounted }}
 
 
-- name: Conditionally create a file if it does not exist
+- name: Conditionally Create a File if It Does Not Exist
   copy:
     content: "Hellow Ceph iSCSI World!"
     dest: "{{ item.value['mount_dir'] }}/test-iscsi01.txt"

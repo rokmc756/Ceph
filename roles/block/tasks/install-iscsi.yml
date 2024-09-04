@@ -172,19 +172,33 @@
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
-# cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }};
-#          mutual_id: "iqn.2024-04.{{ ceph.rdomain }}.iscsi-gw:iscsi-igw",
+##################################################################################################################################################################
+# "stdout_lines": ["/bin/bash: line 10: warning: here-document at line 0 delimited by end-of-file (wanted `EOF')"
+##################################################################################################################################################################
+# https://stackoverflow.com/questions/63801415/ansible-quoted-heredoc-in-expect-command-block-not-finding-delimiter-multiline
 #
-# cat <<EOF | podman exec -it $podman_iscsi_gw_cmd gwcli
-# cd /iscsi-targets/iqn.2024-04.io.pivotal.jtest.iscsi-gw:iscsi-igw-rk9-node01/hosts/iqn.2024-04.io.pivotal.jtest:iscsi-client1-rk9-node01;
-# auth username=jomoon-rk9-node01 password=changemechangeme
-# exit
-# EOF
+# Move the closing EOF left by two spaces. At the moment it does not start at the beginning of its line, so bash won't see it as a delimiter.
+# From the bash man-page:
+# Here Documents
+# This type of redirection instructs the shell to read input from the current source until a line containing only delimiter (with no trailing blanks) is seen.
+# All of the lines read up to that point are then used as the standard input for a command. The format of here-documents is:
+# <<[-]word
+#        here-document 
+#delimiter 
+# No parameter expansion, command substitution, arithmetic expansion, or pathname expansion is performed on word.
+# If any characters in word are quoted, the delimiter is the result of quote removal on word, and the lines in the here-document are not expanded.
+# If word is unquoted, all lines of the here-document are subjected to parameter expansion, command substitution, and arithmetic expansion.
+# In the latter case, the character sequence \<newline> is ignored, and \ must be used to quote the characters \, $, and `. If the redirection operator is <<-,
+# then all leading tab characters are stripped from input lines and the line containing delimiter.
+# This allows here-documents within shell scripts to be indented in a natural fashion.
+# So you'll either need to remove the indentation from the EOF line or indent everything with TABs instead of spaces. I suggest that the former option is simpler.
+#
+##################################################################################################################################################################
 
 
 - name: Setup User and Password for iSCSI Initiators
   shell:
-    cmd:
+    cmd: |
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}

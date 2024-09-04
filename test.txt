@@ -1,54 +1,43 @@
-Ceph Monitor (ceph-mon)
-It maintains maps of the entire Ceph cluster state including monitor map, manager map, the OSD map, and the CRUSH map.
-manages authentication between daemons and clients.
-A Ceph cluster must contain a minimum of three running monitors in order to be both redundant and highly-available.
+Storage Devices
+There are several Ceph daemons in a storage cluster:
 
+Ceph OSDs (Object Storage Daemons) store most of the data in Ceph. Usually each OSD is backed by a single storage device. This can be a traditional hard disk (HDD) or a solid state disk (SSD). OSDs can also be backed by a combination of devices: for example, a HDD for most data and an SSD (or partition of an SSD) for some metadata. The number of OSDs in a cluster is usually a function of the amount of data to be stored, the size of each storage device, and the level and type of redundancy specified (replication or erasure coding).
 
-Ceph Maanger (ceph-mgr)
-keeps track of runtime metrics and the current state of the Ceph cluster, including storage utilization, current performance metrics, and system load.
-manages and exposes Ceph cluster web dashboard and API.
-At least two managers are required for HA.
+Ceph Monitor daemons manage critical cluster state. This includes cluster membership and authentication information. Small clusters require only a few gigabytes of storage to hold the monitor database. In large clusters, however, the monitor database can reach sizes of tens of gigabytes to hundreds of gigabytes.
 
+Ceph Manager daemons run alongside monitor daemons, providing additional monitoring and providing interfaces to external monitoring and management systems.
 
+OSD Back Ends
+There are two ways that OSDs manage the data they store. As of the Luminous 12.2.z release, the default (and recommended) back end is BlueStore. Prior to the Luminous release, the default (and only) back end was Filestore.
 
-Ceph Metadata Server (MDS):
-Manages metadata for the Ceph File System (CephFS). Coordinates metadata access and ensures consistency across clients.
-One or more, depending on the requirements of the CephFS.
+BlueStore
+BlueStore is a special-purpose storage back end designed specifically for managing data on disk for Ceph OSD workloads. BlueStore’s design is based on a decade of experience of supporting and managing Filestore OSDs.
 
+Key BlueStore features include:
 
-RADOS Gateway (RGW):
-Also called “Ceph Object Gateway”
-is a component of the Ceph storage system that provides object storage services with a RESTful interface. RGW allows applications and users to interact with Ceph storage using industry-standard APIs, such as the S3 (Simple Storage Service) API (compatible with Amazon S3) and the Swift API (compatible with OpenStack Swift).
+Direct management of storage devices. BlueStore consumes raw block devices or partitions. This avoids intervening layers of abstraction (such as local file systems like XFS) that can limit performance or add complexity.
 
+Metadata management with RocksDB. RocksDB’s key/value database is embedded in order to manage internal metadata, including the mapping of object names to block locations on disk.
 
-Ceph Storage Cluster Deployment Methods
-There are different methods you can use to deploy Ceph storage cluster.
-cephadm leverages container technology (specifically, Docker containers) to deploy and manage Ceph services on a cluster of machines.
-Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs.
-ceph-ansible deploys and manages Ceph clusters using Ansible.
-ceph-salt installs Ceph using Salt and cephadm.
-jaas.ai/ceph-mon installs Ceph using Juju.
-Installs Ceph via Puppet.
-Ceph can also be installed manually.
+Full data and metadata checksumming. By default, all data and metadata written to BlueStore is protected by one or more checksums. No data or metadata is read from disk or returned to the user without being verified.
 
-Use of cephadm and rooks are the recommended methods for deploying Ceph storage cluster.
+Inline compression. Data can be optionally compressed before being written to disk.
 
+Multi-device metadata tiering. BlueStore allows its internal journal (write-ahead log) to be written to a separate, high-speed device (like an SSD, NVMe, or NVDIMM) for increased performance. If a significant amount of faster storage is available, internal metadata can be stored on the faster device.
 
+Efficient copy-on-write. RBD and CephFS snapshots rely on a copy-on-write clone mechanism that is implemented efficiently in BlueStore. This results in efficient I/O both for regular snapshots and for erasure-coded pools (which rely on cloning to implement efficient two-phase commits).
 
-Ceph Deployment Requirements
-Depending on the deployment method you choose, there are different requirements for deploying Ceph storage cluster
-In this tutorial, we will use cephadm to deploy Ceph storage cluster on Rocky Linux
-Below are the requirements for deploying Ceph storage cluster via cephadm;
-Python 3 (installed by default on Rocky Linux)
-Systemd
-Podman or Docker for running containers (we use docker in this setup)
-Time synchronization (such as chrony or NTP)
-LVM2 for provisioning storage devices. We are using raw devices without any filesystem in this guide.
-All the required dependencies are installed automatically by the bootstrap process.
+For more information, see BlueStore Configuration Reference and BlueStore Migration.
 
+FileStore
+Warning
 
+Filestore has been deprecated in the Reef release and is no longer supported.
 
+FileStore is the legacy approach to storing objects in Ceph. It relies on a standard file system (normally XFS) in combination with a key/value database (traditionally LevelDB, now RocksDB) for some metadata.
 
-Prepare Ceph Nodes for Ceph Storage Cluster Deployment on Rocky Linux
-Our Ceph Storage Cluster Deployment Architecture
-The diagram below depicts our ceph storage cluster deployment architecture. In a typical production environment, you would have at least 3 monitor nodes as well as at least 3 OSDs.
+FileStore is well-tested and widely used in production. However, it suffers from many performance deficiencies due to its overall design and its reliance on a traditional file system for object data storage.
+
+Although FileStore is capable of functioning on most POSIX-compatible file systems (including btrfs and ext4), we recommend that only the XFS file system be used with Ceph. Both btrfs and ext4 have known bugs and deficiencies and their use may lead to data loss. By default, all Ceph provisioning tools use XFS.
+
+For more information, see Filestore Config Reference.
