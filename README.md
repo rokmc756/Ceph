@@ -93,9 +93,7 @@ rk9-node05 ansible_ssh_host=192.168.0.75
 rk9-node06 ansible_ssh_host=192.168.0.76
 
 [clients]
-ubt22-client01 ansible_ssh_host=192.168.0.61
-ubt22-client02 ansible_ssh_host=192.168.0.62
-ubt22-client03 ansible_ssh_host=192.168.0.63
+rk9-node07 ansible_ssh_host=192.168.0.77
 ```
 
 #### 03) Configure variables for deploying Ceph
@@ -152,7 +150,7 @@ $ vi init-hosts.yml
   roles:
     - { role: init-hosts }
 
-$ make install
+$ make init
 ```
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
