@@ -63,9 +63,10 @@ shutdown: role-update control-vms.yml
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=shutdown-guest power_title=Shutdown VMs"
 
 
+#	make -f makefile_configs/Makefile.ceph r=${r} s=${s} c=${c}
 ceph:
 	@if [ "${r}" = "upload" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
+		 ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
 	elif [ "${r}" = "install" ]; then\
 		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
 	elif [ "${r}" = "uninstall" ]; then\
@@ -123,15 +124,31 @@ block:
 		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
 			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='install';\
 		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='install';\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' -e '{enable_iscsi_client: True }' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi_client: True }' --tags='install';\
+			else\
+				echo "No Actions for Installing iSCSI with Client";\
+			fi\
 		else\
 			echo "No Actions for Installing Block";\
 		fi;\
 	elif [ "${r}" = "uninstall" ]; then\
 		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='uninstall';\
+			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{disable_rbd: True}' --tags='uninstall';\
 		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='uninstall';\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{disable_iscsi: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{disable_iscsi: True}' -e '{disable_iscsi_client: True }' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{disable_iscsi_client: True }' --tags='uninstall';\
+			else\
+				echo "No Actions for Installing iSCSI with Client";\
+			fi\
 		else\
 			echo "No Actions for Uninstalling Block";\
 		fi;\

@@ -8,7 +8,7 @@
   when: print_debug == true and inventory_hostname in groups['mon']
 
 
-- name: Set command line for Podman iSCSI Gateway Container
+- name: Set Command Line for Podman iSCSI Gateway Container
   set_fact:
     podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
   ignore_errors: true
@@ -179,12 +179,6 @@
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_users_deleted }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-
-# ceph dashboard iscsi-gateway-rm rk9-node01
-# ceph dashboard iscsi-gateway-rm rk9-node01.jtest.pivotal.io
-# ceph dashboard iscsi-gateway-rm rk9-node02.jtest.pivotal.io
-# ceph dashboard iscsi-gateway-rm rk9-node03.jtest.pivotal.io
 
 
 # https://github.com/ceph/ceph-iscsi/issues/99

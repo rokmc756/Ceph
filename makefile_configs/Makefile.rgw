@@ -51,3 +51,59 @@ rgw:
 		echo "No Actions for Rados Gateway";\
 		exit;\
 	fi
+
+
+
+nfs:
+	@if [ "${r}" = "install" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_nfs: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_nfs: True}' -e '{enable_single_client: True }' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_client: True }' --tags='install';\
+			else\
+				echo "No Actions for Installing Single NFS with Clients";\
+			fi\
+		elif [ ! -z ${r} ] && [ "${s}" = "ganesha" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_nfs_ganesha: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_nfs_ganesha: True}' -e '{enable_multi_client: True}' --tags='install';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_multi_client: True}' --tags='install';\
+			else\
+				echo "No Actions for Installing NFS Ganesha with Clients";\
+			fi\
+		else\
+			echo "No Actions for Installing NFS";\
+		fi;\
+	elif [ "${r}" = "uninstall" ]; then\
+		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_nfs: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_nfs: True}' -e '{disable_single_client: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_client: True}' --tags='uninstall';\
+			else\
+				echo "No Actions for Uninstalling Single NFS with Clients";\
+			fi\
+		elif [ ! -z ${r} ] && [ "${s}" = "ganesha" ]; then\
+			if [ -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_nfs_ganesha: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_nfs_ganesha: True}' -e '{disable_multi_client: True}' --tags='uninstall';\
+			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_multi_client: True}' --tags='uninstall';\
+			else\
+				echo "No Actions for Uninstalling NFS Ganesha With Clients";\
+			fi\
+		else\
+			echo "No Actions for Uninstalling NFS";\
+		fi;\
+	else\
+		echo "No Actions for Installing or Uninstalling NFS";\
+		exit;\
+	fi

@@ -63,197 +63,20 @@ shutdown: role-update control-vms.yml
 	ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} control-vms.yml --extra-vars "power_state=shutdown-guest power_title=Shutdown VMs"
 
 
-#	make -f makefile_configs/Makefile.ceph r=${r} s=${s} c=${c}
 ceph:
-	@if [ "${r}" = "upload" ]; then\
-		 ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
-	elif [ "${r}" = "install" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
-	elif [ "${r}" = "uninstall" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{uninstall_ceph: True}' --tags='uninstall';\
-	elif [ "${r}" = "init" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{init_ceph: True}' --tags='init';\
-	elif [ "${r}" = "purge" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{purge_ceph: True}' --tags='purge';\
-	elif [ "${r}" = "add-ceph" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_ceph_nodes: True}' --tags='add-ceph';\
-	elif [ "${r}" = "remove-ceph" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_ceph_nodes: True}' --tags='remove-ceph';\
-	elif [ "${r}" = "add-osd" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_osd_nodes: True}' --tags='add-osd';\
-	elif [ "${r}" = "remove-osd" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_osd_nodes: True}' --tags='remove-osd';\
-	elif [ "${r}" = "uninstall" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} uninstall.yml --tags='uninstall';\
-	else\
-		echo "No Actions for Ceph";\
-		exit;\
-	fi
-
-
+	make -f makefile_configs/Makefile.ceph r=${r} s=${s} c=${c} USERNAME=${USERNAME}
 
 cephfs:
-	@if [ "${r}" = "install" ]; then\
-		if [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' -e '{enable_cephfs_client: True}' --tags='install';\
-		elif [ ! -z ${c} ] && [ "${c}" != "enable" ]; then\
-			echo "No Actions for Installing CephFS with Client";\
-		else\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' --tags='install';\
-		fi;\
-	elif [ "${r}" = "uninstall" ]; then\
-		if [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' -e '{enable_cephfs_client: True}' --tags='uninstall';\
-		elif [ ! -z ${c} ] && [ "${c}" != "enable" ]; then\
-			echo "No Actions for Uninstalling CephFS with Client";\
-		else\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs: True}' --tags='uninstall';\
-		fi;\
-	elif [ -z ${r} ] && [ "${c}" = "enable" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs_client: True}' --tags='install';\
-	elif [ -z ${r} ] && [ "${c}" = "disable" ]; then\
-		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-cephfs.yml -e '{enable_cephfs_client: True}' --tags='uninstall';\
-	else\
-		echo "No Actions for CephFS";\
-		exit;\
-	fi
-
+	make -f makefile_configs/Makefile.cephfs r=${r} s=${s} c=${c} USERNAME=${USERNAME}
 
 block:
-	@if [ "${r}" = "install" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='install';\
-		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='install';\
-		else\
-			echo "No Actions for Installing Block";\
-		fi;\
-	elif [ "${r}" = "uninstall" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "rbd" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_rbd: True}' --tags='uninstall';\
-		elif [ ! -z ${r} ] && [ "${s}" = "iscsi" ]; then\
-			ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-block.yml -e '{enable_iscsi: True}' --tags='uninstall';\
-		else\
-			echo "No Actions for Uninstalling Block";\
-		fi;\
-	else\
-		echo "No Actions for Block";\
-		exit;\
-	fi
-
+	make -f makefile_configs/Makefile.block r=${r} s=${s} c=${c} USERNAME=${USERNAME}
 
 rgw:
-	@if [ "${r}" = "install" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_rgw: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_rgw: True}' -e '{enable_single_client: True }' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_single_client: True }' --tags='install';\
-			else\
-				echo "No Actions for Installing Single Rados Gateway with Client";\
-			fi\
-		elif [ ! -z ${r} ] && [ "${s}" = "multi" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_rgw: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_rgw: True}' -e '{enable_multi_client: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{enable_multi_client: True}' --tags='install';\
-			else\
-				echo "No Actions for Installing Multi Rados Gateway with Client";\
-			fi\
-		else\
-			echo "No Actions for Installing Rados Gateway";\
-		fi;\
-	elif [ "${r}" = "uninstall" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_rgw: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_rgw: True}' -e '{disable_single_client: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_single_client: True}' --tags='uninstall';\
-			else\
-				echo "No Actions for Uninstalling Multi Rados Gateway with Client";\
-			fi\
-		elif [ ! -z ${r} ] && [ "${s}" = "multi" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_rgw: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_rgw: True}' -e '{disable_multi_client: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-radosgw.yml -e '{disable_multi_client: True}' --tags='uninstall';\
-			else\
-				echo "No Actions for Uninstalling Multi Rados Gateway with Client";\
-			fi\
-		else\
-			echo "No Actions for Uninstalling Rados Gateway";\
-		fi;\
-	else\
-		echo "No Actions for Rados Gateway";\
-		exit;\
-	fi
-
-
+	make -f makefile_configs/Makefile.rgw r=${r} s=${s} c=${c} USERNAME=${USERNAME}
 
 nfs:
-	@if [ "${r}" = "install" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_nfs: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_nfs: True}' -e '{enable_single_client: True }' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_single_client: True }' --tags='install';\
-			else\
-				echo "No Actions for Installing Single NFS with Clients";\
-			fi\
-		elif [ ! -z ${r} ] && [ "${s}" = "ganesha" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_nfs_ganesha: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "enable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_nfs_ganesha: True}' -e '{enable_multi_client: True}' --tags='install';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{enable_multi_client: True}' --tags='install';\
-			else\
-				echo "No Actions for Installing NFS Ganesha with Clients";\
-			fi\
-		else\
-			echo "No Actions for Installing NFS";\
-		fi;\
-	elif [ "${r}" = "uninstall" ]; then\
-		if [ ! -z ${r} ] && [ "${s}" = "single" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_nfs: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_nfs: True}' -e '{disable_single_client: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_single_client: True}' --tags='uninstall';\
-			else\
-				echo "No Actions for Uninstalling Single NFS with Clients";\
-			fi\
-		elif [ ! -z ${r} ] && [ "${s}" = "ganesha" ]; then\
-			if [ -z ${c} ];  then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_nfs_ganesha: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "disable" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_nfs_ganesha: True}' -e '{disable_multi_client: True}' --tags='uninstall';\
-			elif [ ! -z ${c} ] && [ "${c}" = "only" ]; then\
-				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-nfs.yml -e '{disable_multi_client: True}' --tags='uninstall';\
-			else\
-				echo "No Actions for Uninstalling NFS Ganesha With Clients";\
-			fi\
-		else\
-			echo "No Actions for Uninstalling NFS";\
-		fi;\
-	else\
-		echo "No Actions for Installing or Uninstalling NFS";\
-		exit;\
-	fi
-
-
-
+	make -f makefile_configs/Makefile.nfs r=${r} s=${s} c=${c} USERNAME=${USERNAME}
 
 
 #install: role-update install.yml

@@ -196,11 +196,12 @@
 ##################################################################################################################################################################
 
 
+# cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
 - name: Setup User and Password for iSCSI Initiators
   shell:
     cmd: |
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
-      cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
+      cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
       auth username={{ item.auth_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }} password={{ item.password }}
       exit
       EOF

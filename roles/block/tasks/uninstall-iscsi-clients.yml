@@ -1,12 +1,12 @@
 ---
-- name: Check the device name attached
+- name: Check the Device Name Attached
   shell: |
     iscsiadm -m session -P 3 | grep 'Target\|disk' | grep Attached | awk '{print $4}'
   register: device_name_attached
 - debug: msg={{ device_name_attached.stdout }}
 
 
-- name: Delete text file
+- name: Delete Text File
   file:
     path: "{{ item.value['mount_dir'] }}/test-iscsi01.txt"
     state: absent

@@ -144,12 +144,11 @@ ceph:
 ### 04) - Initialize Linux Hosts
 - Initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
-$ vi install.yml
+$ vi init-hosts.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-~~ snip
   roles:
     - { role: init-hosts }
 
@@ -158,88 +157,69 @@ $ make install
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
-### 05) Install Ceph Software into all Hosts.
+### 05) Upload and Install Ceph Software into All Hosts.
 ```
-$ vi install.yml
+$ vi config-ceph.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    upload_cephadm: true
-    install_ceph: true
   roles:
     - { role: ceph }
 
-$ make install
+$ make ceph r=install
 ```
 [![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
 
 
-### 06) Initialize Ceph as deploying MON and MGR services
+### 06) Initialize Ceph as Deploying MON and MGR services
 ```
-$ vi install.yml
+$ vi config-ceph.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    init_ceph: true
   roles:
     - { role: ceph }
 
-$ make install
+$ make ceph r=init
 ```
 [![YouTube](http://i.ytimg.com/vi/2DhiWXthQBU/hqdefault.jpg)](https://www.youtube.com/watch?v=2DhiWXthQBU)
 
 
 ### 07) Add Ceph Nodes for High Availablity
 ```
-$ vi install.yml
+$ vi config-ceph.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    add_ceph_nodes: true
   roles:
     - { role: ceph }
 
-$ make install
+$ make ceph r=add-ceph
 ```
 [![YouTube](http://i.ytimg.com/vi/I2lmJJWNGD8/hqdefault.jpg)](https://www.youtube.com/watch?v=I2lmJJWNGD8)
 
 
 ### 08) Add OSD nodes
 ```
-$ vi install.yml
+$ vi config-ceph.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
-    add_osd_nodes: true
   roles:
     - { role: ceph }
 
-$ make install
+$ make ceph r=add-osd
 ```
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
 ### 09) Create Pools and RBDs
 ```
-$ vi group_vars/all.yml
-~~ snip
-ceph:
-  control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  cluster_name: jack-kr-ceph
-  major_version: "18"
-  minor_version: "2"
-  build_version: "1"
-~~ snip
-  block:
-    rbd: true
-    iscsi: false
-~~ snip
-
-$ vi install.yml
+$ vi config-block.yml
 - hosts: all
   become: yes
   vars:
@@ -247,31 +227,14 @@ $ vi install.yml
   roles:
     - { role: block }
 
-$ make install
+$ make block r=install s=rbd
 ```
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
 ### 10) Creating Ceph Filesystems and CephFS POSIX Clients
 ```
-$ vi group_vars/all.yml
-~~ snip
-ceph:
-  control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  cluster_name: jack-kr-ceph
-  major_version: "18"
-  minor_version: "2"
-  build_version: "1"
-~~ snip
-  obs: false
-  fs: true
-~~ snip
-~~ snip
-  client:
-    cephfs: true
-~~ snip
-
-$ vi install.yml
+$ vi config-block.yml
 - hosts: all
   become: yes
   vars:
@@ -279,28 +242,14 @@ $ vi install.yml
   roles:
     - { role: cephfs }
 
-$ make install
+$ make cephfs r=install
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
 
 ### 11) Deploy Multisite Rados Gateway
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-~~ snip
-    rgw:
-      single: false
-      multi: true
-  client:
-~~ snip
-    rgw:
-      single: false
-      multi: true
-~~ snip
-
-$ vi install.yml
+$ vi config-rgw.yml
 - hosts: all
   become: yes
   vars:
@@ -308,28 +257,14 @@ $ vi install.yml
   roles:
     - { role: radosgw }
 
-$ make install
+$ make rgw r=install s=multi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/kblAiF7r0a0/hqdefault.jpg)](https://www.youtube.com/watch?v=kblAiF7r0a0)
 
 
 ### 12) Destroy Multisite Rados Gateway
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-~~ snip
-    rgw:
-      single: false
-      multi: true
-  client:
-~~ snip
-    rgw:
-      single: false
-      multi: true
-~~ snip
-
-$ vi install.yml
+$ vi config-rgw.yml
 - hosts: all
   become: yes
   vars:
@@ -337,99 +272,63 @@ $ vi install.yml
   roles:
     - { role: radosgw }
 
-$ make install
+$ make rgw r=uninstall s=multi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/138Y5FPVmjA/hqdefault.jpg)](https://www.youtube.com/watch?v=138Y5FPVmjA)
 
 
 ### 13) Deploy NFS Ganesha Cluster with a RGW
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-    nfs:
-      single: false
-      ganesha: true
-    rgw:
-      single: true
-      multi: false
-  client:
-~~ snip
-    nfs:
-      single: false
-      ganesha: true
-    rgw:
-      single: true
-      multi: false
-~~ snip
 
-$ vi install.yml
-- hosts: all
-  become: yes
-  vars:
+$ vi config-rgw.yml
+    print_debug: true
+  roles:
+    - { role: radosgw }
+
+$ make rgw r=install s=single
+
+$ vi config-nfs.yml
     print_debug: true
   roles:
     - { role: radosgw }
     - { role: nfs }
 
-$ make install
+$ make nfs r=install s=ganesha
+
 ~~~
 [![YouTube](http://i.ytimg.com/vi/e5sEYsm9u5Q/hqdefault.jpg)](https://www.youtube.com/watch?v=e5sEYsm9u5Q)
 
 
 ### 14) Destory NFS Ganesha Cluser with single RGW
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-    nfs:
-      single: false
-      ganesha: true
-    rgw:
-      single: true
-      multi: false
-  client:
-~~ snip
-    nfs:
-      single: false
-      ganesha: true
-    rgw:
-      single: true
-      multi: false
-~~ snip
-
-$ vi install.yml
+$ vi config-nfs.yml
 - hosts: all
   become: yes
   vars:
     print_debug: true
   roles:
     - { role: nfs }
+
+$ make nfs r=uninstall s=ganesha
+
+$ vi config-rgw.yml
+- hosts: all
+  become: yes
+  vars:
+    print_debug: true
+  roles:
     - { role: radosgw }
 
-$ make install
+$ make rgw r=install s=single
+~
+
 ~~~
 [![YouTube](http://i.ytimg.com/vi/cUFCWH0EMGY/hqdefault.jpg)](https://www.youtube.com/watch?v=cUFCWH0EMGY)
 
 
 ### 15) Deploy Single NFS Service
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-~~ snip
-    nfs:
-      single: true
-      ganesha: false
-~~ snip
-  client:
-~~ snip
-    nfs:
-      single: true
-      ganesha: false
-~~ snip
-
-$ vi install.yml
+$ vi config-nfs.yml
 - hosts: all
   become: yes
   vars:
@@ -437,28 +336,13 @@ $ vi install.yml
   roles:
     - { role: nfs }
 
-$ make install
+$ make nfs r=install s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/A0yBCh9-w7c/hqdefault.jpg)](https://www.youtube.com/watch?v=A0yBCh9-w7c)
 
 
 ### 16) Destroy Single NFS Service
 ~~~
-$ vi group_vars/all.yml
-~~ snip
-  protocol:
-~~ snip
-    nfs:
-      single: true
-      ganesha: false
-~~ snip
-  client:
-~~ snip
-    nfs:
-      single: true
-      ganesha: false
-~~ snip
-
 $ vi install.yml
 - hosts: all
   become: yes
@@ -467,26 +351,14 @@ $ vi install.yml
   roles:
     - { role: nfs }
 
-$ make install
+$ make nfs r=uninstall s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/dBvBt9ox8kY/hqdefault.jpg)](https://www.youtube.com/watch?v=dBvBt9ox8kY)
 
 
 ### 17) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
-$ vi group_vars/all.yml
-  block:
-    rbd: true
-    iscsi: false
-~~ snip
-  client:
-~~ snip
-    block:
-      rbd: false
-      iscsi: true
-~~ snip
-
-$ vi install.yml
+$ vi config-block.yml
 - hosts: all
   become: yes
   vars:
@@ -494,26 +366,14 @@ $ vi install.yml
   roles:
     - { role: block }
 
-$ make install
+$ make block r=install s=iscsi c=enable
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 
 
 ### 18) Destroy iSCSI Clients and Gateways
 ~~~
-$ vi group_vars/all.yml
-  block:
-    rbd: true
-    iscsi: false
-~~ snip
-  client:
-~~ snip
-    block:
-      rbd: false
-      iscsi: true
-~~ snip
-
-$ vi install.yml
+$ vi config-block.yml
 - hosts: all
   become: yes
   vars:
@@ -521,7 +381,7 @@ $ vi install.yml
   roles:
     - { role: block }
 
-$ make install
+$ make block r=uninstall s=iscsi c=disable
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 
@@ -584,52 +444,13 @@ Error: error creating tmpdir: mkdir /run/user/1000: permission denied
 ~~~
 $ ./conn-ceph.sh 61 "systemctl stop ufw; systemctl disable ufw"
 Synchronizing state of ufw.service with SysV service script with /lib/systemd/systemd-sysv-install.
-
 Executing: /lib/systemd/systemd-sysv-install disable ufw
-
 $ ./conn-ceph.sh 61 "iptables -nL"
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination
-CNI-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0            /* CNI firewall plugin rules */
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain CNI-ADMIN (1 references)
-target     prot opt source               destination
-
-Chain CNI-FORWARD (1 references)
-target     prot opt source               destination
-CNI-ADMIN  all  --  0.0.0.0/0            0.0.0.0/0            /* CNI firewall plugin admin overrides */
-
-$ ./conn-ceph.sh 61 "iptables -F"
-
-$ ./conn-ceph.sh 61 "iptables -nL"
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain CNI-ADMIN (0 references)
-target     prot opt source               destination
-
-Chain CNI-FORWARD (0 references)
-target     prot opt source               destination
-jomoon@LAPTOP-OS28E8H5:~/Ceph$
-
 
 $ ufw status
 Status: inactive
 
 $ ufw disable
-
 ~~~
 
 - https://www.suse.com/ko-kr/support/kb/doc/?id=000021071

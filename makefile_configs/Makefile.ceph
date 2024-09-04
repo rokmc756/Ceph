@@ -1,29 +1,25 @@
 ceph:
-	@echo ${r}
-	@echo ${s}
-	@echo ${c}
-
-#	@if [ "${r}" = "upload" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
-#	elif [ "${r}" = "install" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
-#	elif [ "${r}" = "uninstall" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{uninstall_ceph: True}' --tags='uninstall';\
-#	elif [ "${r}" = "init" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{init_ceph: True}' --tags='init';\
-#	elif [ "${r}" = "purge" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{purge_ceph: True}' --tags='purge';\
-#	elif [ "${r}" = "add-ceph" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_ceph_nodes: True}' --tags='add-ceph';\
-#	elif [ "${r}" = "remove-ceph" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_ceph_nodes: True}' --tags='remove-ceph';\
-#	elif [ "${r}" = "add-osd" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_osd_nodes: True}' --tags='add-osd';\
-#	elif [ "${r}" = "remove-osd" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_osd_nodes: True}' --tags='remove-osd';\
-#	elif [ "${r}" = "uninstall" ]; then\
-#		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} uninstall.yml --tags='uninstall';\
-#	else\
-#		echo "No Actions for Ceph";\
-#		exit;\
-#	fi
+	@if [ "${r}" = "upload" ]; then\
+		 ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{upload_cephadm: True}' --tags='upload';\
+	elif [ "${r}" = "install" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{install_ceph: True}' --tags='install';\
+	elif [ "${r}" = "uninstall" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{uninstall_ceph: True}' --tags='uninstall';\
+	elif [ "${r}" = "init" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{init_ceph: True}' --tags='init';\
+	elif [ "${r}" = "purge" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{purge_ceph: True}' --tags='purge';\
+	elif [ "${r}" = "add-ceph" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_ceph_nodes: True}' --tags='add-ceph';\
+	elif [ "${r}" = "remove-ceph" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_ceph_nodes: True}' --tags='remove-ceph';\
+	elif [ "${r}" = "add-osd" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{add_osd_nodes: True}' --tags='add-osd';\
+	elif [ "${r}" = "remove-osd" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} config-ceph.yml -e '{remove_osd_nodes: True}' --tags='remove-osd';\
+	elif [ "${r}" = "uninstall" ]; then\
+		ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} uninstall.yml --tags='uninstall';\
+	else\
+		echo "No Actions for Ceph";\
+		exit;\
+	fi
