@@ -5,6 +5,7 @@
     --dashboard-password-noupdate \
     --initial-dashboard-user {{ ceph.admin_user }} \
     --initial-dashboard-password {{ ceph.admin_passwd }} \
+    --skip-firewalld \
     --allow-overwrite
   register: init_ceph
 - debug: msg={{ init_ceph }}

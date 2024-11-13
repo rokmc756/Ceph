@@ -1,4 +1,4 @@
-- name: Install Ceph Reef
+- name: Install Ceph - Project Name ( {{ ceph.project_name }} )
   shell: |
     {{ ceph.base_path }}/cephadm install
   register: install_ceph

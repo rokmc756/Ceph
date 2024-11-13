@@ -5,8 +5,8 @@
   when: inventory_hostname in groups['control']
 - debug: msg={{ get_fsid.stdout }}
   when: print_debug == true and inventory_hostname in groups['control']
-  # Get the Name of MGR Node
-  # ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
+# [ Get the Name of MGR Node ]
+# ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
 
 
 - name: Set Fact for FSID
@@ -18,7 +18,7 @@
   when: inventory_hostname in groups['control']
 
 
-- name: Set Fact for Cephadm_cmd Command
+- name: Set Fact for Cephadm Command
   set_fact:
     cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
   delegate_to: "{{ item }}"
@@ -38,8 +38,8 @@
   when: inventory_hostname != ceph.control_node
 - debug: msg={{ ceph_nodes_unlabeled }}
   when: print_debug == true and inventory_hostname != ceph.control_node
-  # ceph orch daemon stop node-exporter.rk9-node01  # ceph-exporter,crash,mon,mgr
-  # ceph orch apply {{ item }} "1 rk9-node01"
+# ceph orch daemon stop node-exporter.rk9-node01  # ceph-exporter,crash,mon,mgr
+# ceph orch apply {{ item }} "1 rk9-node01"
 
 
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
@@ -56,8 +56,9 @@
   when: inventory_hostname != ceph.control_node
 - debug: msg={{ cluster_hosts_removed }}
   when: print_debug == true and inventory_hostname != ceph.control_node
-  # {{ cephadm_cmd }} ceph orch host ls
-  # ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
+# ceph orch host ls
+# ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
+
 
 
 - name: Remove the Ceph Cluster
@@ -94,7 +95,7 @@
 # ceph mon remove {{ hostvars[item]['ansible_hostname'] }}
 # ceph mgr fail {{ mgr_name }}
 
-# Remove MDS Service
+# [ Remove MDS Service ]
 # ceph orch rm mds.myfs
 
 # systemctl stop ceph-mgr@{{ mgr_name }}
@@ -102,7 +103,7 @@
 # ceph osd unset noscrub
 # ceph -s
 
-# Remove Monitoring Stacks
+# [ Remove Monitoring Stacks ]
 # ceph orch rm grafana       # prometheus,node-exporter,ceph-exporter,alertmanager
 # ceph mgr module disable prometheus
 # ceph orch status

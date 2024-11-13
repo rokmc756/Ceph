@@ -317,7 +317,7 @@ $ vi config-rgw.yml
   roles:
     - { role: radosgw }
 
-$ make rgw r=install s=single
+$ make rgw r=uninstall s=single
 ~
 
 ~~~

@@ -43,8 +43,7 @@
 
 
 - name: Allow Deployment of Monitor Daemons On Arbitrary Hosts to Add the Nodes to Ceph Cluster
-  shell: |
-    {{ cephadm_cmd }} ceph orch host add {{ hostvars[inventory_hostname]['ansible_hostname'] }}
+  shell: "{{ cephadm_cmd }} ceph orch host add {{ hostvars[inventory_hostname]['ansible_hostname'] }}"
   register: add_nodes
   delegate_to: "{{ hostvars[groups['control'][0]]['ansible_hostname'] }}"
   delegate_facts: True
@@ -57,8 +56,7 @@
 # Provide additionally external monitoring and monitoring interfaces running with Ceph Manager Daemon
 # The MGR Role is assigned into all nodes
 - name: Apply the Role of MGR for All Nodes
-  shell: |
-    {{ cephadm_cmd }} ceph orch apply mgr --placement='{{ all_mon_hostnames }}'
+  shell: "{{ cephadm_cmd }} ceph orch apply mgr --placement='{{ all_mon_hostnames }}'"
   register: apply_mgr
   when: inventory_hostname in groups['control']
 - debug: msg={{ apply_mgr }}
@@ -69,8 +67,7 @@
 # Creaet MDS and assign the role of MDS into all nodes in order to use CephRBD and CephFS
 # In this case myfs would be created to identify filesystem
 - name: Apply the Role of MDS for All Nodes
-  shell: |
-    {{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement='{{ ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'
+  shell: "{{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement='{{ ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'"
   register: apply_mds
   when: inventory_hostname in groups['control']
 - debug: msg={{ apply_mds }}
@@ -82,8 +79,7 @@
 
 
 - name: Apply the Role of Monitor for All Nodes
-  shell: |
-    {{ cephadm_cmd }} ceph orch apply mon --placement='{{ all_mon_hostnames }}'
+  shell: "{{ cephadm_cmd }} ceph orch apply mon --placement='{{ all_mon_hostnames }}'"
   register: apply_monitors
   when: inventory_hostname in groups['control']
 - debug: msg={{ apply_monitors }}

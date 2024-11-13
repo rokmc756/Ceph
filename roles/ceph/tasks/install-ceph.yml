@@ -1,6 +1,6 @@
-- name: Add Repo for Ceph Reef for RedHat/Rocky/CentOS
+- name: Add Repo for Ceph ( {{ ceph.project_name }} ) for RedHat/Rocky/CentOS
   shell: |
-    {{ cephadm.base_path }}/cephadm add-repo --release reef
+    {{ cephadm.base_path }}/cephadm add-repo --release {{ ceph.project_name }}
   register: add_repo
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ add_repo }}
@@ -13,8 +13,8 @@
     state: present
   with_items: "{{ ceph_pkgs }}"
 
-#
-- name: Install Ceph CLI Tools On the Host
+
+- name: Install Ceph CLI Tools On the Hosts
   shell: |
     {{ cephadm.base_path }}/cephadm install ceph-common
   register: install_ceph_cli_tools
@@ -22,8 +22,8 @@
 - debug: msg={{ install_ceph_cli_tools }}
   when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
-#
-- name: Install Ceph Reef
+
+- name: Install Ceph - Project Name ( {{ ceph.project_name }} )
   shell: |
     {{ cephadm.base_path }}/cephadm install
   register: install_ceph

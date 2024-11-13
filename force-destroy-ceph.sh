@@ -104,6 +104,8 @@ do
 done
 
 
+exit
+
 for i in `echo "06 05 04 03 02 01"`
 do
 

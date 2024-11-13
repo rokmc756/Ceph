@@ -10,21 +10,22 @@ minio:
   release_date: 20240307
 
 cephadm:
-  major_version: 18
+  major_version: 19
   minor_version: 2
-  patch_version: 1
+  patch_version: 0
   base_path: /root   # /usr/sbin
   bin_type: tar.gz
   download: false
 
 ceph:
+  project_name: squid # reef
   domain: "jtest.pivotal.io"
   rdomain: "io.pivotal.jtest"
   control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
-  major_version: "18"
+  major_version: "19"
   minor_version: "2"
-  build_version: "1"
+  build_version: "0"
   patch_version: ""
   download_url: ""
   download: false
