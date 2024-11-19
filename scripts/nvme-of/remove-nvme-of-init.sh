@@ -1,6 +1,4 @@
-# [root@rk9-node07 nvme-of]# cat remove-nvme-of-init.sh
 # Disconnect the NVMe-oF initiator from NVMe-oF target.
-# [1] OK
 nvme disconnect-all
 
 # VMware esx initiator
@@ -11,7 +9,6 @@ nvme disconnect-all
 # Remove existing namespace from subsystem.
 # podman run -it <cp.icr.io/cp/ibm-ceph/nvmeof-cli-rhel9:latest> --server-address GATEWAY_IP --server-port 5500 remove_namespace -n SUBSYSTEM_NQN -i NSID
 # For example,
-# [2] OK
 podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.71 --server-port 5500 namespace del --subsystem nqn.2016-06.io.spdk:rk9-node01 --nsid 1
 # Failure deleting namespace: Can't find namespace
 
@@ -19,14 +16,11 @@ podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.71 --se
 # podman run -it <cp.icr.io/cp/ibm-ceph/nvmeof-cli-rhel9:latest> --server-address GATEWAY_IP --server-port 5500 delete_bdev -b BLOCK_DEVICE_NAME
 # For example,
 # podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.71 --server-port 5500 delete_bdev -b nvmeof_pool01_01
-# [3] OK
 ceph orch rm nvmeof.nvmeof_pool01
 
 # Removed service nvmeof.nvmeof_pool01
-# [4] OK
 ceph config set mon mon_allow_pool_delete true
 
-# [5] OK
 ceph osd pool rm nvmeof_pool01 nvmeof_pool01 --yes-i-really-really-mean-it
 # pool 'nvmeof_pool01' removed
 
