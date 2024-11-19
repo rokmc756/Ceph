@@ -13,9 +13,9 @@
   register: buckets_created
   ignore_errors: true
   with_items: "{{ rgw.users }}"
-  when: inventory_hostname in groups['rgw']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ buckets_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Remove Users in the Ceph Object Gateway
@@ -24,9 +24,9 @@
   register: rgw_user_removed
   ignore_errors: true
   with_items: "{{ rgw.users }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ rgw_user_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Remove Zone in the Ceph Object Gateway
@@ -34,9 +34,9 @@
     {{ cephadm_cmd }} ceph orch rm rgw.test_realm.test_zone_bb
   register: rgw_zone_removed
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ rgw_zone_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Stop and Disable Rados Gateway
@@ -63,9 +63,9 @@
     - "^rgw dns name =*"
     - "^keyring =*"
     - "^log file ="
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ rgw_config_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Remove Ceph Configuration to Rados Gateway Host
@@ -87,9 +87,9 @@
     {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
   register: delete_pool_allowed
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ delete_pool_allowed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Remove Rados Gateway Pools
@@ -106,9 +106,9 @@
     - "default.rgw.control"
     - "default.rgw.log"
     - "default.rgw.meta"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ rgw_pool_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Check if Pools are still Unknown
@@ -119,9 +119,9 @@
   retries: 30
   delay: 10
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ unknown_pool_checked }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Check if Pools are Active+Clean
@@ -132,9 +132,9 @@
   retries: 20
   delay: 15
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ scrub_pool_checked }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Delete Rados Gateway Users
@@ -144,9 +144,9 @@
   ignore_errors: true
   with_items:
     - "bootstrap-rgw"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname == ceph.control_node
 - debug: msg={{ rgw_user_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname == ceph.control_node
 
 
 - name: Uninstall MC for S3 Client

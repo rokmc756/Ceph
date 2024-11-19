@@ -48,3 +48,15 @@
     _netdev: "{{ 'ansible_'~ netdev1 }}"
     _ipaddr: "{{ ipaddr1 }}"
 
+- set_fact:
+    nfs_client_pkg_name: "nfs-utils"
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+
+- set_fact:
+    nfs_client_pkg_name: "nfs-client"
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- set_fact:
+    nfs_client_pkg_name: "nfs-utils"
+  when: ansible_distribution == "openSUSE Leap"
+

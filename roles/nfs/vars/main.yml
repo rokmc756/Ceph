@@ -1,29 +1,3 @@
-#nfs:
-#  cluster_name: jtest-nfs-clu01
-#  cephfs_name: cephfs-nfs
-#  user_name: nfsclient
-#  namespace: singletest
-
-
-# ceph osd pool create nfs-pool01
-#  ceph osd pool application enable nfs-pool01 freeform/rgw/rbd/cephfs/nfs
-#  ceph osd pool application enable nfs-pool01 cephfs
-#  rbd pool init -p nfs-pool01
-#  create osd pool create nfs-ganesha01
-#  
-#  ceph create osd pool create nfs-ganesha01
-#
-#  ceph osd pool create nfs-ganesha01
-#  ceph osd pool application enable nfs-ganesha01 nfs
-#  rbd pool init -p nfs-ganesha01
-#
-#  ceph orch apply nfs nfs-ganesha01 --placement="3 rk9-node01 rk9-node02 rk9-node03"
-
-
-#    - { name: "jtest-clu01", fs: "jtest-fs01" }
-#  cluster:
-#    - { name: "jtest-nfs-ganesha01", fs: "jtest-fs01" }
-
 nfs:
   cluster:
     - { name: "jtest-nfs01", pool: "jtest-nfs-pool01", fs: "jtest-nfs-fs01", virtual_ip: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}" }
@@ -52,10 +26,8 @@ ganesha:
     - { mount_dir: "/mnt/ceph-nfs", src: "/ceph", fs: "jtest-ganesha-fs01", dest: "/mnt/ceph-nfs", virtual_ip: "192.168.1.88"  }
   rgw:
     - { cluster: "jtest-ganesha01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
-
-
-
 # - { action: "get-or-create", user: "jomoon", mon: "allow r", osd: "allow rw", pool: ".nfs", namespace: "jtest-ns01", cephfs: "allow rw tag cephfs", data: "jtest-fs01", mds: "allow rw", path: "/", key: "jtest.key" }
+
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
 # ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/

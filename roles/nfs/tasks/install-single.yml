@@ -1,26 +1,6 @@
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
-- name: Get FSID
-  shell: |
-    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-  register: get_fsid
-  when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-
-- name: Set Fact for FSID
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
-  when: inventory_hostname in ceph.control_node
-
-
-- name: Set Fact for cephadm_cmd Command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-  when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
 
 
 - name: Create NFS Service
@@ -29,10 +9,8 @@
   register: create_nfs
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ create_nfs }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Check the ls Status when Creating NFS
@@ -41,10 +19,8 @@
   register: check_nfs_ls
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ check_nfs_ls }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Check the ps Status when Creating NFS
@@ -54,10 +30,8 @@
   ignore_errors: true
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ check_nfs_ps }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Check the Cluster Info Status when Creating NFS
@@ -67,10 +41,8 @@
   ignore_errors: true
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ check_nfs_clu_info }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 # Exporting a Ceph File System
@@ -80,10 +52,8 @@
   register: create_nfs_vol
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ create_nfs_vol }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Create a User, nfsclient to Expose CephFS though the NFS server
@@ -95,10 +65,8 @@
   register: create_nfs_auth
   with_items: "{{ nfs.auth }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ create_nfs_auth }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # ceph nfs cluster create jtest-nfs-clu01
 # ceph orch ls --service_name=nfs.jtest-nfs-clu01
@@ -106,7 +74,7 @@
 # ceph nfs cluster info jtest-nfs-clu01
 
 # ceph fs volume create cephfs-nfs
-# sudo ceph auth get-or-create client.nfsclient \
+# ceph auth get-or-create client.nfsclient \
 #   mon 'allow r' \
 #   osd 'allow rw pool=.nfs namespace=singletest, allow rw tag cephfs data=cephfs-nfs' \
 #   mds 'allow rw path=/' > nfsclient.key
@@ -122,10 +90,8 @@
   register: create_nfs_config
   with_items: "{{ nfs.cluster }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ create_nfs_config }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 # In this example, the BINDING (/ceph) is the pseudo root path, which must be unique, and an absolute path
@@ -135,11 +101,9 @@
   register: create_cephfs_export
   with_items: "{{ nfs.export }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ create_cephfs_export }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-  #  ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/
+# ceph nfs export create cephfs {{ item.name }} /ceph {{ item.fs }} --path=/
 
 
 - name: View the Export Block Based on the Pseudo Root Name
@@ -148,10 +112,8 @@
   register: view_nfs_export
   with_items: "{{ nfs.export }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ view_nfs_export }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: List the NFS Exports
@@ -160,10 +122,8 @@
   register: list_nfs_export
   with_items: "{{ nfs.export }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ list_nfs_export }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 # Note: CLUSTER_NAME is optional. If the CLUSTER_NAME is not specified, information of all nfs clusters present will be displayed.
@@ -173,19 +133,9 @@
   register: get_nfs_export
   with_items: "{{ nfs.export }}"
   when: inventory_hostname in ceph.control_node
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ get_nfs_export }}
   when: print_debug == true and inventory_hostname in ceph.control_node
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-
-#- name: Mount the exported Ceph File System on a client
-#  shell: |
-#    mount -t nfs -o port=2049 rk9-ceph-mon01:/ceph/ /mnt/nfs-cephfs
-#  register: mount_exported_cephfs
-#
-#- debug: msg={{ mount_exported_cephfs }}
-#  when: print_debug == true
 
 # On a client host, to mount a exported NFS Ceph File System created with an ingress service:
 # Replace VIRTUAL_IP_ADDRESS with --ingress --virtual-ip IP address used to create the NFS cluster.
@@ -204,7 +154,7 @@
 # ceph nfs cluster create jtest-nfs-clu01
 # ceph orch ls --service_name=nfs.jtest-nfs-clu01
 # ceph orch ps --service_name=nfs.jtest-nfs-clu01
-# ceph nfs cluster info jtest-nfs-clu01
+# nfs cluster info jtest-nfs-clu01
 
 # ceph fs volume create cephfs-nfs
 # sudo ceph auth get-or-create client.nfsclient \

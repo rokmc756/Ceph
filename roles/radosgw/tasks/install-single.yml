@@ -1,5 +1,4 @@
 # https://www.server-world.info/en/note?os=CentOS_Stream_9&p=ceph18&f=5
-# yum install ceph-radosgw
 # firewall-cmd --zone=public --permanent --add-port=7480/tcp
 # firewall-cmd --reload
 #
@@ -38,8 +37,8 @@
 #|    Object Storage     +----+    Object Storage     +----+    Object Storage     |
 #|                       |    |                       |    |                       |
 #+-----------------------+    +-----------------------+    +-----------------------+
-#
-#
+
+
 #- name: Install required packages for RADOSGW
 #  yum:
 #    name: "{{ item }}"
@@ -172,7 +171,7 @@
 # On Object Gateway Node, Create a S3 compatible user who can authenticate to Object Gateway.
 # for example, create [serverworld] user
 
-#
+
 - name: Transfer Ceph Configuration to Rados Gateway Host
   shell: |
     radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
@@ -183,7 +182,7 @@
 - debug: msg={{ rgw_user_created }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Show User List
   shell: |
     radosgw-admin user list
@@ -192,7 +191,7 @@
 - debug: msg={{ rgw_users_showed }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Show Specific User Information
   shell: |
     radosgw-admin user info --uid={{ item.user_name }}
@@ -202,7 +201,7 @@
 - debug: msg={{ rgw_user_showed }}
   when: print_debug == true and inventory_hostname in groups['rgw']
 
-#
+
 - name: Enable the Object Gateway Management Frontend
   shell: |
     ceph dashboard set-rgw-credentials
