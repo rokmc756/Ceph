@@ -62,7 +62,7 @@
     state: absent
   register: parted_uninstalled
 - debug: msg={{ parted_uninstalled }}
-#  command: cat /proc/partitions
+# command: cat /proc/partitions
 
 
 - name: Confirm the Established Session
@@ -135,26 +135,35 @@
 - debug: msg={{ iscsi_initator_config_files_deleted }}
 
 
-- name: Uninstall iSCSI Initiator
-  package:
-    name: "{{ item }}"
-    state: absent
-  register: iscsi_initiator_uninstalled
-  with_items:
-    - "iscsi-initiator-utils"
-  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
-- debug: msg={{ iscsi_initiator_uninstalled }}
-  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
+#- name: Uninstall iSCSI Initiator
+#  package:
+#    name: "{{ item }}"
+#    state: absent
+#  register: iscsi_initiator_uninstalled
+#  with_items:
+#    - "iscsi-initiator-utils"
+#  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
+#- debug: msg={{ iscsi_initiator_uninstalled }}
+#  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
+
+
+#- name: Uninstall iSCSI Initiator
+#  package:
+#    name: "{{ item }}"
+#    state: absent
+#  register: iscsi_initiator_uninstalled
+#  with_items:
+#    - "open-iscsi"
+#  when: ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
+#- debug: msg={{ iscsi_initiator_uninstalled }}
+#  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
 
 
 - name: Uninstall iSCSI Initiator
   package:
-    name: "{{ item }}"
+    name: "{{ iscsi_init_pkg_name }}"
     state: absent
   register: iscsi_initiator_uninstalled
-  with_items:
-    - "open-iscsi"
-  when: ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 - debug: msg={{ iscsi_initiator_uninstalled }}
-  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
+  when: print_debug == true
 

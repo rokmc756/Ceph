@@ -1,9 +1,3 @@
-#
-# Setup: Rados Gateway on Cluster 1
-# Cluster 1 will be our primary cluster. SSH in to ceph-mon01 VM.
-#
-# Lets define some variables. You can provide your own variable names and use your own IPs and hostnames
-
 ---
 - name: Check if Ceph Config Directory Exists
   stat: path=/etc/ceph
@@ -90,7 +84,7 @@
 # Save ACCESS_KEY and SECRET_KEY values. These values will be needed when we configure rgw on second cluster.
 - name: Create a Replication User
   shell: |
-    radosgw-admin user create --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system > /root/{{ item.user_full_name }}-keys
+    radosgw-admin user create --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system > {{ ceph.base_path }}/{{ item.user_full_name }}-keys
   register: rep_user_created
   ignore_errors: true
   with_items: "{{ rgw.multisite.users }}"
@@ -123,8 +117,7 @@
 
 
 - name: Deploy Primary Rados Gateway
-  shell: |
-    ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'
+  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'"
   register: primary_rgw_deployed
   with_items: "{{ rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
@@ -170,8 +163,8 @@
 - debug: msg={{ password_changed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
-  # radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
-  # radosgw-admin key rm --uid={{ item.rep_user }} --access-key `radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | awk '{print $2}' | cut -d \" -f 2`
+# radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
+# radosgw-admin key rm --uid={{ item.rep_user }} --access-key `radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | awk '{print $2}' | cut -d \" -f 2`
 
 - pause:
     seconds: 20
@@ -219,8 +212,7 @@
 
 
 - name: Deploy Secondary Raods Gateway
-  shell: |
-    ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.osd_host_num }} {{ all_osd_hostnames }}'
+  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.osd_host_num }} {{ all_osd_hostnames }}'"
   register: secondary_rgw_deployed
   with_items: "{{ rgw.multisite.zone.secondary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
@@ -228,24 +220,24 @@
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
-- name: Delete Default Zone
-  shell: |
-    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
-  register: default_zone_deleted
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ default_zone_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- name: Delete Default Zone
+#  shell: |
+#    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
+#  register: default_zone_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ default_zone_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
-- name: Delete Default Zone Group
-  shell: |
-    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
-  register: default_zone_group_deleted
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ default_zone_group_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- name: Delete Default Zone Group
+#  shell: |
+#    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
+#  register: default_zone_group_deleted
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ default_zone_group_deleted }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Install MC for S3 Client

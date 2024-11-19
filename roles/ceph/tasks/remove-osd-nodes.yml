@@ -1,22 +1,27 @@
-- name: Get FSID for Setting Fact
-  shell: |
-    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-  register: get_fsid
-  when: inventory_hostname in groups['control']
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # ceph osd crush remove <hostname>
+#- name: Get FSID for Setting Fact
+#  shell: |
+#    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+#  register: get_fsid
+#  when: inventory_hostname in groups['control']
+#- debug: msg={{ get_fsid.stdout }}
+#  when: print_debug == true and inventory_hostname in groups['control']
+#  # ceph osd crush remove <hostname>
+#
+#
+#- name: Set Fact for FSID
+#  set_fact:
+#    _fsid: "{{ get_fsid.stdout }}"
+#  when: inventory_hostname in groups['control']
+#
+#
+#- name: Set fact for cephadm_cmd command
+#  set_fact:
+#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+#  when: inventory_hostname in groups['control']
 
 
-- name: Set Fact for FSID
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
-  when: inventory_hostname in groups['control']
-
-
-- name: Set fact for cephadm_cmd command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
   when: inventory_hostname in groups['control']
 
 
@@ -224,9 +229,9 @@
 #  register: osd_users_deleted
 #  ignore_errors: true
 #  loop: "{{ groups['osd'] }}"
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: inventory_hostname in groups['control']
 #- debug: msg={{ osd_users_deleted }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true and inventory_hostname in groups['control']
 
 #
 #- name: Remove FSID Directory
@@ -234,9 +239,9 @@
 #    rm -rf "/var/lib/ceph/{{ _fsid }}"
 #  ignore_errors: true
 #  register: fsid_dir_removed
-#  when: inventory_hostname in groups['osd']
+#  when: inventory_hostname in groups['control']
 #- debug: msg={{ fsid_dir_removed }}
-#  when: print_debug == true and inventory_hostname in groups['osd']
+#  when: print_debug == true and inventory_hostname in groups['control']
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
 # https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
 
@@ -269,6 +274,7 @@
 #  when: inventory_hostname in groups['osd']
 #- debug: msg={{ run_wipe_cephfs_script }}
 #  when: print_debug == true and inventory_hostname in groups['osd']
+
 
 - name: Remove LVMs
   shell: |

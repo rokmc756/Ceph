@@ -65,7 +65,7 @@
 # omitt --silent --remote-name
 - name: Download Ceph CLI Tools On the Host
   shell: |
-    curl --location https://download.ceph.com/rpm-reef/el9/noarch/cephadm -o /root/cephadm
+    curl --location https://download.ceph.com/rpm-{{ ceph.project_name }}/el9/noarch/cephadm -o /root/cephadm
   async: 60
   poll: 5
   register: download_ceph_cli_tools

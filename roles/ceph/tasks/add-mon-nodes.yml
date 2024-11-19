@@ -1,19 +1,23 @@
-- name: Get FSID
-  shell: |
-    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-  register: get_fsid
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true
+#- name: Get FSID
+#  shell: |
+#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+#  register: get_fsid
+#- debug: msg={{ get_fsid.stdout }}
+#  when: print_debug == true
+#
+#
+#- name: Set Fact for FSDI
+#  set_fact:
+#    _fsid: "{{ get_fsid.stdout }}"
+#
+#
+#- name: Set Fact for cephadm command
+#  set_fact:
+#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 
-- name: Set Fact for FSDI
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
-
-
-- name: Set Fact for cephadm command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
 
 
 - name: Enable Ceph CLI
@@ -39,6 +43,7 @@
   register: confirm_label
 - debug: msg={{ confirm_label }}
   when: print_debug == true
+
 
 #- name: Manually add Monitors and Disable Automated Monitor Deployment
 #  become: true
@@ -74,9 +79,11 @@
 - debug: msg={{ confirm_label }}
   when: print_debug == true
 
-#- name: Deploy each additional monitor:
+
+#- name: Deploy Each Additional Monitor:
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch daemon add mon *<host1:ip>
 #  register: deploy_additional_monitor
 #
 #- debug: msg={{ deploy_additional_monitor }}
+

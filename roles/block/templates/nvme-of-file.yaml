@@ -1,0 +1,9 @@
+service_type: nvmeof
+service_id: nvmeof_pool01
+placement:
+  hosts:
+    - host01
+    - host02
+spec:
+  pool: nvmeof_pool01
+  tgt_cmd_extra_args: --cpumask=0xFF

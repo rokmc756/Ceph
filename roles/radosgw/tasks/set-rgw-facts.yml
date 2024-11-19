@@ -7,6 +7,7 @@
     netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr2 ) | map(attribute='device') | first }}"
   when: inventory_hostname not in groups['clients']
 
+
 - name: Get interface name from prefix of IP Addresses provided for Weka Nodes
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
@@ -14,11 +15,12 @@
     netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr2 ) | map(attribute='device') | first }}"
   when: inventory_hostname in groups['clients']
 
-#
+
 - name: Get IP Address from provided network device name
   set_fact:
     ipaddr0: "{{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}"
     ipaddr1: "{{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }}"
+
 
 # https://stackoverflow.com/questions/36328907/ansible-get-all-the-ip-addresses-of-a-group
 - name: Define facts for all worker's hostname

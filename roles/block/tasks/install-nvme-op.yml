@@ -1,12 +1,5 @@
-# https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
-# https://www.youtube.com/watch?v=bOPsVM43HOs
-# https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
-# https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
-# https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
-# https://cbs.centos.org/koji/buildinfo?buildID=34736
-
-
-- name: List Hosts for iSCSI Gateway
+---
+- name: List Hosts for NVME-oF Gateway
   shell: |
     ceph orch host ls
   register: hosts_listed
@@ -17,46 +10,51 @@
 
 # To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
 # The suggested values are 20, 5 and 15, respectively.
-- name: Avoid Initiator Timeout
-  shell: |
-    ceph config set osd osd_heartbeat_grace 20
-    ceph config set osd osd_heartbeat_interval 5
-    ceph config set osd osd_client_watch_timeout 15
-  register: initiator_timeout_avoided
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ initiator_timeout_avoided }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+#- name: Avoid Initiator Timeout
+#  shell: |
+#    ceph config set osd osd_heartbeat_grace 20
+#    ceph config set osd osd_heartbeat_interval 5
+#    ceph config set osd osd_client_watch_timeout 15
+#  register: initiator_timeout_avoided
+#  when: inventory_hostname in ceph.control_node
+#- debug: msg={{ initiator_timeout_avoided }}
+#  when: print_debug == true and inventory_hostname in ceph.control_node
 
 
 # Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
 - name: Create a Replicated Pool with replicated_rule Crush Map
   shell: |
-    ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
+    ceph osd pool create nvmeof_pool01
   register: replica_pool_created
-  with_items: "{{ iscsi.targets }}"
+  # with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in ceph.control_node
 - debug: msg={{ replica_pool_created }}
   when: print_debug == true and inventory_hostname in ceph.control_node
   # replicated
+  # ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
 
 
 - name: Initialize the Pool for RBD Application
   shell: |
-    rbd pool init {{ item.pg_name }}
+    rbd pool init nvmeof_pool01
   register: rbd_pool_inited
-  with_items: "{{ iscsi.targets }}"
+  # with_items: "{{ iscsi.targets }}"
   when: inventory_hostname in ceph.control_node
 - debug: msg={{ rbd_pool_inited }}
   when: print_debug == true and inventory_hostname in ceph.control_node
 
 
 - name:  Deploy iSCSI Container Services
-  shell: "ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'"
+  shell: |
+    "ceph orch apply nvmeof nvmeof_pool01 --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'"
   register: iscsi_gw_deployed
-  with_items: '{{ iscsi.targets }}'
+  # with_items: '{{ iscsi.targets }}'
   when: inventory_hostname in ceph.control_node
 - debug: msg={{ iscsi_gw_deployed }}
   when: print_debug == true and inventory_hostname in ceph.control_node
+  #  "ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'"
+
+
 # ceph orch ls --service_type=iscsi
 # ceph orch ps --daemon_type=iscsi
 # firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
@@ -181,6 +179,7 @@
 ##################################################################################################################################################################
 
 
+# cd /iscsi-targets/{{ item.mutual_id }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/hosts/{{ item.init_wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}
 - name: Setup User and Password for iSCSI Initiators
   shell:
     cmd: |
@@ -223,3 +222,4 @@
 
 # gwcli / export copy | jq -r '.["version"]'
 # https://stackoverflow.com/questions/71973210/gwcli-not-working-after-deleting-pool-in-ceph
+

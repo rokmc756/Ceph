@@ -1,5 +1,4 @@
 # RGW Secondary Site
-
 - name: Delete Access and Secret Key
   shell: |
     radosgw-admin key rm --uid={{ item.rep_user }} --access-key {{ item.access_key }} --secret {{ item.secret_key }}

@@ -3,7 +3,7 @@
 # firewall-cmd --zone=public --permanent --add-port=7480/tcp
 # firewall-cmd --reload
 #
-# Ceph Reef : Ceph Object Gateway2023/08/21
+# Ceph {{ ceph.project_name }} : Ceph Object Gateway 2023/08/21
 #
 # Enable Ceph Object Gateway (RADOSGW) to access to Ceph Cluster Storage via Amazon S3 or OpenStack Swift compatible API.
 # This example is based on the environment like follows.
@@ -12,7 +12,7 @@
 #        +--------------------+              |                +--------------------+
 #        |                    |              |                |                    |
 #        |   [dlp.srv.world]  |              |                |  [rk9-ceph-mon03]  |
-#        |                    | 192.168.0.x  | 192.168.0.223  |                    |
+#        |                    | 192.168.1.x  | 192.168.1.73   |                    |
 #        |     Ceph Client    +--------------+----------------+      RADOSGW       |
 #        |                    |              |                |                    |
 #        +--------------------+              |                +--------------------+
@@ -20,7 +20,7 @@
 #                                            |
 #            +-------------------------------+----------------------------+
 #            |                               |                            |
-#            | 192.168.0.221                 | 192.168.0.222              | 192.168.0.223
+#            | 192.168.1.71                  | 192.168.1.72               | 192.168.1.73
 #+-----------+-----------+        +----------+-----------+    +-----------+-----------+
 #|                       +        |                      |    |                       |
 #|   [rk9-ceph-mon01]    |        |   [rk9-ceph-mon02]   |    |   [rk9-ceph-mon03]    |
@@ -31,7 +31,7 @@
 #+-----------------------+        +----------------------+    +-----------------------+
 #            |                            |                            |
 #            |                            |                            |
-#            | 192.168.0.224              | 192.168.0.225              | 192.168.0.226
+#            | 192.168.1.74               | 192.168.1.75               | 192.168.1.76
 #+-----------+-----------+    +-----------+-----------+    +-----------+-----------+
 #|                       |    |                       |    |                       |
 #|   [rk9-ceph-osd01]    |    |   [rk9-ceph-osd02]    |    |   [rk9-ceph-osd03]    |
@@ -40,22 +40,13 @@
 #+-----------------------+    +-----------------------+    +-----------------------+
 #
 #
-#- name: Tansfer Required Files to RADOSGW Node and Configure it from Admin Node
-#  become_user: root
-#  shell: |
-#    ssh-copy-id root@{{ hostvars[groups['mon'][2]]['ansible_hostname'] }}
-#  register: copy_ssh_public_keys
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ copy_ssh_public_keys }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 #- name: Install required packages for RADOSGW
 #  yum:
 #    name: "{{ item }}"
 #    state: present
 #  register: install_required_pkgs
 #  with_items:
-#    - "centos-release-ceph-reef"
+#    - "centos-release-ceph-{{ ceph.project_name }}"
 #    - "epel-release"
 #    - "ceph-radosgw"
 #- debug: msg={{ install_required_pkgs }}
@@ -100,7 +91,7 @@
     src:  "{{ item }}"
     dest: "{{ item }}"
     rsync_opts:
-      - "-e ssh"   #  - "-e ssh -i /remote/path/to/mykey"
+      - "-e ssh"      #  - "-e ssh -i /remote/path/to/mykey"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
   register: ceph_config_dir_created
@@ -162,16 +153,6 @@
   when: print_debug == true and inventory_hostname in groups['rgw']
 
 
-#- name: Open a port in firewalld for Rados Gateway
-#  shell: |
-#    firewall-cmd --add-port=7480/tcp
-#    firewall-cmd --runtime-to-permanent
-#  register: open_rgw_port
-#  when: inventory_hostname in groups['rgw']
-#- debug: msg={{ open_rgw_port }}
-#  when: print_debug == true and inventory_hostname in groups['rgw']
-
-#
 - name: Pause for 30 Seconds to Wait for Compleiting Initializaion of Rados Gateway
   pause:
     seconds: 30
@@ -276,5 +257,4 @@
 #
 # Remove the "my-bucket" bucket
 # mc rb --force test/my-bucket
-
 

@@ -240,7 +240,8 @@ $ vi config-block.yml
   roles:
     - { role: cephfs }
 
-$ make cephfs r=install
+$ make cephfs r=install c=enable
+$ make ceph c=disable # or enable if cephfs is already created
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
@@ -365,6 +366,10 @@ $ vi config-block.yml
     - { role: block }
 
 $ make block r=install s=iscsi c=enable
+
+# In case that you need only disable or enable iscsi client if iscsi gateways are already created
+$ make block r=uninstall s=iscsi c=only
+$ make block r=install s=iscsi c=only
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 

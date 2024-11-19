@@ -1,5 +1,5 @@
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-client-users-for-a-ceph-file-system_fs
-# https://docs.ceph.com/en/reef/cephfs/client-auth/
+# https://docs.ceph.com/en/{{ ceph.project_name }}/cephfs/client-auth/
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-client-users-ceph-file
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/mounting-the-ceph-file-system-as-a-kernel-client_fs
 # https://www.ibm.com/docs/ko/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
@@ -25,9 +25,9 @@
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
-- name: Add Repo for Ceph Reef for RedHat/Rocky/CentOS
+- name: Add Repo for Ceph {{ ceph.project_name }} for RedHat/Rocky/CentOS
   shell: |
-    {{ cephadm.base_path }}/cephadm add-repo --release reef
+    {{ cephadm.base_path }}/cephadm add-repo --release {{ ceph.project_name }}
   register: add_repo
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ add_repo }}

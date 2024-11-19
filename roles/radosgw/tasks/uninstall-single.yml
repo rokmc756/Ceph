@@ -1,29 +1,7 @@
-- name: Get FSID
-  shell: |
-    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-  register: get_fsid
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-
-- name: Set Fact for FSID
-  set_fact:
-    _fsid: "{{ get_fsid.stdout }}"
-  delegate_to: "{{ item }}"
-  delegate_facts: True
-  with_items: "{{ groups['all'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-
-- name: Set Fact for cephadm_cmd command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-  delegate_to: "{{ item }}"
-  delegate_facts: True
-  with_items: "{{ groups['all'] }}"
-  ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+---
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
+  when: inventory_hostname == ceph.control_node
 
 
 - name: Delete Buckets
@@ -174,5 +152,4 @@
 - name: Uninstall MC for S3 Client
   import_tasks: uninstall-mc-client.yml
   ignore_errors: true
-
 

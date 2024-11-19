@@ -42,22 +42,26 @@
   when: print_debug == true
 
 
-- name: Get fsid for setting fact
-  shell: |
-    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-  register: get_fsid
-- debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true
+#- name: Get fsid for setting fact
+#  shell: |
+#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
+#  register: get_fsid
+#- debug: msg={{ get_fsid.stdout }}
+#  when: print_debug == true
+#
+#
+#- name: Set fact for fsid
+#  set_fact:
+#    fsid01: "{{ get_fsid.stdout }}"
+#
+#
+#- name: Set fact for cephadm_cmd command
+#  set_fact:
+#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 
-- name: Set fact for fsid
-  set_fact:
-    fsid01: "{{ get_fsid.stdout }}"
-
-
-- name: Set fact for cephadm_cmd command
-  set_fact:
-    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
 
 
 - name: Enable Ceph CLI
@@ -167,7 +171,6 @@
 #  shell: |
 #    {{ cephadm_cmd }} ceph orch daemon add mon *<host1:ip>
 #  register: deploy_additional_monitor
-#
 #- debug: msg={{ deploy_additional_monitor }}
 
 
@@ -178,7 +181,7 @@
   with_items: "{{ groups['osd'] }}"
 - debug: msg={{ add_osd_nodes }}
   when: print_debug == true
-  #  {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb,/dev/vdc,/dev/vdd
+  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}:/dev/vdb,/dev/vdc,/dev/vdd
 
 
 - name: Label the OSD nodes with its role
@@ -213,17 +216,7 @@
   # --method {raw|lvm}
 - debug: msg={{ attach_all_devices }}
   when: print_debug == true
-
-
-#- name: Disable the automatic creation of OSDs on available devices), use the 'unmanaged' parameter
-#  become: true
-#  become_user: root
-#  shell: |
-#    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
-#  register: disable_auto_create_osds
-#
-#- debug: msg={{ disable_auto_create_osds }}
-#  when: print_debug == true
+  # {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true
 
 
 #- name: Ceate manullay an OSD from a specific device on a specific host
@@ -289,8 +282,9 @@
 
 - name: Change admin password for Ceph Dashboard
   shell: |
-    {{ cephadm_cmd }} echo changeme > /tmp/dashboard_password.yml ; ceph dashboard ac-user-set-password admin -i /tmp/dashboard_password.yml
+    {{ cephadm_cmd }} echo {{ ceph.admin_passwd }} > /tmp/dashboard_password.yml ; ceph dashboard ac-user-set-password admin -i /tmp/dashboard_password.yml
   register: change_admin_password
   # ceph telemetry off
 - debug: msg={{ change_admin_password }}
   when: print_debug == true
+

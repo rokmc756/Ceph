@@ -1,3 +1,4 @@
+---
 - name: Get iSCSI Gateway Container ID
   shell: |
     podman ps | grep ceph | grep tcmu | awk '{print" "$NF}'
@@ -49,7 +50,6 @@
   when: inventory_hostname in groups['mon']
 - debug: msg={{ nochap_auth }}
   when: print_debug == true and inventory_hostname in groups['mon']
-  # loop: "{{ iscsi.targets }}"
 
 
 - name: Delete iSCSI Client
@@ -68,7 +68,6 @@
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_client_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
-  # loop: "{{ iscsi.targets }}"
 
 
 - name: Delete Disk
@@ -94,7 +93,7 @@
     cmd: |
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-      delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.pivotal.io confirm=true
+      delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} confirm=true
       exit
       EOF
   args:
@@ -105,6 +104,7 @@
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
+  # delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.jtest.pivotal.io confirm=true
 
 
 - name: Delete iSCSI Target
@@ -131,10 +131,12 @@
   register: iscsi_gw_service_deleted
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
+  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_service_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-  # ceph orch ps
+  when: print_debug == true and inventory_hostname in ceph.control_node
+  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+# ceph orch ps
 
 
 - name: Allow to Delete Pool
@@ -142,9 +144,11 @@
     ceph tell mon.\* injectargs --mon-allow-pool-delete true
   register: delete_pool_allowed
   ignore_errors: true
+  when: inventory_hostname in ceph.control_node
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ delete_pool_allowed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
+  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Remove Pool
@@ -155,9 +159,11 @@
   register: pool_removed
   ignore_errors: true
   loop: "{{ iscsi.targets }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
+  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ pool_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
+  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Remove iSCSI Gateway
@@ -166,9 +172,11 @@
   register: iscsi_gw_removed
   ignore_errors: true
   with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
+  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_removed }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: print_debug == true and inventory_hostname in ceph.control_node
+  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Delete iSCSI Gateway Users
@@ -176,24 +184,27 @@
     for i in $(ceph auth list | grep client.iscsi); do ceph auth del $i; done
   register: iscsi_gw_users_deleted
   ignore_errors: true
-  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+  when: inventory_hostname in ceph.control_node
+  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ iscsi_gw_users_deleted }}
-  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
+  when: print_debug == true and inventory_hostname in ceph.control_node
+  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # https://github.com/ceph/ceph-iscsi/issues/99
+#
 # This is a new install right? You didn't start from a old 2.x ceph-iscsi-config or github commit did you?
 # If this is a new install, I think the bug is that the initial creation failed but did not fully clean itself up. The second creation reported success but did not fully set it up.
 # What version is your rtslib? And is a distro rpm or did you install the upstream one from GitHub?
-
+#
 # Do you have targetcli installed and if so is that a distro or upstream one?
 # Could you start from a clean slate? Do the following:
-
+#
 # Make a /etc/target and /etc/target/pr dir if you do not have it.
 # It looks like there is a bug in some rtslib versions where if tagretcli has not created the /etc/target (or /var/target or it is not specified by or dir then when we try to create a device we will get a failure. This is due to some rtslib code checking for that dir and the pr dir in there or in configfs.
-
+#
 # Start from a clean slate. Delete the bad gateway.conf
 # rados -p rbd rm gateway.conf
 # Restart the gws. Either reboot the node or stop and start the rbd-target-api service.
-
+#
 # rados -p rbd rm gateway.conf
+

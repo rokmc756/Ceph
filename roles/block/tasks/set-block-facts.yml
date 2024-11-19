@@ -1,6 +1,6 @@
 ---
 # https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
-#
+
 - name: Get interface name from prefix of IP Addresses provided for Weka Nodes
   set_fact:
     netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
@@ -48,4 +48,17 @@
   set_fact:
     _netdev: "{{ 'ansible_'~ netdev1 }}"
     _ipaddr: "{{ ipaddr1 }}"
+
+
+- set_fact:
+    iscsi_init_pkg_name: "iscsi-initiator-utils"
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+
+- set_fact:
+    iscsi_init_pkg_name: "open-iscsi"
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- set_fact:
+    iscsi_init_pkg_name: "iscsi-initiator-utils"
+  when: ansible_distribution == "openSUSE Leap"
 

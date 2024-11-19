@@ -1,7 +1,7 @@
-# https://docs.ceph.com/en/reef/rbd/iscsi-target-cli/
+# https://docs.ceph.com/en/{{ ceph.project_name }}/rbd/iscsi-target-cli/
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/5/html/block_device_guide/the-ceph-iscsi-gateway
 # https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/7/html/block_device_guide/index
-# https://docs.ceph.com/en/reef/mgr/dashboard/#enabling-iscsi-management
+# https://docs.ceph.com/en/{{ ceph.project_name }}/mgr/dashboard/#enabling-iscsi-management
 # https://github.com/ceph/ceph-iscsi
 # https://download.ceph.com/ceph-iscsi/latest/rpm/el9/noarch/
 #

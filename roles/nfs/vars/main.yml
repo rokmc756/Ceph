@@ -26,7 +26,7 @@
 
 nfs:
   cluster:
-    - { name: "jtest-nfs01", pool: "jtest-nfs-pool01", fs: "jtest-nfs-fs01", virtual_ip: "{{ hostvars[groups['mon'][2]]['ansible_'~netdev0].ipv4.address }}" }
+    - { name: "jtest-nfs01", pool: "jtest-nfs-pool01", fs: "jtest-nfs-fs01", virtual_ip: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}" }
   users:
     - { cluster: "jtest-nfs01", name: "jomoon", passwd: "changeme", namespace: "jtest-nfs-ns01" }
   auth:
@@ -34,7 +34,7 @@ nfs:
   export:
     - { name: "cephfs", cluster: "jtest-nfs01", src: "/ceph", fs: "jtest-nfs-fs01", dest: "/"  }
   client:
-    - { mount_dir: "/mnt/ceph-nfs", src: "/ceph", fs: "jtest-nfs-fs01", dest: "/mnt/ceph-nfs", virtual_ip: "{{ hostvars[groups['mon'][2]]['ansible_'~netdev0].ipv4.address }}"  }
+    - { mount_dir: "/mnt/ceph-nfs", src: "/ceph", fs: "jtest-nfs-fs01", dest: "/mnt/ceph-nfs", virtual_ip: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}"  }
   rgw:
     - { cluster: "jtest-nfs01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
 

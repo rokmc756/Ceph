@@ -3,28 +3,38 @@
 # iscsiadm -m node --op=update --name node.session.auth.username --value=jomoon-rk9-node01
 # iscsiadm -m node --op=update --name node.session.auth.password --value=changemechangeme
 
-- name: Install iSCSI Initiator
-  package:
-    name: "{{ item }}"
-    state: present
-  register: iscsi_initiator_installed
-  with_items:
-    - "iscsi-initiator-utils"
-  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
-- debug: msg={{ iscsi_initiator_installed }}
-  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
+
+#- name: Install iSCSI Initiator
+#  package:
+#    name: "{{ item }}"
+#    state: present
+#  register: iscsi_initiator_installed
+#  with_items:
+#    - "iscsi-initiator-utils"
+#  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
+#- debug: msg={{ iscsi_initiator_installed }}
+#  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
+
+
+#- name: Install iSCSI Initiator
+#  package:
+#    name: "{{ item }}"
+#    state: present
+#  register: iscsi_initiator_installed
+#  with_items:
+#    - "open-iscsi"
+#  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+#- debug: msg={{ iscsi_initiator_installed }}
+#  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
 
 
 - name: Install iSCSI Initiator
   package:
-    name: "{{ item }}"
+    name: "{{ iscsi_init_pkg_name }}"
     state: present
   register: iscsi_initiator_installed
-  with_items:
-    - "open-iscsi"
-  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 - debug: msg={{ iscsi_initiator_installed }}
-  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
+  when: print_debug == true
 
 
 - name: Copy iSCSId Config Files
