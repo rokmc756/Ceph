@@ -162,7 +162,6 @@
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 - debug: msg={{ password_changed }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-
 # radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
 # radosgw-admin key rm --uid={{ item.rep_user }} --access-key `radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | awk '{print $2}' | cut -d \" -f 2`
 
