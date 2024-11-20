@@ -21,9 +21,9 @@
   shell: |
     ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
   register: get_mgr_name
-  when: inventory_hostname in groups['control']
+  when: purge_ceph != true and inventory_hostname in groups['control']
 - debug: msg={{ get_mgr_name.stdout }}
-  when: print_debug == true and inventory_hostname in groups['control']
+  when: print_debug == true and purge_ceph != true and inventory_hostname in groups['control']
 
 
 - name: Set Fact for Cephadm Command

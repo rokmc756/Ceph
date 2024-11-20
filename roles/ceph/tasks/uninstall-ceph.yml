@@ -65,3 +65,18 @@
 - debug: msg={{ cleanup_ceph_block_devices }}
   when: inventory_hostname in groups['osd'] and print_debug == true
 
+
+- name: Reboot Required
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  ignore_errors: true
+  register: reboot_required
+  async: 120
+  poll: 0
+  notify:
+    - Waiting for Server to Come Back after Restart
+  when: inventory_hostname in groups['all']
+
+
+- meta: flush_handlers
+  when: inventory_hostname in groups['all']
+
