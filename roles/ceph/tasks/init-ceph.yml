@@ -22,8 +22,7 @@
 #--allow-fqdn-hostname \
 #--single-host-defaults
 # cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
-#
-# --cluster-network 192.168.2.0/24 \
+# --cluster-network 192.168.1.0/24 \
 
 
 #- name: Set Fact for cephadm_cmd Command
@@ -33,7 +32,6 @@
 
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
-  when: inventory_hostname in groups['control']
 
 
 #- name: Activate the Telemetry Module

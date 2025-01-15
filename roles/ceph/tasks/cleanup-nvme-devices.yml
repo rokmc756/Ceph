@@ -1,0 +1,15 @@
+- name: Cleanup the NVME Devices
+  shell: |
+    pvremove -y -ff {{ item }}
+    dd if=/dev/zero of={{ item }} bs=4096 count=1 conv=notrunc
+    nvme format {{ item }}
+    wipefs -a {{ item }}
+    sgdisk --zap-all --delete {{ item }}
+    blkdiscard {{ item }}
+  register: cleanup_ceph_block_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+  when: inventory_hostname in groups['osd']
+- debug: msg={{ cleanup_ceph_block_devices }}
+  when: inventory_hostname in groups['osd'] and print_debug == true
+

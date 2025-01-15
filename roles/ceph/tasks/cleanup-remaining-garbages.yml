@@ -59,10 +59,8 @@
   poll: 0
   notify:
     - Waiting for Server to Come Back after Restart
-  when: inventory_hostname in groups['all']
 
 
 - meta: flush_handlers
-  when: inventory_hostname in groups['all']
 
 

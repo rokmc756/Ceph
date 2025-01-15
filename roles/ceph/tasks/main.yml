@@ -6,7 +6,7 @@
 
 - name: Set Facts for Network and Packages Informations
   import_tasks: set-ceph-facts.yml
-  tags: install, uninstall, upload, download, init, purge, add, remove, enable, disable
+  tags: install, uninstall, upload, download, init, purge, add, remove, enable, disable, clean, deploy, destroy
 
 
 - name: Enable Ceph Software Package Repo

@@ -11,7 +11,7 @@
   when: inventory_hostname in groups['control']
 
 
-- name: Remove the Ceph Cluster
+- name: Purge the Ceph Cluster
   shell: |
     cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
   ignore_errors: true

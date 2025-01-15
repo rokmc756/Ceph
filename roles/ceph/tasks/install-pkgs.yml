@@ -14,7 +14,7 @@
   with_items: "{{ ceph_pkgs }}"
 
 
-#    {{ _cephadm.base_path }}/cephadm install ceph-common
+#  {{ _cephadm.base_path }}/cephadm install ceph-common
 - name: Install Ceph CLI Tools On the Hosts
   shell: |
     cephadm install ceph-common
