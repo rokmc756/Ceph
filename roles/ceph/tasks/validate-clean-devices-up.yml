@@ -1,0 +1,12 @@
+---
+- name: Validate if Devices has still filesytem and is insufficent space
+  shell: |
+    ceph orch device ls
+  register: check_fs_space
+  ignore_errors: true
+  until: check_fs_space.stdout.find("Has a FileSystem, Insufficient space") == -1
+  retries: 100
+  delay: 10
+- debug: msg={{ check_fs_space }}
+  when: print_debug == true
+

@@ -1,0 +1,20 @@
+---
+- name: Delete Access and Secret Key
+  shell: |
+    radosgw-admin key rm --uid={{ item.rep_user }} --access-key {{ item.access_key }} --secret {{ item.secret_key }}
+  register: delete_auth_keys
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ delete_auth_keys }}
+  when: print_debug == true
+
+
+- name: Remove System User
+  shell: |
+    radosgw-admin user rm --uid={{ item.rep_user }} --purge-data
+  register: remove_system_user
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ remove_system_user }}
+  when: print_debug == true
+

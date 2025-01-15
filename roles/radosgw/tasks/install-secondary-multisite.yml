@@ -1,0 +1,114 @@
+# S3 endpoint should be available 
+# $ curl -k http://localhost:80/
+# <?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>anonymous</ID><DisplayName></DisplayName></Owner><Buckets></Buckets></ListAllMyBucketsResult>
+
+
+#- name: Get Access Key
+#  shell: |
+#    radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | grep -v changeme | awk '{print $2}' | cut -d \" -f 2
+#  register: access_key_got
+#  with_items: "{{ _rgw.multisite.users }}"
+#- debug: msg={{ access_key_got }}
+#  when: print_debug == true
+
+
+# Create a local zone on secondary cluster
+- name: Change Password
+  shell: |
+    export ACCESS_KEY=`radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | grep -v changeme | awk '{print $2}' | cut -d \" -f 2`
+    radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+    radosgw-admin user modify --uid={{ item.rep_user }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
+    radosgw-admin key rm --uid={{ item.rep_user }} --access-key $ACCESS_KEY
+  register: change_password
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+  # with_items: "{{ rgw.multisite.primary }}"
+- debug: msg={{ change_password }}
+  when: print_debug == true
+# radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
+# radosgw-admin key rm --uid={{ item.rep_user }} --access-key `radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | awk '{print $2}' | cut -d \" -f 2`
+
+
+
+- name: Pause for 1 Minutes to Wait for Compleiting Initializaion of Rados Gateway
+  pause:
+    minutes: 1
+
+
+# Setup: Rados Gateway on Cluster 2
+# Create a local zone on secondary cluster
+- name: Deploy Primary Rados Gateway
+  shell: |
+    radosgw-admin realm pull --rgw-realm={{ item.rgw_realm }} --url=http://{{ item.endpoint }}:{{ item.rgw_port }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }} --default
+  register: deploy_rgw
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ deploy_rgw }}
+  when: print_debug == true
+
+
+- name: Pull Zonegroup and Zone from Primary Ceph Cluster
+  shell: |
+    radosgw-admin period pull --url=http://{{ item.endpoint }}:{{ item.rgw_port }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
+  register: pull_primary_zone
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ pull_primary_zone }}
+  when: print_debug == true
+
+
+- name: Create a Local Zone for This Cluster
+  shell: |
+    radosgw-admin zone create --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} \
+    --endpoints={{ item.endpoint }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+  register: create_local_zone
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
+- debug: msg={{ create_local_zone }}
+  when: print_debug == true
+
+
+- name: Commit Changes
+  shell: |
+    radosgw-admin period update --commit
+  register: commit_changes
+- debug: msg={{ commit_changes }}
+  when: print_debug == true
+
+
+- name: Deploy Secondary Raods Gateway
+  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ _ceph.osd_host_num }} {{ all_osd_hostnames }}'"
+  register: deploy_secondary_rgw
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
+- debug: msg={{ deploy_secondary_rgw }}
+  when: print_debug == true
+
+
+#- name: Delete Default Zone
+#  shell: |
+#    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
+#  register: delete_default_zone
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ delete_default_zone }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+#- name: Delete Default Zone Group
+#  shell: |
+#    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
+#  register: delete_default_zone_group
+#  ignore_errors: true
+#  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+#- debug: msg={{ delete_default_zone_group }}
+#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
+
+
+- name: Create Buckets
+  shell: |
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+    /usr/local/bin/mc mb {{ item.mc_alias }}/{{ item.bucket }}
+  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+  delegate_facts: true
+  register: create_buckets
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ create_buckets }}
+  when: print_debug == true
+

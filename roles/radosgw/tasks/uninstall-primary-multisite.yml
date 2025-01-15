@@ -1,0 +1,59 @@
+#- name: Remove Realm
+#  shell: |
+#    radosgw-admin realm rm --rgw-realm={{ item.rgw_realm }} --default
+#  register: remove_realm
+#  ignore_errors: true
+#  with_items: "{{ _rgw.multisite.zone.primary }}"
+#- debug: msg={{ remove_realm }}
+#  when: print_debug == true
+
+
+- name: Remove Primary RGW Service
+  shell: |
+    ceph orch rm rgw.{{ item.zone }}
+  register: remove_primary_rgw
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ remove_primary_rgw }}
+  when: print_debug == true
+
+
+- name: Delete Zone
+  shell: |
+    radosgw-admin zone delete --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} --endpoints={{ item.endpoint }} --master --default
+  register: delete_zone
+  ignore_errors: true
+  with_items:
+    - "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ delete_zone }}
+  when: print_debug == true
+
+
+- name: Delete Zone Group
+  shell: |
+    radosgw-admin zonegroup delete --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
+  register: delete_zone_group
+  ignore_errors: true
+  with_items:
+    - "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ delete_zone_group }}
+  when: print_debug == true
+
+
+#- name: Delete Default Zone
+#  shell: |
+#    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
+#  register: delete_default_zone
+#  ignore_errors: true
+#- debug: msg={{ delete_default_zone }}
+#  when: print_debug == true
+
+
+#- name: Delete Default Zone Group
+#  shell: |
+#    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
+#  register: delete_default_zone_group
+#  ignore_errors: true
+#- debug: msg={{ delete_default_zone_group }}
+#  when: print_debug == true
+

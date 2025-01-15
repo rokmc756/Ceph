@@ -1,247 +1,3 @@
-#- name: Get FSID for Setting Fact
-#  shell: |
-#    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-#  register: get_fsid
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true and inventory_hostname in groups['control']
-#  # ceph osd crush remove <hostname>
-#
-#
-#- name: Set Fact for FSID
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
-#  when: inventory_hostname in groups['control']
-#
-#
-#- name: Set fact for cephadm_cmd command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-#  when: inventory_hostname in groups['control']
-
-
-- name: Set Ceph FSID
-  import_tasks: set-fsid.yml
-  when: inventory_hostname in groups['control']
-
-
-- name: Get All OSD IDs
-  shell: |
-    ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-  register: all_osd_ids
-  when: inventory_hostname in groups['control']
-- debug: msg={{ all_osd_ids }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-  # ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-
-
-- set_fact:
-    all_osd: "{{ all_osd_ids.stdout | split(',')}}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ item }}
-  with_items: "{{ all_osd }}"
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-
-- name: Unlabel the OSD Nodes with Its Role
-  shell: |
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
-  register: osd_nodes_unlabled
-  ignore_errors: true
-  with_items: "{{ groups['osd'] }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_nodes_unlabled }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name: Disable Scrub for OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
-    {{ cephadm_cmd }} ceph osd set noscrub
-    {{ cephadm_cmd }} ceph osd set nodeep-scrub
-  register: scrub_disabled
-  ignore_errors: true
-  when: inventory_hostname in groups['control']
-- debug: msg={{ scrub_disabled }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
-
-
-- name: Out OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd out all
-  register: osd_out
-  ignore_errors: true
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_out }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # {{ cephadm_cmd }} ceph osd out {{ item }}
-  # with_items: "{{ all_osd }}"
-
-
-- name: Down OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd down all
-  register: osd_downed
-  ignore_errors: true
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_downed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # {{ cephadm_cmd }} ceph osd down {{ item }} --definitely-dead
-  # with_items: "{{ all_osd }}"
-
-
-- name: Remove OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd rm {{ item }}
-  register: osd_removed
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_removed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name: Remove Auth of OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph auth del osd.{{ item }}
-  register: osd_auth_removed
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_auth_removed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name:  Destroy OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd destroy {{ item }} --force
-  register: osd_destroyed
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_destroyed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name: Remove Crush OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd crush rm osd.{{ item }}
-  register: osd_removed
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_removed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name: Purge OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd purge {{ item }} --force
-  register: osd_purged
-  ignore_errors: true
-  with_items: "{{ all_osd }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_purged }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # {{ cephadm_cmd }} ceph osd purge {{ item }} --yes-i-really-mean-it
-
-
-- name: Remove Host Bucket in Crush Map
-  shell: |
-    {{ cephadm_cmd }} ceph osd crush rm {{ item }}
-  register: bucket_removed
-  loop: "{{ groups['osd'] }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ bucket_removed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-- name: Unset Scrub for OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 3 --osd-recovery-op-priority 3
-    {{ cephadm_cmd }} ceph osd unset noscrub
-    {{ cephadm_cmd }} ceph osd unset nodeep-scrub
-    {{ cephadm_cmd }} ceph osd unset noup
-  register: scrub_unset
-  ignore_errors: true
-  when: inventory_hostname in groups['control']
-- debug: msg={{ scrub_unset }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
-- name: Delete OSD Users
-  shell: |
-    {{ cephadm_cmd }} ceph auth del client.ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph auth del client.crash.{{ hostvars[item]['ansible_hostname'] }}
-  register: osd_users_deleted
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ osd_users_deleted }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # ceph orch start node-exporter.rk9-node04
-  # ceph orch redeploy node-exporter.rk9-node04
-  # ceph orch redeploy node-exporter
-  # ceph orch daemon restart node-exporter.rk9-node06
-  # ceph orch daemon restart ceph-exporter.rk9-node05
-  # ceph orch daemon restart crash.rk9-node06
-
-
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
-- name: Remove the Cluster Hosts and Check if There is Ceph Daemon Running
-  shell: |
-    {{ cephadm_cmd }} ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
-  register: cluster_hosts_removed
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-  when: inventory_hostname in groups['control']
-- debug: msg={{ cluster_hosts_removed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-  # {{ cephadm_cmd }} ceph orch host ls
-
-
-#- name: Stop and Remove Ceph and Node Exporters's Containers
-#  shell: |
-#    for i in `systemctl list-units '*ceph*' | grep running | awk '{print $1}'`; do systemctl stop $i && systemctl disable $i ; done
-#  ignore_errors: true
-#  register: exporter_containers_stopped
-#  when: inventory_hostname in groups['osd']
-#- debug: msg={{ exporter_containers_stopped }}
-#  when: print_debug == true and inventory_hostname in groups['osd']
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
-# https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
-# podman images | awk '{print $3}'
-# podman rmi -f 1c40e0e88d74
-
-
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
-#- name: Delete OSD Users
-#  shell: |
-#    {{ cephadm_cmd }} ceph auth del client.ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
-#    {{ cephadm_cmd }} ceph auth del client.crash.{{ hostvars[item]['ansible_hostname'] }}
-#  register: osd_users_deleted
-#  ignore_errors: true
-#  loop: "{{ groups['osd'] }}"
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ osd_users_deleted }}
-#  when: print_debug == true and inventory_hostname in groups['control']
-
-#
-#- name: Remove FSID Directory
-#  shell: |
-#    rm -rf "/var/lib/ceph/{{ _fsid }}"
-#  ignore_errors: true
-#  register: fsid_dir_removed
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ fsid_dir_removed }}
-#  when: print_debug == true and inventory_hostname in groups['control']
 # https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
 # https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
 
@@ -249,21 +5,17 @@
 - name: Clear Memory Cache
   shell: |
     sync && echo 3 > /proc/sys/vm/drop_caches
-  delegate_to: "{{ item }}"
   register: clear_cache_memory
-  loop: "{{ groups['osd'] }}"
-  when: inventory_hostname in groups['osd']
 - debug: msg={{ clear_cache_memory }}
-  when: print_debug == true and inventory_hostname in groups['osd']
+  when: print_debug == true
 
 
 #- name: Copy Wipe CephFS Script
 #  template: src=wipe-cephfs.sh.j2 dest=/root/wipe-cephfs.sh owner=root group=root mode=755 force=yes
 #  ignore_errors: true
 #  register: copy_wipe_cephfs_script
-#  when: inventory_hostname in groups['osd']
 #- debug: msg={{ copy_wipe_cephfs_script }}
-#  when: print_debug == true and inventory_hostname in groups['osd']
+#  when: print_debug == true
 
 
 #- name: Run Script to Wipe CephFS
@@ -271,9 +23,8 @@
 #    sh /root/wipe-cephfs.sh
 #  ignore_errors: true
 #  register: run_wipe_cephfs_script
-#  when: inventory_hostname in groups['osd']
 #- debug: msg={{ run_wipe_cephfs_script }}
-#  when: print_debug == true and inventory_hostname in groups['osd']
+#  when: print_debug == true
 
 
 - name: Remove LVMs
@@ -282,9 +33,8 @@
     for dm in $(fdisk -l | grep mapper | grep ceph | awk '{print $2}' | cut -d : -f 1); do dmsetup remove $dm ;done
   register: remove_lvms
   ignore_errors: true
-  when: inventory_hostname in groups['osd']
 - debug: msg={{ remove_lvms }}
-  when: inventory_hostname in groups['osd'] and print_debug == true
+  when: print_debug == true
 
 
 - name: Cleanup the Ceph Block Devices
@@ -296,38 +46,21 @@
     sgdisk --zap-all --delete {{ item }}
     blkdiscard {{ item }}
   register: cleanup_ceph_block_devices
-  # ignore_errors: true
+  ignore_errors: true
   with_items: "{{ nvme_device_array }}"
-  when: inventory_hostname in groups['osd']
 - debug: msg={{ cleanup_ceph_block_devices }}
-  when: inventory_hostname in groups['osd'] and print_debug == true
+  when: print_debug == true
 
 
 - name: Reboot Required
-  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible Updates Triggered" ) &
   ignore_errors: true
   register: reboot_required
   async: 120
   poll: 0
   notify:
     - Waiting for Server to Come Back after Restart
-  when: inventory_hostname in groups['osd']
 
 
 - meta: flush_handlers
-  when: inventory_hostname in groups['osd']
-
-
-# ceph orch device ls | grep -E '{{ all_osd_nodes }}'
-- name: Validate if Devices has still filesytem and is insufficent space
-  shell: |
-    ceph orch device ls
-  register: fs_space_checked
-  ignore_errors: true
-  until: fs_space_checked.stdout.find("Has a FileSystem, Insufficient space") == -1
-  retries: 100
-  delay: 10
-  when: inventory_hostname in groups['control']
-- debug: msg={{ fs_space_checked }}
-  when: print_debug == true and inventory_hostname in groups['control']
 

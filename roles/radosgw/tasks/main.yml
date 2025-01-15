@@ -1,58 +1,107 @@
 ---
 - name: Check OS ( Rados Gateway )
-  fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
+  fail: msg="{{ ansible_distribution }} is not Supported for this Ansible Playbook!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 
-- name: Check if Single and MultiSite both are enabled to deploy in groups_vars/all.yml
-  fail: msg="Stopped due to both Single and Multisite Settings enabled in groups_vars/all.yml. Please Choose One of Them and Rerun Playbook"
-  when: ceph.protocol.rgw.single == true and ceph.protocol.rgw.multi == true
-
-
-- name: Set facts for network and packages informations for Linux Distribution
+- name: Set Facts for Network and Packages Informations
   import_tasks: set-rgw-facts.yml
-  tags:
-    - install
-    - uninstall
+  tags: install, uninstall, create, delete
+
+
+- name: Copy Ceph Config
+  import_tasks: copy-ceph-config.yml
+  tags: install
+  when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))
 
 
 - name: Install Single Rados Gateway
   import_tasks: install-single.yml
   tags: install
-  when: ( enable_single_rgw is defined and enable_single_rgw == true ) and inventory_hostname not in groups['clients']
+  when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
 
 
-- name: Install Multisite Rados Gateway
-  import_tasks: install-multisite.yml
+- name: Install Primary Multisite Rados Gateway
+  import_tasks: install-primary-multisite.yml
   tags: install
-  when: ( enable_multi_rgw is defined and enable_multi_rgw == true ) and inventory_hostname not in groups['clients']
+  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
 
 
-- name: Check if Single and MultiSite both are enabled to install clients in groups_vars/all.yml
-  fail: msg="Stopped due to both Single and Multisite Settings enabled to install clients in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
-  when: ( enable_single_rgw is defined and enable_single_rgw == true ) and ( enable_multi_rgw is defined and enable_multi_rgw == true )
-
-
-- name: Install S3 Clients
-  import_tasks: install-clients.yml
+- name: Install Secondary Multisite Rados Gateway
+  import_tasks: install-secondary-multisite.yml
   tags: install
-  when: (( enable_single_client is defined and enable_single_client == true ) or ( enable_multi_client is defined and enable_multi_client == true )) and inventory_hostname in groups['clients']
+  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
 
 
-- name: Uninstall S3 Clients
-  import_tasks: uninstall-clients.yml
+- name: Install MC S3 Client Packages
+  import_tasks: install-mc-client.yml
+  tags: install
+  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+
+
+- name: Install S3 Single Clients
+  import_tasks: install-s3-single-clients.yml
+  tags: install
+  when: ( s3sclient is defined and s3sclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Install S3 Multi Clients
+  import_tasks: install-s3-multi-clients.yml
+  tags: install
+  when: ( s3mclient is defined and s3mclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall S3 Multi Clients
+  import_tasks: uninstall-s3-multi-clients.yml
   tags: uninstall
-  when: (( disable_single_client is defined and disable_single_client == true ) or ( disable_multi_client is defined and disable_multi_client == true )) and inventory_hostname in groups['clients']
+  when: ( s3mclient is defined and s3mclient == true ) and inventory_hostname in groups['clients']
 
 
-- name: Uninstall Multisite Rados Gateway
-  import_tasks: uninstall-multisite.yml
+- name: Uninstall S3 Single Clients
+  import_tasks: uninstall-s3-single-clients.yml
   tags: uninstall
-  when: ( disable_multi_rgw is defined and disable_multi_rgw == true ) and inventory_hostname not in groups['clients']
+  when: ( s3sclient is defined and s3sclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Delete S3 Base Directory
+  import_tasks: delete-s3-base-dir.yml
+  tags: uninstall
+  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall MC S3 Client Packages
+  import_tasks: uninstall-mc-client.yml
+  tags: uninstall
+  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+
+
+- name: Remove Multi System User
+  import_tasks: remove-multisite-system-user.yml
+  tags: uninstall
+  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
+
+
+- name: Uninstall Secondary Multisite Rados Gateway
+  import_tasks: uninstall-secondary-multisite.yml
+  tags: uninstall
+  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
+
+
+- name: Uninstall Primary Multisite Rados Gateway
+  import_tasks: uninstall-primary-multisite.yml
+  tags: uninstall
+  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Uninstall Single Rados Gateway
   import_tasks: uninstall-single.yml
   tags: uninstall
-  when: ( disable_single_rgw is defined and disable_single_rgw == true ) and inventory_hostname not in groups['clients']
+  when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
+
+
+- name: Delete Rados Gateway Pools
+  import_tasks: delete-radosgw-pools.yml
+  tags: uninstall
+  when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))  and inventory_hostname in groups['control']
+
 

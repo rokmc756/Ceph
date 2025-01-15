@@ -1,83 +1,43 @@
 ---
-- name: Check if Ceph Config Directory Exists
-  stat: path=/etc/ceph
-  register: ceph_conf_dir_exists
-- debug: msg={{ ceph_conf_dir_exists }}
-  when: print_debug == true
-
-
-- name: Create a Ceph Directory
-  file:
-    path: /etc/ceph
-    state: directory
-    owner: root
-    group: root
-    mode: 0755
-  register: ceph_dir_created
-  ignore_errors: true
-  when: ceph_conf_dir_exists.stat.exists == false and inventory_hostname not in groups['clients']
-- debug: msg={{ ceph_dir_created }}
-  when: print_debug == true and ceph_conf_dir_exists.stat.exists == false and inventory_hostname not in groups['clients']
-
-
-- name: Copy Ceph Configuration to Rados Gateway Host
-  synchronize:
-    src:  "{{ item }}"
-    dest: "{{ item }}"
-    rsync_opts:
-      - "-e ssh"   #  - "-e ssh -i /remote/path/to/mykey"
-  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  delegate_facts: true
-  register: ceph_config_dir_created
-  with_items:
-    - "/etc/ceph/ceph.conf"
-    - "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname not in groups['clients']
-- debug: msg={{ ceph_config_dir_created }}
-  when: print_debug == true and not inventory_hostname in groups['clients']
-
-
 - name: Create a Realm
   shell: |
     radosgw-admin realm create --rgw-realm={{ item.rgw_realm }} --default
-  register: realm_created
-  ignore_errors: true
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  register: create_realm
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ realm_created }}
+- debug: msg={{ create_realm }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Create a Zonegroup
   shell: |
     radosgw-admin zonegroup create --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
-  register: zonegroup_created
-  ignore_errors: true
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  register: create_zonegroup
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ zonegroup_created }}
+- debug: msg={{ create_zonegroup }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Create a Zone
   shell: |
     radosgw-admin zone create --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} --endpoints={{ item.endpoint }} --master --default
-  register: zone_created
+  register: create_zone
   ignore_errors: true
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ zone_created }}
+- debug: msg={{ create_zone }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Commit the Changes
   shell: |
     radosgw-admin period update --rgw-realm={{ item.rgw_realm }} --commit --yes-i-really-mean-it
-  register: changes_committed
+  register: commit_changes
   ignore_errors: true
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ changes_committed }}
+- debug: msg={{ commit_changes }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
@@ -85,12 +45,12 @@
 - name: Create a Replication User
   shell: |
     radosgw-admin user create --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system > {{ ceph.base_path }}/{{ item.user_full_name }}-keys
-  register: rep_user_created
+  register: create_rep_user
   ignore_errors: true
-  with_items: "{{ rgw.multisite.users }}"
+  with_items: "{{ _rgw.multisite.users }}"
   # with_items: "{{ rgw.multisite.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ rep_user_created }}
+- debug: msg={{ create_rep_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 # export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
 # export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
@@ -99,29 +59,29 @@
 - name: Update Zone Keys with User Keys just Created
   shell: |
     radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
-  register: zone_keys_updated
-  with_items: "{{ rgw.multisite.users }}"
+  register: update_zone_keys
+  with_items: "{{ _rgw.multisite.users }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ zone_keys_updated }}
+- debug: msg={{ update_zone_keys }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Commit the Changes
   shell: |
     radosgw-admin period update --commit
-  register: changes_committed
+  register: commit_changes
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ changes_committed }}
+- debug: msg={{ commit_changes }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 - name: Deploy Primary Rados Gateway
-  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'"
-  register: primary_rgw_deployed
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}'"
+  register: deploy_primary_rgw
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-- debug: msg={{ primary_rgw_deployed }}
+- debug: msg={{ deploy_primary_rgw }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
@@ -141,8 +101,8 @@
 #  shell: |
 #    radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | grep -v changeme | awk '{print $2}' | cut -d \" -f 2
 #  register: access_key_got
-#  with_items: "{{ rgw.multisite.users }}"
-#  # with_items: "{{ rgw.multisite.primary }}"
+#  with_items: "{{ _rgw.multisite.users }}"
+#  # with_items: "{{ _rgw.multisite.primary }}"
 #  when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 #- debug: msg={{ access_key_got }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
@@ -155,38 +115,40 @@
     radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
     radosgw-admin user modify --uid={{ item.rep_user }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
     radosgw-admin key rm --uid={{ item.rep_user }} --access-key $ACCESS_KEY
-  register: password_changed
+  register: change_password
   ignore_errors: true
-  with_items: "{{ rgw.multisite.users }}"
+  with_items: "{{ _rgw.multisite.users }}"
   # with_items: "{{ rgw.multisite.primary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ password_changed }}
+- debug: msg={{ change_password }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 # radosgw-admin key rm --uid=jz01-rep-user --access-key A1OZJASPOA41N7L7OEJ5
 # radosgw-admin key rm --uid={{ item.rep_user }} --access-key `radosgw-admin user info --uid={{ item.rep_user }} | grep access_key | awk '{print $2}' | cut -d \" -f 2`
 
+
 - pause:
-    seconds: 20
+    seconds: 60
+
 
 # Setup: Rados Gateway on Cluster 2
 # Create a local zone on secondary cluster
 - name: Deploy Rados Gateway
   shell: |
     radosgw-admin realm pull --rgw-realm={{ item.rgw_realm }} --url=http://{{ item.endpoint }}:{{ item.rgw_port }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }} --default
-  register: rgw_deployed
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  register: deploy_rgw
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ rgw_deployed }}
+- debug: msg={{ deploy_rgw }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
 - name: Pull Zonegroup and Zone from Primary Ceph Cluster
   shell: |
     radosgw-admin period pull --url=http://{{ item.endpoint }}:{{ item.rgw_port }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
-  register: primary_zone_pull
-  with_items: "{{ rgw.multisite.zone.primary }}"
+  register: pull_primary_zone
+  with_items: "{{ _rgw.multisite.zone.primary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ primary_zone_pull }}
+- debug: msg={{ pull_primary_zone }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
@@ -194,48 +156,48 @@
   shell: |
     radosgw-admin zone create --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} \
     --endpoints={{ item.endpoint }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
-  register: local_zone_created
-  with_items: "{{ rgw.multisite.zone.secondary }}"
+  register: create_local_zone
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ local_zone_created }}
+- debug: msg={{ create_local_zone }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
 - name: Commit Changes
   shell: |
     radosgw-admin period update --commit
-  register: changes_committed
+  register: commit_changes
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ changes_committed }}
+- debug: msg={{ commit_changes }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
 - name: Deploy Secondary Raods Gateway
   shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ ceph.osd_host_num }} {{ all_osd_hostnames }}'"
-  register: secondary_rgw_deployed
-  with_items: "{{ rgw.multisite.zone.secondary }}"
+  register: deploy_secondary_rgw
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ secondary_rgw_deployed }}
+- debug: msg={{ deploy_secondary_rgw }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 
 
 #- name: Delete Default Zone
 #  shell: |
 #    radosgw-admin zone delete --rgw-zonegroup=default --rgw-zone=default --master --default
-#  register: default_zone_deleted
+#  register: delete_default_zone
 #  ignore_errors: true
 #  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-#- debug: msg={{ default_zone_deleted }}
+#- debug: msg={{ delete_default_zone }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
 #- name: Delete Default Zone Group
 #  shell: |
 #    radosgw-admin zonegroup delete --rgw-zonegroup=default --master --default
-#  register: default_zone_group_deleted
+#  register: delete_default_zone_group
 #  ignore_errors: true
 #  when: inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
-#- debug: msg={{ default_zone_group_deleted }}
+#- debug: msg={{ delete_default_zone_group }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][2]]['ansible_hostname']
 
 
@@ -249,9 +211,9 @@
     /usr/local/bin/mc mb {{ item.mc_alias }}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: buckets_created
-  with_items: "{{ rgw.multisite.users }}"
+  register: create_buckets
+  with_items: "{{ _rgw.multisite.users }}"
   when: inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
-- debug: msg={{ buckets_created }}
+- debug: msg={{ create_buckets }}
   when: print_debug == true and inventory_hostname in hostvars[groups['osd'][2]]['ansible_hostname']
 

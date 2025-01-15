@@ -1,0 +1,25 @@
+
+https://knowledgebase.45drives.com/kb/kb450418-offlining-a-ceph-storage-node-for-maintenance/
+
+
+Setting Maintenance OptionsTop
+SSH into the node you want to take down
+Run these 3 commands to set flags on the cluster to prepare for offlining a node.
+root@osd1:~# ceph osd set noout 
+root@osd1:~# ceph osd set norebalance 
+root@osd1:~# ceph osd set norecover
+ 
+
+Run ceph -s to see the cluster is in a warning state and that the 3 flags have been set.
+root@osd1:~# ceph -s
+
+
+Now that the flags are set, it is safe to reboot/shutdown the node.
+root@osd1:~# shutdown now
+
+root@osd1:~# reboot
+Disabling Maintenance OptionsTop
+Once the system is back up and running and joined to the cluster unset the 3 flags we previously set.
+root@osd1:~# ceph osd unset noout
+root@osd1:~# ceph osd unset norebalance
+root@osd1:~# ceph osd unset norecover

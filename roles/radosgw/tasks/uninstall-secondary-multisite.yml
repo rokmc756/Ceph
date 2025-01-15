@@ -1,0 +1,41 @@
+---
+- name: Remove Secondary RGW Service
+  shell: |
+   ceph orch rm rgw.{{ item.zone }}
+  register: remove_secondary_rgw
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
+- debug: msg={{ remove_secondary_rgw }}
+  when: print_debug == true
+
+
+- name: Remove Zone from Zone Group
+  shell: |
+    radosgw-admin zone delete --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} \
+    --endpoints={{ item.endpoint }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+  register: remove_zone
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.secondary }}"
+- debug: msg={{ remove_zone }}
+  when: print_debug == true
+
+
+#- name: Delete Period
+#  shell: |
+#    radosgw-admin period delete
+#  register: delete_period
+#  ignore_errors: true
+#- debug: msg={{ delete_period }}
+#  when: print_debug == true
+
+
+- name: Remove Realm, Access and Secret Keys
+  shell: |
+     radosgw-admin realm rm --rgw-realm={{ item.rgw_realm }} --url={{ item.endpoint }} \
+     --access-key={{ item.access_key }} --secret-key={{ item.secret_key }} --default
+  register: remove_realm
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ remove_realm }}
+  when: print_debug == true
+

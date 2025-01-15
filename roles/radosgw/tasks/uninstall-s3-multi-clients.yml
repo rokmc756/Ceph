@@ -1,0 +1,40 @@
+---
+- name: Set Up an Alias for MinIO to Interact With the RADOS Gateway
+  shell: |
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+  register: set_mc_alias
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ set_mc_alias }}
+  when: print_debug == true
+
+
+- name: Delete Parquet Test Files in S3 Backends
+  shell: |
+    /usr/local/bin/mc rm --recursive --force {{ item.mc_alias }}/{{ item.bucket }}/
+  register: delete_parquet_files
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ delete_parquet_files }}
+  when: print_debug == true and
+
+
+- name: Delete S3-Base Test Directory
+  file:
+    path: "{{ _ceph.base_path }}/s3-base"
+    state: absent
+  register: delete_s3base_dir
+  ignore_errors: true
+- debug: msg={{ delete_s3base_dir }}
+  when: print_debug == true
+
+
+- name: Delete MC Hidden Directory
+  file:
+    path: "{{ _ceph.base_path }}/.mc"
+    state: absent
+  register: delete_mc_dir
+  ignore_errors: true
+- debug: msg={{ delete_mc_dir }}
+  when: print_debug == true
+

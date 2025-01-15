@@ -1,0 +1,20 @@
+---
+- name: Delete S3-Base Test Directory
+  file:
+    path: "{{ _ceph.base_path }}/s3-base"
+    state: absent
+  register: delete_s3base_dir
+  ignore_errors: true
+- debug: msg={{ delete_s3base_dir }}
+  when: print_debug == true
+
+
+- name: Delete MC Hidden Directory
+  file:
+    path: "{{ _ceph.base_path }}/.mc"
+    state: absent
+  register: delete_mc_dir
+  ignore_errors: true
+- debug: msg={{ delete_mc_dir }}
+  when: print_debug == true
+

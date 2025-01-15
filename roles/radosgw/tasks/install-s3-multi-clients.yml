@@ -1,0 +1,69 @@
+---
+- name: Create S3 Base Directory for Download
+  file:
+    path: "{{ _ceph.base_path }}/s3-base/download"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_rgw_down_dir
+- debug: msg={{ create_rgw_down_dir }}
+  when: print_debug == true
+
+
+- name: Create S3 Base Directory for Upload
+  file:
+    path: "{{ _ceph.base_path }}/s3-base/upload"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
+  register: create_rgw_up_dir
+- debug: msg={{ create_rgw_up_dir }}
+  when: print_debug == true
+
+
+- name: Copy Parquet Test Files to Upload and Download into S3
+  copy: src={{ item }} dest={{ _ceph.base_path }}/s3-base/{{ item }} mode=0644 owner=root group=root
+  register: copy_parquet_files
+  with_items:
+    - "part-m-00001.gz.parquet"
+    - "part-m-00003.gz.parquet"
+    - "part-m-00005.gz.parquet"
+    - "part-m-00000.gz.parquet"
+    - "part-m-00002.gz.parquet"
+    - "part-m-00004.gz.parquet"
+    - "part-m-00006.gz.parquet"
+- debug: msg={{ copy_parquet_files }}
+  when: print_debug == true
+
+
+# For Multiple Zone
+- name: Set Up an Alias for MinIO to Interact with the RADOS Gateway
+  shell: |
+    /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"
+  register: set_mc_alias
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ set_mc_alias }}
+  when: print_debug == true
+
+
+- name: Upload Parquet Test Files Into S3
+  shell: |
+    /usr/local/bin/mc cp {{ _ceph.base_path }}/s3-base/part-m-*.gz.parquet {{ item.mc_alias }}/{{ item.bucket }}/
+  register: upload_parquet_files
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ upload_parquet_files }}
+  when: print_debug == true
+
+
+- name: Download Parquet Test Files into S3
+  shell: |
+    /usr/local/bin/mc cp --recursive {{ item.mc_alias }}/{{ item.bucket }}/ /root/s3-base/download/
+  register: download_parquet_files
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ download_parquet_files }}
+  when: print_debug == true
+

@@ -1,9 +1,8 @@
-
-rgw:
+_rgw:
   users:
-    - { user_name: "jmoon", display_name: "jack.moon", email: "rokmc756@gmail.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", domain: "jtest.weka.io", bucket: "jbucket01", mc_alias: "test01", rgw_port: 7480 }
-    - { user_name: "rmoon", display_name: "rose.moon", email: "marineguy@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme1", secret_key: "changeme1", domain: "jtest1.weka.io", bucket: "jbucket02", mc_alias: "test02", rgw_port: 7480 }
-    - { user_name: "dmoon", display_name: "dawin.moon", email: "dawin@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme2", secret_key: "changeme2", domain: "jtest2.weka.io", bucket: "jbucket03", mc_alias: "test03", rgw_port: 7480 }
+    - { user_name: "jmoon", display_name: "jack.moon", zone: "jz01", email: "rokmc756@gmail.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", domain: "jtest.futurfusion.io", bucket: "jbucket01", mc_alias: "test01", rgw_port: 7480 }
+    - { user_name: "rmoon", display_name: "rose.moon", zone: "jz02", email: "marineguy@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme1", secret_key: "changeme1", domain: "jtest1.futurfusion.io", bucket: "jbucket02", mc_alias: "test02", rgw_port: 7480 }
+    - { user_name: "dmoon", display_name: "dawin.moon", zone: "jz03", email: "dawin@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme2", secret_key: "changeme2", domain: "jtest2.futurfusion.io", bucket: "jbucket03", mc_alias: "test03", rgw_port: 7480 }
   auth:
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
     - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
@@ -16,9 +15,9 @@ rgw:
         - { zone: "jz02", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['osd'][2]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", rgw_port: 80 }
         - { zone: "jz03", zone_group: "jzg01", rgw_realm: "jtest", endpoint: "{{ hostvars[groups['osd'][1]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", rgw_port: 80 }
     users:
-      - { zone: "jz01", rep_user: "jmoon", user_full_name: "jack.moon", email: "rokmc756@gmail.com", endpoint: "{{ hostvars[groups['mon'][0]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", domain: "jtest.weka.io", bucket: "jbucket01", mc_alias: "test01", rgw_port: 80 }
-      - { zone: "jz01", rep_user: "rmoon", user_full_name: "rose.moon", email: "marineguy@naver.com", endpoint: "{{ hostvars[groups['mon'][1]][_netdev].ipv4.address }}", access_key: "changeme1", secret_key: "changeme1", domain: "jtest1.weka.io", bucket: "jbucket02", mc_alias: "test02", rgw_port: 80 }
-      - { zone: "jz01", rep_user: "dmoon", user_full_name: "dawin.moon", email: "dawin@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme2", secret_key: "changeme2", domain: "jtest2.weka.io", bucket: "jbucket03", mc_alias: "test03", rgw_port: 80 }
+      - { zone: "jz01", rep_user: "jmoon", user_full_name: "jack.moon", email: "rokmc756@gmail.com", endpoint: "{{ hostvars[groups['mon'][0]][_netdev].ipv4.address }}", access_key: "changeme", secret_key: "changeme", domain: "jtest.futurfusion.io", bucket: "jbucket01", mc_alias: "test01", rgw_port: 80 }
+      - { zone: "jz01", rep_user: "rmoon", user_full_name: "rose.moon", email: "marineguy@naver.com", endpoint: "{{ hostvars[groups['mon'][1]][_netdev].ipv4.address }}", access_key: "changeme1", secret_key: "changeme1", domain: "jtest1.futurfusion.io", bucket: "jbucket02", mc_alias: "test02", rgw_port: 80 }
+      - { zone: "jz01", rep_user: "dmoon", user_full_name: "dawin.moon", email: "dawin@naver.com", endpoint: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}", access_key: "changeme2", secret_key: "changeme2", domain: "jtest2.futurfusion.io", bucket: "jbucket03", mc_alias: "test03", rgw_port: 80 }
     auth:
       - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }
       - { action: "get-or-create", osd: "allow rwx", mon: "allow rw" }

@@ -59,47 +59,16 @@
     line: "{{ item }}"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: rgw_config_added
+  register: add_rgw_config
   with_items:
     - ""
     - "[client.{{ hostvars[inventory_hostname]['ansible_hostname'] }}]"
     - "host = {{ hostvars[inventory_hostname][_netdev]['ipv4']['address'] }}"
-    - "rgw dns name = {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ rgw.users[0].domain }}"
+    - "rgw dns name = {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ _rgw.users[0].domain }}"
     - "keyring = /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}/keyring"
     - "log file = /var/log/ceph/radosgw.gateway.log"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_config_added }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
-
-
-- name: Create Ceph Configuration Directory on Rados Gateway
-  file:
-    path: "/etc/ceph"
-    state: directory
-    mode: "0755"
-    owner: "root"
-    group: "root"
-  register: ceph_config_dir_created
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ ceph_config_dir_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
-
-
-- name: Copy Ceph Configuration to Rados Gateway Host
-  synchronize:
-    src:  "{{ item }}"
-    dest: "{{ item }}"
-    rsync_opts:
-      - "-e ssh"      #  - "-e ssh -i /remote/path/to/mykey"
-  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
-  delegate_facts: true
-  register: ceph_config_dir_created
-  with_items:
-    - "/etc/ceph/ceph.conf"
-    - "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ ceph_config_dir_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+- debug: msg={{ add_rgw_config }}
+  when: print_debug == true
 
 
 - name: Create Directory for Rados Gateway
@@ -109,10 +78,9 @@
     mode: "0755"
     owner: "root"
     group: "root"
-  register: rgw_dir_created
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_dir_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: create_rgw_dir
+- debug: msg={{ create_rgw_dir }}
+  when: print_debug == true
 
 
 - name: Create Authentication for Rados Gateway
@@ -120,11 +88,10 @@
     ceph auth {{ item.action }} client.rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }} \
     osd '{{ item.osd }}' mon '{{ item.mon }}' \
     -o /var/lib/ceph/radosgw/ceph-rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}/keyring
-  register: rgw_auth_created
-  with_items: "{{ rgw.auth }}"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_auth_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: create_rgw_auth
+  with_items: "{{ _rgw.auth }}"
+- debug: msg={{ create_rgw_auth }}
+  when: print_debug == true
 
 
 - name: Change Owership of Ceph Config and Directories
@@ -137,24 +104,24 @@
   with_items:
     - "/etc/ceph"
     - "/var/lib/ceph/radosgw"
-  register: ceph_config_dir_owner_changed
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ ceph_config_dir_owner_changed }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: chown_ceph_config_dir
+- debug: msg={{ chown_ceph_config_dir }}
+  when: print_debug == true
 
 
 - name: Enable Systemd Service for Rados Gateway
   shell: |
     systemctl enable --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-  register: rgw_systemd_enabled
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_systemd_enabled }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: enable_rgw_systemd
+- debug: msg={{ enable_rgw_systemd }}
+  when: print_debug == true
 
 
 - name: Pause for 30 Seconds to Wait for Compleiting Initializaion of Rados Gateway
   pause:
     seconds: 30
+  when: inventory_hostname in groups['rgw']
+
 
 # radosgw-admin sync status
 #          realm  ()
@@ -176,30 +143,27 @@
   shell: |
     radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
     --email={{ item.email }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
-  register: rgw_user_created
-  with_items: "{{ rgw.users }}"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_user_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: create_rgw_user
+  with_items: "{{ _rgw.users }}"
+- debug: msg={{ create_rgw_user }}
+  when: print_debug == true
 
 
 - name: Show User List
   shell: |
     radosgw-admin user list
-  register: rgw_users_showed
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_users_showed }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: show_rgw_users
+- debug: msg={{ show_rgw_users }}
+  when: print_debug == true
 
 
 - name: Show Specific User Information
   shell: |
     radosgw-admin user info --uid={{ item.user_name }}
-  register: rgw_user_showed
-  with_items: "{{ rgw.users }}"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_user_showed }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: show_rgw_user
+  with_items: "{{ _rgw.users }}"
+- debug: msg={{ show_rgw_user }}
+  when: print_debug == true
 
 
 - name: Enable the Object Gateway Management Frontend
@@ -210,14 +174,9 @@
     ceph dashboard set-rest-requests-timeout 30
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: obj_gw_mtmt_fe_enabled
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ obj_gw_mtmt_fe_enabled }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
-
-
-- name: Install MC for S3 Client
-  import_tasks: install-mc-client.yml
+  register: enable_obj_gw_mtmt_fe
+- debug: msg={{ enable_obj_gw_mtmt_fe }}
+  when: print_debug == true
 
 
 - name: Create Buckets
@@ -226,34 +185,9 @@
     /usr/local/bin/mc mb {{ item.mc_alias }}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: buckets_created
-  with_items: "{{ rgw.users }}"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ buckets_created }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+  register: create_buckets
+  with_items: "{{ _rgw.users }}"
+- debug: msg={{ create_buckets }}
+  when: print_debug == true
 
-
-# https://github.com/hetznercloud/ceph-s3-box
-# These examples are performed using the MinIO Client (mc) but any other s3 clients will work, too.
-#
-# Set up an alias for MinIO to interact with the RADOS Gateway
-# mc alias set test http://127.0.0.1:7480 radosgwadmin radosgwadmin --api "s3v4" --path "on"
-#
-# Create a bucket named "my-bucket"
-# mc mb test/my-bucket
-#
-# List all buckets
-# mc ls test
-#
-# Upload a file named "example.txt" to the "my-bucket" bucket
-# mc cp example.txt test/my-bucket/example.txt
-#
-# Download the "example.txt" file from the "my-bucket" bucket
-# mc cp test/my-bucket/example.txt ./downloaded-example.txt
-#
-# Remove the "example.txt" file from the "my-bucket" bucket
-# mc rm test/my-bucket/example.txt
-#
-# Remove the "my-bucket" bucket
-# mc rb --force test/my-bucket
 

@@ -1,7 +1,6 @@
 ---
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
-  when: inventory_hostname == ceph.control_node
 
 
 - name: Delete Buckets
@@ -10,44 +9,40 @@
     /usr/local/bin/mc rb --force {{ item.mc_alias}}/{{ item.bucket }}
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: buckets_created
+  register: create_buckets
   ignore_errors: true
-  with_items: "{{ rgw.users }}"
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ buckets_created }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
+  with_items: "{{ _rgw.users }}"
+- debug: msg={{ create_buckets }}
+  when: print_debug == true
 
 
 - name: Remove Users in the Ceph Object Gateway
   shell: |
     radosgw-admin user rm --uid={{ item.user_name }} --purge-data
-  register: rgw_user_removed
+  register: remove_rgw_user
   ignore_errors: true
-  with_items: "{{ rgw.users }}"
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ rgw_user_removed }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
+  with_items: "{{ _rgw.users }}"
+- debug: msg={{ remove_rgw_user }}
+  when: print_debug == true
 
 
 - name: Remove Zone in the Ceph Object Gateway
   shell: |
     {{ cephadm_cmd }} ceph orch rm rgw.test_realm.test_zone_bb
-  register: rgw_zone_removed
+  register: remove_rgw_zone
   ignore_errors: true
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ rgw_zone_removed }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
+- debug: msg={{ remove_rgw_zone }}
+  when: print_debug == true
 
 
 - name: Stop and Disable Rados Gateway
   shell: |
     systemctl stop --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
     systemctl disable --now ceph-radosgw@rgw.{{ hostvars[inventory_hostname]['ansible_hostname'] }}
-  register: rgw_service_disabled
+  register: disable_rgw_service
   ignore_errors: true
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ rgw_service_disabled }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
+- debug: msg={{ disable_rgw_service }}
+  when: print_debug == true
 
 
 - name: Delete Lines for Setting Radosgw in /etc/ceph/ceph.conf
@@ -55,7 +50,7 @@
     path: /etc/ceph/ceph.conf
     regexp: "{{ item }}"
     state: absent
-  register: rgw_config_removed
+  register: remove_rgw_config
   ignore_errors: true
   with_items:
     - "^\\[client."
@@ -63,93 +58,19 @@
     - "^rgw dns name =*"
     - "^keyring =*"
     - "^log file ="
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ rgw_config_removed }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
+- debug: msg={{ remove_rgw_config }}
+  when: print_debug == true
 
 
 - name: Remove Ceph Configuration to Rados Gateway Host
   file:
     path: "{{ item }}"
     state: absent
-  register: ceph_config_removed
+  register: remove_ceph_config
   ignore_errors: true
   with_items:
     - "/etc/ceph/ceph.conf"
     - "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname in groups['rgw']
-- debug: msg={{ ceph_config_removed }}
-  when: print_debug == true and inventory_hostname in groups['rgw']
-
-
-- name: Allow to Delete Pool from Mon
-  shell: |
-    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
-  register: delete_pool_allowed
-  ignore_errors: true
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ delete_pool_allowed }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
-
-
-- name: Remove Rados Gateway Pools
-  shell: |
-    {{ cephadm_cmd }} ceph osd pool rm {{ item }} {{ item }} --yes-i-really-really-mean-it
-  register: rgw_pool_removed
-  until: rgw_pool_removed is succeeded
-  retries: 10
-  delay: 20
-  ignore_errors: true
-  with_items:
-    - ".rgw.root"
-    - "default.rgw.buckets.index"
-    - "default.rgw.control"
-    - "default.rgw.log"
-    - "default.rgw.meta"
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ rgw_pool_removed }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
-
-
-- name: Check if Pools are still Unknown
-  shell: |
-    ceph pg stat
-  register: unknown_pool_checked
-  until: unknown_pool_checked.stdout.find("unknown") == -1
-  retries: 30
-  delay: 10
-  ignore_errors: true
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ unknown_pool_checked }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
-
-
-- name: Check if Pools are Active+Clean
-  shell: |
-    ceph pg stat
-  register: scrub_pool_checked
-  until: scrub_pool_checked.stdout.find("scrubbing") == -1
-  retries: 20
-  delay: 15
-  ignore_errors: true
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ scrub_pool_checked }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
-
-
-- name: Delete Rados Gateway Users
-  shell: |
-    {{ cephadm_cmd }} ceph auth del client.{{ item }}
-  register: rgw_user_deleted
-  ignore_errors: true
-  with_items:
-    - "bootstrap-rgw"
-  when: inventory_hostname == ceph.control_node
-- debug: msg={{ rgw_user_deleted }}
-  when: print_debug == true and inventory_hostname == ceph.control_node
-
-
-- name: Uninstall MC for S3 Client
-  import_tasks: uninstall-mc-client.yml
-  ignore_errors: true
+- debug: msg={{ remove_ceph_config }}
+  when: print_debug == true
 

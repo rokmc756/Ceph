@@ -1,25 +1,26 @@
 ---
 - name: Check if MC Binary Exists
-  stat: path={{ minio.client_bin }}
-  register: mc_bin_exists
-- debug: msg={{ mc_bin_exists }}
+  stat: path={{ _minio.client_bin }}
+  register: check_mc_bin
+- debug: msg={{ check_mc_bin }}
 
 
 - name: Delete MC Binary File
-  file: path={{ minio.client_bin }} state=absent
-  register: mc_bin_deleted
-  when: mc_bin_exists.stat.exists == true
-- debug: msg={{ mc_bin_deleted }}
+  file: path={{ _minio.client_bin }} state=absent
+  register: delete_mc_bin
+  when: check_mc_bin.stat.exists == true
+- debug: msg={{ delete_mc_bin }}
 
 
 - name: Check if MC Tarball Exists
-  stat: path=/tmp/mc-{{ minio.release_date }}.tar.gz
-  register: mc_tar_exists
-- debug: msg={{ mc_tar_exists }}
+  stat: path=/tmp/mc-{{ _minio.release_date }}.tar.gz
+  register: check_mc_file
+- debug: msg={{ check_mc_file }}
 
 
 - name: Delete MC Tarball File
-  file: path=/tmp/mc-{{ minio.release_date }}.tar.gz state=absent
-  register: mc_tar_deleted
-  when: mc_tar_exists.stat.exists == true
-- debug: msg={{ mc_tar_deleted }}
+  file: path=/tmp/mc-{{ _minio.release_date }}.tar.gz state=absent
+  register: delete_mc_file
+  when: check_mc_file.stat.exists == true
+- debug: msg={{ delete_mc_file }}
+

@@ -80,20 +80,20 @@ remote_machine_username="jomoon"
 remote_machine_password="changeme"
 
 [rgw]
-rk9-node03 ansible_ssh_host=192.168.0.73
+rk9-node03 ansible_ssh_host=192.168.1.73
 
 [mon]
-rk9-node01 ansible_ssh_host=192.168.0.71
-rk9-node02 ansible_ssh_host=192.168.0.72
-rk9-node03 ansible_ssh_host=192.168.0.73
+rk9-node01 ansible_ssh_host=192.168.1.71
+rk9-node02 ansible_ssh_host=192.168.1.72
+rk9-node03 ansible_ssh_host=192.168.1.73
 
 [osd]
-rk9-node04 ansible_ssh_host=192.168.0.74
-rk9-node05 ansible_ssh_host=192.168.0.75
-rk9-node06 ansible_ssh_host=192.168.0.76
+rk9-node04 ansible_ssh_host=192.168.1.74
+rk9-node05 ansible_ssh_host=192.168.1.75
+rk9-node06 ansible_ssh_host=192.168.1.76
 
 [clients]
-rk9-node07 ansible_ssh_host=192.168.0.77
+rk9-node07 ansible_ssh_host=192.168.1.77
 ```
 
 #### 03) Configure variables for deploying Ceph
@@ -115,7 +115,7 @@ $ vi group_vars/all.yml
 ansible_ssh_pass: "changeme"
 ansible_become_pass: "changeme"
 ~~ snip
-cephadm:
+_cephadm:
   major_version: 18
   minor_version: 2
   patch_version: 1
@@ -123,7 +123,7 @@ cephadm:
   bin_type: tar.gz
   download: false
 
-ceph:
+_ceph:
   control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
   major_version: "18"
@@ -150,7 +150,7 @@ $ vi init-hosts.yml
   roles:
     - { role: init-hosts }
 
-$ make init
+$ make host r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 

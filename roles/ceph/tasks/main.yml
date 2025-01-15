@@ -39,16 +39,28 @@
   when: ( osd is defined and osd == true )
 
 
+- name: Clean OSDs
+  import_tasks: clean-osds.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+
+
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
   tags: remove
-  when: ( osd is defined and osd == true )
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['osd']
+
+
+- name: Validate that Clean Devices are Up
+  import_tasks: validate-clean-devices-up.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
 
 
 - name: Remove Ceph Mon/MGR/MDS Nodes
   import_tasks: remove-ceph-nodes.yml
   tags: remove
-  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['mon']
+  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['control']
 
 
 - name: Purge Ceph Cluster

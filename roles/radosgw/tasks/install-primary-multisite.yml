@@ -1,0 +1,94 @@
+---
+# https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
+
+- name: Create a Realm
+  shell: |
+    radosgw-admin realm create --rgw-realm={{ item.rgw_realm }} --default
+  register: create_realm
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ create_realm }}
+  when: print_debug == true
+
+
+- name: Create a Zonegroup
+  shell: |
+    radosgw-admin zonegroup create --rgw-zonegroup={{ item.zone_group }} --endpoints={{ item.endpoint }} --master --default
+  register: create_zonegroup
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ create_zonegroup }}
+  when: print_debug == true
+
+
+- name: Create a Zone
+  shell: |
+    radosgw-admin zone create --rgw-zonegroup={{ item.zone_group }} --rgw-zone={{ item.zone }} --endpoints={{ item.endpoint }} --master --default
+  register: create_zone
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ create_zone }}
+  when: print_debug == true
+
+
+- name: Commit the Changes
+  shell: |
+    radosgw-admin period update --rgw-realm={{ item.rgw_realm }} --commit --yes-i-really-mean-it
+  register: commit_changes
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ commit_changes }}
+  when: print_debug == true
+
+
+# Save ACCESS_KEY and SECRET_KEY values. These values will be needed when we configure rgw on second cluster.
+- name: Create a Replication User
+  shell: |
+    radosgw-admin user create --uid={{ item.rep_user }} --display-name={{ item.user_full_name }} --system > {{ _ceph.base_path }}/{{ item.user_full_name }}-keys
+  register: create_rep_user
+  ignore_errors: true
+  with_items: "{{ _rgw.multisite.users }}"
+  # with_items: "{{ rgw.multisite.primary }}"
+- debug: msg={{ create_rep_user }}
+  when: print_debug == true
+
+
+# export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
+# export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
+
+
+- name: Update Zone Keys with User Keys just Created
+  shell: |
+    export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
+    export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
+    radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key=$ACCESS_KEY --secret=$SECRET_KEY
+  register: update_zone_keys
+  with_items: "{{ _rgw.multisite.users }}"
+- debug: msg={{ update_zone_keys }}
+  when: print_debug == true
+  # radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
+
+
+- name: Commit the Changes
+  shell: |
+    radosgw-admin period update --commit
+  register: commit_changes
+  ignore_errors: true
+- debug: msg={{ commit_changes }}
+  when: print_debug == true
+
+
+- name: Deploy Primary Rados Gateway
+  shell: "ceph orch apply rgw {{ item.zone }} --realm={{ item.rgw_realm }} --zone={{ item.zone }} --placement='{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}'"
+  register: deploy_primary_rgw
+  with_items: "{{ _rgw.multisite.zone.primary }}"
+- debug: msg={{ deploy_primary_rgw }}
+  when: print_debug == true
+
+
+- name: Verify Rados Gateway is Deployed. Should See 3 RGW Services
+  shell: |
+    ceph orch ls
+  register: verify_rgw_deploy
+- debug: msg={{ verify_rgw_deploy }}
+  when: print_debug == true
+
+
