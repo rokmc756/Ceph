@@ -1,6 +1,7 @@
 ansible_ssh_pass: "changeme"
 ansible_become_pass: "changeme"
 
+
 minio:
   download: false
   client_bin: /usr/local/bin/mc
@@ -9,18 +10,22 @@ minio:
   client_checksum:
   release_date: 20240307
 
-cephadm:
-  major_version: 19
+
+_cephadm:
+  major_version: 18
   minor_version: 2
-  patch_version: 0
-  base_path: /root   # /usr/sbin
+  patch_version: 1
+  build_version: 0
+  base_path: /root     # /usr/sbin
   bin_type: tar.gz
   download: false
 
-ceph:
-  project_name: squid # reef
-  domain: "jtest.pivotal.io"
-  rdomain: "io.pivotal.jtest"
+
+_ceph:
+  project_name: squid  # reef
+  os_version: el9
+  domain: "jtest.futurfusion.io"
+  rdomain: "io.futurfusion.jtest"
   control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
   major_version: "19"
@@ -43,7 +48,7 @@ ceph:
     iscsi: false
   net:
     conn: "dpdk"                     # dpdk or udp
-    gateway: "192.168.1.1"
+    gateway: "192.168.2.1"
     ha1: 1
     ha2: 2
     type: "virtual"                  # or physical
@@ -89,7 +94,14 @@ ceph:
       ipaddr2: "192.168.2."
 
 
+vms:
+  rk9: [ "rk9-freeipa", "rk9-node01", "rk9-node02", "rk9-node03", "rk9-node04", "rk9-node05", "rk9-node06" ]
+  ubt24: [ "rk9-freeipa", "ubt24-node01", "ubt24-node02", "ubt24-node03", "ubt24-node04", "ubt24-node05", "ubt24-node06" ]
+
+
 vmware:
   esxi_hostname: "192.168.0.231"
   esxi_username: "root"
   esxi_password: "Changeme34#$"
+
+

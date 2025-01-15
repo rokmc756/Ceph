@@ -1,24 +1,15 @@
 ---
 - name: Define Filename of Cephadm
   set_fact:
-    cephadm_file_name: cephadm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}
+    cephadm_file_name: cephadm-{{ _cephadm.major_version }}.{{ _cephadm.minor_version }}.{{ _cephadm.patch_version }}
 
 
 # https://serverfault.com/questions/1040246/how-to-select-network-interface-given-ip-address-in-ansible-across-debian-and-fr
 - name: Get interface name from prefix of IP Addresses provided for Ceph Nodes
   set_fact:
-    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
-    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr1 ) | map(attribute='device') | first }}"
-    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.net.ipaddr2 ) | map(attribute='device') | first }}"
-  when: inventory_hostname not in groups['clients']
-
-
-- name: Get interface name from prefix of IP Addresses provided for Ceph Clients
-  set_fact:
-    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
-    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr1 ) | map(attribute='device') | first }}"
-    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', ceph.client.net.ipaddr2 ) | map(attribute='device') | first }}"
-  when: inventory_hostname in groups['clients']
+    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
+    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr1 ) | map(attribute='device') | first }}"
+    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr2 ) | map(attribute='device') | first }}"
 
 
 - name: Get IP Address from provided network device name
@@ -35,22 +26,41 @@
     all_node_hostnames: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
     all_mon_hostnames: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
     all_osd_nodes: "{{ groups['osd'] | map('extract', hostvars, ['ansible_hostname']) | join('|') }}"
-  when: inventory_hostname not in groups['clients']
-
-
-#- debug: msg={{ all_ext1_hostnames }}
-#- debug: msg={{ all_nodes_hostname }}
 
 
 - name: Set Default Network Device and Address
   set_fact:
     _netdev: "{{ 'ansible_'~ netdev1 }}"
     _ipaddr: "{{ ipaddr1 }}"
+    _netdev0: "{{ 'ansible_'~ netdev0 }}"
+    _netdev1: "{{ 'ansible_'~ netdev1 }}"
+    _netdev2: "{{ 'ansible_'~ netdev2 }}"
+    _ipaddr0: "{{ ipaddr0 }}"
+    _ipaddr1: "{{ ipaddr1 }}"
+    _ipaddr2: "{{ ipaddr2 }}"
+
+
+- name: Get Netmask From Provided Network Device Names
+  set_fact:
+    netmask0: "{{ ( hostvars[inventory_hostname][_netdev0]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev0]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    netmask1: "{{ ( hostvars[inventory_hostname][_netdev1]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev1]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    netmask2: "{{ ( hostvars[inventory_hostname][_netdev2]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev2]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    _netmask: "{{ ( hostvars[inventory_hostname][_netdev1]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev1]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+
+
+- set_fact:
+    ceph_network_range0: "{{ hostvars[inventory_hostname][_netdev0]['ipv4']['network'] }}/{{ ( hostvars[inventory_hostname][_netdev0]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev0]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    ceph_network_range1: "{{ hostvars[inventory_hostname][_netdev1]['ipv4']['network'] }}/{{ ( hostvars[inventory_hostname][_netdev1]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev1]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    ceph_network_range2: "{{ hostvars[inventory_hostname][_netdev2]['ipv4']['network'] }}/{{ ( hostvars[inventory_hostname][_netdev2]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev2]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
+    _ceph_network_range: "{{ hostvars[inventory_hostname][_netdev1]['ipv4']['network'] }}/{{ ( hostvars[inventory_hostname][_netdev1]['ipv4']['address'] + '/' + hostvars[inventory_hostname][_netdev1]['ipv4']['netmask'] ) | ansible.utils.ipaddr('prefix') }}"
 
 
 - name: Define fact for all worker's first ip addresses
   set_fact:
     all_net0_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev0, 'ipv4', 'address']) | join(',') }}"
+    all_net1_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev1, 'ipv4', 'address']) | join(',') }}"
+    all_net2_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev2, 'ipv4', 'address']) | join(',') }}"
+    _all_net_ipaddrs: "{{ groups['all'] | map('extract', hostvars, ['ansible_'~netdev1, 'ipv4', 'address']) | join(',') }}"
 - debug: msg={{ all_net0_ipaddrs }}
 
 
@@ -95,35 +105,34 @@
 
 
 # Handling NVME Devices about define number and list
-#
 - name: Get NVME Devices List
   shell: |
     nvme list | sed 1,2d | awk '{print $1}' | paste -sd "," -
   register: nvme_device_list0
-  when: ceph.nvme == true
+  when: _ceph.nvme == true
 - debug: msg={{ nvme_device_list0.stdout_lines }}
-  when: print_debug == true
+  when: print_debug == true and _ceph.nvme == true
 
 
 - set_fact:
     nvme_device_list: "{{ nvme_device_list0.stdout }}"
-  when: ceph.nvme == true
+  when: _ceph.nvme == true
 - debug: msg={{ nvme_device_list }}
-  when: print_debug == true
+  when: print_debug == true and _ceph.nvme == true
 
 
 - name: Get NVME Devices Array
   shell: |
     nvme list | sed 1,2d | awk '{print $1}'
   register: nvme_device_array0
-  when: ceph.nvme == true
+  when: _ceph.nvme == true
 - debug: msg={{ nvme_device_array0.stdout_lines }}
-  when: print_debug == true
+  when: print_debug == true and _ceph.nvme == true
 
 
 - set_fact:
     nvme_device_array: "{{ nvme_device_array0.stdout_lines }}"
-  when: ceph.nvme == true
+  when: _ceph.nvme == true
 - debug: msg={{ nvme_device_array }}
-  when: print_debug == true
+  when: print_debug == true and _ceph.nvme == true
 

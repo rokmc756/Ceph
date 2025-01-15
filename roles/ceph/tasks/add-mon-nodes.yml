@@ -1,23 +1,7 @@
-#- name: Get FSID
-#  shell: |
-#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-#  register: get_fsid
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true
-#
-#
-#- name: Set Fact for FSDI
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
-#
-#
-#- name: Set Fact for cephadm command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-
-
+---
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
 - name: Enable Ceph CLI

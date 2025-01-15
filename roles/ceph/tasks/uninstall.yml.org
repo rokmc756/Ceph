@@ -1,6 +1,7 @@
 # vi force-destroy-ceph.sh
 # https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
-#
+
+
 # Remove rbd-pool
 # Check the pools, images and OSDs
 # ceph osd tree
@@ -9,13 +10,14 @@
 # rbd unmap /dev/rbd[0-3]
 # rbd rm datapool/rbdvol1
 
-#
+
 - name: Remove Block Device Image in {{ rbd.pool_name }} Pool
   shell: |
     rbd rm {{ rbd.custom_image  }} --pool {{ rbd.pool_name }}
   register: remove_custom_rbd_image
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
 
 - debug: msg={{ remove_custom_rbd_image }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -36,7 +38,6 @@
 
 
 # Remove NFS Cluster
-#
 - name: Delete CephFS Volume in NFS
   shell: |
     ceph fs volume rm {{ nfs.cephfs_name }} --yes-i-really-mean-it
@@ -45,10 +46,11 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - debug: msg={{ delete_cephfs_volume_nfs }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Delete Ceph File System NFS Exports
   shell: |
     ceph nfs export rm {{ nfs.cephfs_name }} /ceph
@@ -57,10 +59,11 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - debug: msg={{ delete_cephfs_nfs_exports }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Remove NFS Cluster
   shell: |
     ceph nfs cluster rm {{ nfs.cluster_name }}
@@ -80,18 +83,21 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - debug: msg={{ remove_rgw_user }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+
 
 #- name: Remove zone in the Ceph Object Gateway
 #  shell: |
 #    cephadm shell -- ceph orch rm rgw.test_realm.test_zone_bb
 #  register: remove_rgw
-#
+
+
 #- debug: msg={{ remove_rgw }}
 #  when: print_debug == true
 
-#
+
 - name: Delete CephFS in Pool
   shell: |
     cephadm shell -- ceph fs volume rm {{ pool.cephfs_name }} --yes-i-really-mean-it
@@ -99,10 +105,11 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - debug: msg={{ delete_cephfs_pool }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Delete volume in Pool
   shell: |
     rbd rm {{ pool.pg_name }}/{{ pool.pg_custom_volume_name }}
@@ -110,11 +117,11 @@
   ignore_errors: true
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - debug: msg={{ remove_rgw }}
   when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name: Delete Pool
   shell: |
     cephadm shell -- ceph tell mon.* injectargs --mon_allow_pool_delete true
@@ -128,23 +135,24 @@
 
 - meta: end_play
 
-#
+
 - name: Get fsid for setting fact
   shell: |
     cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
   register: get_fsid
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
+
 - debug: msg={{ get_fsid.stdout }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
-#
+
 - name: Set fact for fsid
   set_fact:
     fsid01: "{{ get_fsid.stdout }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - name:  Remove OSDs
   shell: |
     cephadm shell -- ceph osd down {{ item }} && cephadm shell -- ceph osd destroy {{ item }} --force
@@ -152,11 +160,11 @@
   with_sequence: start=0 end=8
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - debug: msg={{ remove_osd }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
-#
+
 - name: Remove the cluster hosts and check if there is ceph daemon running
   shell: |
     cephadm shell -- ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
@@ -166,11 +174,11 @@
   with_items: "{{ groups['mon'] }}"
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 - debug: msg={{ remove_cluster_hosts }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
-#
+
 - name: Remove the ceph storage cluster
   shell: |
     cephadm rm-cluster --fsid {{ fsid01 }} --force
@@ -181,7 +189,7 @@
 - debug: msg={{ remove_ceph_storage }}
   when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname'] and print_debug == true
 
-#
+
 - name: Remove the ceph package repository
   become: true
   become_user: root
@@ -189,8 +197,10 @@
     cephadm rm-repo
   register: remove_ceph_repo
 
+
 - debug: msg={{ remove_ceph_repo }}
   when: print_debug == true
+
 
 - name: Cleanup the ceph configuration files
   shell: |
@@ -201,7 +211,7 @@
 - debug: msg={{ cleanup_ceph_config }}
   when: print_debug == true
 
-#
+
 - name: Cleanup the ceph block devices
   shell: |
     lsblk
@@ -212,7 +222,7 @@
 - debug: msg={{ cleanup_ceph_block_devices }}
   when: inventory_hostname in groups['osd'] and print_debug == true
 
-#
+
 - name: Kill processes of conmon and podman
   shell: |
     killall conmon
@@ -224,7 +234,7 @@
 - debug: msg={{ kill_conmon_podman }}
   when: inventory_hostname in groups['all'] and print_debug == true
 
-#
+
 - name: Uninstall conmon package
   yum:
     name: "{{ item }}"
@@ -238,14 +248,14 @@
     - podman
   when: inventory_hostname in groups['all']
 
-#
+
 - name: Reboot required  ( Red Hat ) - Step 1 in RHEL/CentOS/Rocky Linux 8.x and 9.x
   command: /usr/bin/needs-restarting -r
   register: reboot_required
   changed_when: False
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and hostvars[inventory_hostname].ansible_distribution_major_version|int >= 8
 
-#
+
 - name: Reboot required ( Red Hat ) - Step 2
   shell: ( /bin/sleep 5 ; /sbin/shutdown -r now "Ansible updates triggered" ) &
   async: 120

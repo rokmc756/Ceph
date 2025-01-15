@@ -1,0 +1,47 @@
+# https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
+# https://www.youtube.com/watch?v=bOPsVM43HOs
+# https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
+# https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
+# https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
+# https://cbs.centos.org/koji/buildinfo?buildID=34736
+
+
+- name: List Hosts for iSCSI Gateway
+  shell: |
+    ceph orch host ls
+  register: hosts_listed
+- debug: msg={{ hosts_listed }}
+  when: print_debug == true
+
+
+# To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
+# The suggested values are 20, 5 and 15, respectively.
+- name: Avoid Initiator Timeout
+  shell: |
+    ceph config set osd osd_heartbeat_grace 20
+    ceph config set osd osd_heartbeat_interval 5
+    ceph config set osd osd_client_watch_timeout 15
+  register: initiator_timeout_avoided
+- debug: msg={{ initiator_timeout_avoided }}
+  when: print_debug == true
+
+
+# Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
+- name: Create a Replicated Pool with replicated_rule Crush Map
+  shell: |
+    ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
+  register: replica_pool_created
+  with_items: "{{ _iscsi.targets }}"
+- debug: msg={{ replica_pool_created }}
+  when: print_debug == true
+  # replicated
+
+
+- name: Initialize the Pool for RBD Application
+  shell: |
+    rbd pool init {{ item.pg_name }}
+  register: rbd_pool_inited
+  with_items: "{{ _iscsi.targets }}"
+- debug: msg={{ rbd_pool_inited }}
+  when: print_debug == true
+

@@ -1,10 +1,10 @@
-- name: Add Repo for Ceph ( {{ ceph.project_name }} ) for RedHat/Rocky/CentOS
-  shell: |
-    {{ cephadm.base_path }}/cephadm add-repo --release {{ ceph.project_name }}
-  register: add_repo
-  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-- debug: msg={{ add_repo }}
-  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+#- name: Add Repo for Ceph ( {{ _ceph.project_name }} ) for RedHat/Rocky/CentOS
+#  shell: |
+#    {{ _cephadm.base_path }}/cephadm add-repo --release {{ _ceph.project_name }}
+#  register: add_repo
+#  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+#- debug: msg={{ add_repo }}
+#  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
 - name: Install Podman and Civetweb
@@ -14,18 +14,20 @@
   with_items: "{{ ceph_pkgs }}"
 
 
+#    {{ _cephadm.base_path }}/cephadm install ceph-common
 - name: Install Ceph CLI Tools On the Hosts
   shell: |
-    {{ cephadm.base_path }}/cephadm install ceph-common
+    cephadm install ceph-common
   register: install_ceph_cli_tools
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ install_ceph_cli_tools }}
   when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 
 
-- name: Install Ceph - Project Name ( {{ ceph.project_name }} )
+#    {{ _cephadm.base_path }}/cephadm install
+- name: Install Ceph - Project Name ( {{ _ceph.project_name }} )
   shell: |
-    {{ cephadm.base_path }}/cephadm install
+    cephadm install
   register: install_ceph
   when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
 - debug: msg={{ install_ceph }}

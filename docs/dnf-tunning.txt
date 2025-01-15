@@ -1,0 +1,3 @@
+
+https://linuxcapable.com/increase-dnf-speed-on-rocky-linux/
+

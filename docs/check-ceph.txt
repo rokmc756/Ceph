@@ -1,0 +1,13 @@
+
+
+[root@rk9-node01 log]# ceph config dump | grep 192.168
+global        advanced  cluster_network                        192.168.2.0/24                                                                             *
+mon           advanced  public_network                         192.168.0.0/24
+
+
+
+[root@rk9-node01 log]# ceph config rm mgr.a mgr/prometheus/a/server_addr
+[root@rk9-node01 log]# ceph config rm mgr.a mgr/dashboard/a/server_addr
+
+
+

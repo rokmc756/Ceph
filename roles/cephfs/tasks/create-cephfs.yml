@@ -1,28 +1,9 @@
-- name: Increase Max PGs per OSD
-  shell: |
-    ceph config set mon mon_max_pg_per_osd 600
-  register: max_pgs_increased
-- debug: msg={{ max_pgs_increased }}
-  when: print_debug == true
-  # 300
-
-
-- name: Create Pool for Metadata and Data
-  shell: |
-    ceph osd pool create {{ item.name }}_data {{ item.pg_count }}
-    ceph osd pool create {{ item.name }}_metadata {{ item.pg_count }}
-  register: pool_metadata_created
-  with_items: "{{ cephfs.pool }}"
-- debug: msg={{ pool_metadata_created }}
-  when: print_debug == true
-  # ceph osd pool create {{ item.name }} {{ item.pg_count }}
-
-
+---
 - name: Create Ceph Filesystem
   shell: |
     ceph fs new {{ item.name }}-fs01 {{ item.name }}_metadata {{ item.name }}_data
   register: cephfs_created
-  with_items: "{{ cephfs.pool }}"
+  with_items: "{{ _cephfs.pool }}"
 - debug: msg={{ cephfs_created }}
   when: print_debug == true
 
@@ -41,7 +22,7 @@
   shell: |
     ceph fs set {{ item.name }} max_mds 3
   register: active_mds_daemon_set
-  with_items: "{{ cephfs.fs }}"
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ active_mds_daemon_set }}
   when: print_debug == true
 # ceph mds deactivate cephfs:1
@@ -51,7 +32,7 @@
   shell: |
     ceph fs status {{ item.name }}
   register: active_mds_daemons_verified
-  with_items: "{{ cephfs.fs }}"
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ active_mds_daemons_verified }}
   when: print_debug == true
 
@@ -60,7 +41,7 @@
   shell: |
     ceph fs authorize {{ item.name }} client.{{ item.name }} / rw root_squash / rw
   register: cephfs_client_authorized
-  with_items: "{{ cephfs.fs }}"
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ cephfs_client_authorized }}
   when: print_debug == true
 # ceph fs authorize {{ item.name }} client.{{ item.name }} /temp rw
@@ -71,7 +52,7 @@
   shell: |
     ceph auth get client.{{ item.name }}
   register: ceph_user_key_printed
-  with_items: "{{ cephfs.fs }}"
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ ceph_user_key_printed }}
   when: print_debug == true
 
@@ -80,7 +61,7 @@
   shell: |
     ceph auth get client.{{ item.name }} > /etc/ceph/ceph.client.{{ item.name }}.keyring
   register: ceph_user_auth_key_copied
-  with_items: "{{ cephfs.fs }}"
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ ceph_user_auth_key_copied }}
   when: print_debug == true
 

@@ -1,6 +1,6 @@
 - name: Install Ceph - Project Name ( {{ ceph.project_name }} )
   shell: |
-    {{ ceph.base_path }}/cephadm install
+    {{ _ceph.base_path }}/cephadm install
   register: install_ceph
 - debug: msg={{ install_ceph }}
   when: print_debug == true
@@ -8,7 +8,7 @@
 
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   shell: |
-    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]][_netdev]['ipv4']['address'] }} --allow-overwrite
+    {{ _ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['mon'][0]][_netdev]['ipv4']['address'] }} --allow-overwrite
   register: init_ceph
   ignore_errors: true
 
@@ -19,7 +19,7 @@
 
 - name: Install ceph-common
   shell: |
-   {{ ceph.base_path }}/cephadm install ceph-common
+   {{ _ceph.base_path }}/cephadm install ceph-common
   register: install_ceph_common
   ignore_errors: true
 - debug: msg={{ install_ceph_common }}
@@ -42,26 +42,9 @@
   when: print_debug == true
 
 
-#- name: Get fsid for setting fact
-#  shell: |
-#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-#  register: get_fsid
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true
-#
-#
-#- name: Set fact for fsid
-#  set_fact:
-#    fsid01: "{{ get_fsid.stdout }}"
-#
-#
-#- name: Set fact for cephadm_cmd command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ fsid01 }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-
-
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
 - name: Enable Ceph CLI

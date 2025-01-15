@@ -1,0 +1,66 @@
+---
+- name: Check if Key Directory Already Exists
+  stat: path=/etc/dnf/ceph/keyrings
+  register: repo_key_dir
+- debug: msg={{ repo_key_dir }}
+  when: print_debug == true
+
+
+- name: Create Repo Key Directory
+  file: path=/etc/dnf/ceph/keyrings  state=directory owner=root group=root
+  register: create_repo_key_dir
+  when: repo_key_dir.stat.exists != True
+- debug: msg={{ create_repo_key_dir }}
+  when: print_debug == true
+
+
+- name: Print Ceph Repo Key
+  shell: |
+    curl -fsSL https://download.ceph.com/keys/release.asc | gpg --show-keys --fingerprint
+  register: print_repo_key
+- debug: msg={{ print_repo_key }}
+  when: print_debug == true
+
+
+- name: Download Repo Key for Ceph Repository
+  get_url:
+    url: "https://download.ceph.com/keys/release.asc"
+    dest: "/etc/dnf/ceph/keyrings/release.asc"
+  register: download_ceph_repo_key
+- debug: msg={{ download_ceph_repo_key }}
+  when: print_debug == true
+
+
+- name: Import Ceph Repo Keys
+  shell: |
+    rpm --import /etc/dnf/ceph/keyrings/release.asc
+  register: import_ceph_repo_key
+- debug: msg={{ import_ceph_repo_key }}
+  when: print_debug == true
+
+
+- name: Copy Ceph Repo Repository Config
+  template:
+    src: ceph.repo.j2
+    dest: /etc/yum.repos.d/ceph.repo
+    owner: root
+    group: root
+    mode: 644
+    force: yes
+  register: copy_ceph_repo_config
+- debug: msg={{ copy_ceph_repo_config }}
+  when: print_debug == true
+
+
+- name: Apply New Repository Changes
+  systemd:
+    daemon_reload: true
+
+
+- name: Update Caches for DNF Packages
+  shell: |
+    dnf update --refresh -y
+  register: update_dnf_cache
+- debug: msg={{ update_dnf_cache }}
+  when: print_debug == true
+

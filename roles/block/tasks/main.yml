@@ -1,60 +1,71 @@
 ---
-# For now fail if it's not suppoted OS
-- name: Check OS
+- name: Check OS ( Block )
   fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
-#
-- name: Check if iSCSI and RBD both are enabled to deploy in groups_vars/all.yml
-  fail: msg="Stopped due to both iSCSI and RBD Settings enabled in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
-  when: ( ceph.block.iscsi == true and ceph.block.rbd == false ) or ( ceph.block.iscsi == true and ceph.block.rbd == true )
 
-
-- name: Set facts for network and packages informations for Linux Distribution
+- name: Set Facts for Network and Packages Fnformations
   import_tasks: set-block-facts.yml
-  tags:
-    - install
-    - uninstall
+  tags: install, uninstall, enable, disable, create, delete, prepare
 
 
-- name: Create Rados Block Devices with Pools
-  import_tasks: install.yml
-  tags: install
-  when: enable_rbd is defined and enable_rbd == true and inventory_hostname in ceph.control_node
-  # when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- name: Create Pools for Rados Block Devices
+  import_tasks: create-pool.yml
+  tags: create
+  when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
+
+
+- name: Create Rados Block Devices on Pools
+  import_tasks: create-rbd.yml
+  tags: create
+  when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
 
 
 - name: Create iSCSI Targets
-  import_tasks: install-iscsi.yml
-  tags: install
-  when: enable_iscsi is defined and enable_iscsi == true and inventory_hostname not in groups['clients']
+  import_tasks: prepare-iscsi-target.yml
+  tags: prepare
+  when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['control']
   # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
-- name: Install iSCSI Clients
-  import_tasks: install-iscsi-clients.yml
-  tags: install
-  when: enable_iscsi_client is defined and enable_iscsi_client == true and inventory_hostname in groups['clients']
-  # when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
+- name: Create iSCSI Targets
+  import_tasks: create-iscsi-target.yml
+  tags: create
+  when: ( iscsi is defined and iscsi == true )
+  # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
-- name: Uninstall iSCSI Clients
-  import_tasks: uninstall-iscsi-clients.yml
-  tags: uninstall
-  when: disable_iscsi_client is defined and disable_iscsi_client == true and inventory_hostname in groups['clients']
-  # when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
+#- name: Install iSCSI Clients
+#  import_tasks: clients/install-iscsi-clients.yml
+#  tags: install
+#  when: ( isclient is defined and isclient == true)  and inventory_hostname in groups['clients']
+#  when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
+
+
+#- name: Uninstall iSCSI Clients
+#  import_tasks: clients/uninstall-iscsi-clients.yml
+#  tags: uninstall
+#  when: ( isclient is defined and isclient == true ) and inventory_hostname in groups['clients']
+#  # when: disable_iscsi_client is defined and disable_iscsi_client == true and inventory_hostname in groups['clients']
+#  # when: inventory_hostname in groups['clients'] and ceph.client.block.iscsi == true
 
 
 - name: Delete iSCSI Targets
-  import_tasks: uninstall-iscsi.yml
-  tags: uninstall
-  when: disable_iscsi is defined and disable_iscsi == true and inventory_hostname not in groups['clients']
-  # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
+  import_tasks: delete-iscsi-target.yml
+  tags: delete
+  when: ( iscsi is defined and iscsi == true )
+#  # when: disable_iscsi is defined and disable_iscsi == true and inventory_hostname not in groups['clients']
+#  # when: ceph.block.iscsi == true and inventory_hostname not in groups['clients']
 
 
-- name: Delete Rados Block Devices with Pools
-  import_tasks: uninstall.yml
-  tags: uninstall
-  when: disable_rbd is defined and disable_rbd == true and inventory_hostname in ceph.control_node
-  # when: ceph.block.rbd == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+- name: Delete Rados Block Devices on Pools
+  import_tasks: delete-rbd.yml
+  tags: delete
+  when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
+
+
+- name: Delete Pools for Rados Block Devices
+  import_tasks: delete-pool.yml
+  tags: delete
+  when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 

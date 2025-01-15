@@ -1,18 +1,19 @@
+---
 - name: Check if Cephadm Binary is Already Existed
-  stat: path={{ cephadm.base_path }}/cephadm
+  stat: path={{ _cephadm.base_path }}/cephadm
   register: cephadm_bin_exists
 - debug: msg={{ cephadm_bin_exists }}
   when: print_debug == true
 
 
 - name: Check if Ceph Tarball file is Already Existed
-  stat: path={{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }}
+  stat: path={{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ _cephadm.bin_type }}
   register: cephadm_tarball_exists
 - debug: msg={{ cephadm_tarball_exists }}
   when: print_debug == true
 
 
-- name: Sanity Check for Existence of "{{ cephadm.base_path }}/{{ cephadm_file_name }}".tar File or "{{ cephadm.base_path }}/{{ cephadm_file_name }}" Directory
+- name: Sanity Check for Existence of "{{ _cephadm.base_path }}/{{ cephadm_file_name }}".tar File or "{{ _cephadm.base_path }}/{{ cephadm_file_name }}" Directory
   debug: msg="Both {{ cephadm.base_path }}/{{ cephadm_file_name }}.gz file or cephadm binary already exists"
   changed_when: cephadm_tarball_exists.stat.exists != True and cephadm_bin_exists.stat.exists != True
 
@@ -22,7 +23,7 @@
     path: "{{ item }}"
     state: absent
   with_items:
-    - "{{ cephadm.base_path }}/cephadm"
-    - "{{ cephadm.base_path }}/{{ cephadm_file_name }}.{{ cephadm.bin_type }}"
+    - "{{ _cephadm.base_path }}/cephadm"
+    - "{{ _cephadm.base_path }}/{{ cephadm_file_name }}.{{ _cephadm.bin_type }}"
   when: cephadm_tarball_exists.stat.exists == True or cephadm_bin_exists.stat.exists == True
 

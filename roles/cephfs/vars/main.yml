@@ -1,10 +1,10 @@
-#rbd:
+#_rbd:
 #  pool_name: jtest_pool
 #  pg_count: 100
 #  custom_size: 1G
 #  custom_image: trbd01
 
-cephfs:
+_cephfs:
   pool:
     - { name: "default-p01", pg_count: 100 }
     - { name: "cephfs-p01", pg_count: 100 }

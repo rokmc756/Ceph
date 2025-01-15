@@ -1,13 +1,14 @@
+---
 - name: Delete Text File with the Content
   become_user: root
-  shell: |
-    rm -f {{ item.mount_dir }}/{{ item.name }}.txt
+  file:
+    path: "{{ item.mount_dir }}/{{ item.name }}.txt"
+    state: absent
   register: delete_cephfs_file
   ignore_errors: true
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ delete_cephfs_file }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Check if CephFS Directory is Mounted
@@ -16,10 +17,9 @@
     ls -al {{ item.mount_dir }}
   register: check_cephfs_mounted
   ignore_errors: true
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ check_cephfs_mounted  }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Unmount CephFS Directory
@@ -27,32 +27,32 @@
     umount {{ item.mount_dir }}
   register: unmount_cephfs_dir
   ignore_errors: true
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ unmount_cephfs_dir }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Delete Directory to Mount CephFS
-  shell: |
-    rm -rf {{ item.mount_dir }}
+  file:
+    path: "{{ item.mount_dir }}"
+    state: absent
   register: delete_cephfs_dir
   ignore_errors: true
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ delete_cephfs_dir }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Remove Directory to Be Mount by CephFS Clients
-  shell: |
-    rm -rf {{ item.mount_dir }}
+  file:
+    path: "{{ item.mount_dir }}"
+    state: absent
   register: remove_cephfs_dir
+  ignore_errors: true
   with_items:
-    - "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+    - "{{ _cephfs.fs }}"
 - debug: msg={{ remove_cephfs_dir  }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Uninstall CephFS Client Packages
@@ -62,45 +62,37 @@
   with_items:
     - "ceph-common"
     - "ceph-fuse"
-  when: inventory_hostname in groups['clients']
 
 
 - name: Delete Ceph Config Files
-  shell: |
-    rm -f {{ item }}
+  file:
+    path: "{{ item }}"
+    state: absent
   register: delete_ceph_config_file
   ignore_errors: true
   with_items:
     - "/etc/ceph/ceph.conf"
-  when: inventory_hostname in groups['clients']
 - debug: msg={{ delete_ceph_config_file }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Delete Ceph User Auth Key
-  shell: |
-    rm -f /etc/ceph/ceph.client.{{ item.name }}.keyring
-  register: ceph_user_auth_key_deleted
+  file:
+    path: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
+    state: absent
+  register: delete_ceph_user_auth_key
   ignore_errors: true
   with_items:
-    - "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
-- debug: msg={{ ceph_user_auth_key_deleted }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+    - "{{ _cephfs.fs }}"
+- debug: msg={{ delete_ceph_user_auth_key }}
+  when: print_debug == true
 
 
-#- name: Remove the Ceph Software Package Repository
-#  shell: |
-#    cephadm rm-repo
-#  register: remove_ceph_repo
-#  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-#- debug: msg={{ remove_ceph_repo }}
-#  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-
-
-#- name: Remove Cephadm Binary
-#  import_tasks: remove-cephadm-bin.yml
-#  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+- name: Disable Ceph Repo
+  import_tasks: disable-ceph-repo.yml
+  when:
+    - print_debug == true
+    -  ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and  ansible_distribution_major_version|int >= 9
 
 
 - name: Clear Memory Cache
@@ -108,11 +100,11 @@
     sync && echo 3 > /proc/sys/vm/drop_caches
   register: clear_cache_memory
   ignore_errors: true
-  when: inventory_hostname in groups['clients']
 - debug: msg={{ clear_cache_memory }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
-# Evic Clients
+
+# [ Evic Clients ]
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=systems-manually-evicting-ceph-file-system-client
 # https://docs.ceph.com/en/quincy/cephfs/eviction/
 
@@ -125,7 +117,7 @@
 #- debug: msg={{ all_client_ids }}
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 #- set_fact:
 #    all_ids: "{{ all_client_ids.stdout | split(',')}}"
 #  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
@@ -133,7 +125,7 @@
 #  with_items: "{{ all_ids }}"
 #  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
-#
+
 #- name: Evict All Client IDs
 #  shell: |
 #    ceph tell mds.* client evict id={{ item }}

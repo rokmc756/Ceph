@@ -1,31 +1,4 @@
-# vi force-destroy-ceph.sh
-# https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
-# https://sysdocu.tistory.com/991
-#
-# Remove rbd-pool
-# Check the pools, images and OSDs
-# ceph osd tree
-# ceph osd lspool
-# rbd showmapped
-# rbd unmap /dev/rbd[0-3]
-# rbd rm datapool/rbdvol1
-
-
-- name: Remove Block Device Image in {{ rbd.pool_name }} Pool
-  shell: |
-    rbd rm {{ item.name }} -p {{ item.pool }}
-  register: remove_rbd_image
-  ignore_errors: true
-  with_items:
-    - "{{ rbd.image.default }}"
-    - "{{ rbd.image.cephfs }}"
-    - "{{ rbd.image.block }}"
-    - "{{ rbd.image.rgw }}"
-    - "{{ rbd.image.nfs }}"
-- debug: msg={{ remove_rbd_image }}
-  when: print_debug == true
-
-
+---
 # Error EPERM: pool deletion is disabled;
 # you must first set the mon_allow_pool_delete config option to true  before you can destroy a pool
 - name: Allow Pool to Delete
@@ -45,7 +18,7 @@
   register: remove_custom_pool
   ignore_errors: true
   with_items:
-    - "{{ rbd.pool }}"
+    - "{{ _rbd.pool }}"
 - debug: msg={{ remove_custom_pool }}
   when: print_debug == true
 

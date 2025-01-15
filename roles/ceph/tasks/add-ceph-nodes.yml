@@ -1,33 +1,7 @@
 ---
-#- name: Get FSID
-#  shell: |
-#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-#  register: get_fsid
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true and inventory_hostname in groups['control']
-#
-#
-#- name: Set Fact for FSID
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
-#  delegate_to: "{{ item }}"
-#  delegate_facts: True
-#  with_items: "{{ groups['mon'] }}"
-#  when: inventory_hostname in groups['control']
-#
-#
-#- name: Set Fact for cephadm Command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-#  delegate_to: "{{ item }}"
-#  delegate_facts: True
-#  with_items: "{{ groups['mon'] }}"
-#  when: inventory_hostname in groups['control']
-
-
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
 - name: Enable Ceph CLI
@@ -71,7 +45,7 @@
 # Creaet MDS and assign the role of MDS into all nodes in order to use CephRBD and CephFS
 # In this case myfs would be created to identify filesystem
 - name: Apply the Role of MDS for All Nodes
-  shell: "{{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement='{{ ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'"
+  shell: "{{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement='{{ _ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'"
   register: apply_mds
   when: inventory_hostname in groups['control']
 - debug: msg={{ apply_mds }}

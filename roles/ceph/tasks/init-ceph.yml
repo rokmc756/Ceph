@@ -1,16 +1,19 @@
 ---
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
+  become_user: root
   shell: |
-    {{ ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]][_netdev]['ipv4']['address'] }} \
-    --cluster-network 192.168.1.0/24 \
+    {{ _ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]][_netdev]['ipv4']['address'] }} \
+    --cluster-network {{ _ceph_network_range }} \
     --dashboard-password-noupdate \
-    --initial-dashboard-user {{ ceph.admin_user }} \
-    --initial-dashboard-password {{ ceph.admin_passwd }} \
+    --initial-dashboard-user {{ _ceph.admin_user }} \
+    --initial-dashboard-password {{ _ceph.admin_passwd }} \
     --skip-firewalld \
     --allow-overwrite
   register: init_ceph
 - debug: msg={{ init_ceph }}
   when: print_debug == true
+
+- debug: msg={{ _ceph_network_range }}
 
 # cephadm bootstrap \
 #--registry-url registry.redhat.io \
@@ -19,19 +22,8 @@
 #--allow-fqdn-hostname \
 #--single-host-defaults
 # cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
-
-
-#- name: Get FSID for Setting Fact
-#  shell: |
-#    {{ ceph.base_path }}/cephadm ls | grep fsid | uniq | awk '{print $2}' | sed -e "s/\"//g" | cut -d , -f 1
-#  register: get_fsid
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true
-
-
-#- name: Set Fact for FSID
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
+#
+# --cluster-network 192.168.2.0/24 \
 
 
 #- name: Set Fact for cephadm_cmd Command
@@ -41,19 +33,20 @@
 
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
-- name: Activate the Telemetry Module
-  shell: |
-    {{ cephadm_cmd }} ceph telemetry {{ item }}
-  register: activate_telemetry_module
-  with_items:
-    - "on --license sharing-1-0"
-    - "enable channel perf"                     # or ceph telemetry off
-
-
-- debug: msg={{ activate_telemetry_module }}
-  when: print_debug == true
+#- name: Activate the Telemetry Module
+#  shell: |
+#    {{ cephadm_cmd }} ceph telemetry {{ item }}
+#  register: activate_telemetry_module
+#  with_items:
+#    - "on --license sharing-1-0"
+#    - "enable channel perf"                     # or ceph telemetry off
+#
+#
+#- debug: msg={{ activate_telemetry_module }}
+#  when: print_debug == true
 
 
 - name: Check if Container is Created

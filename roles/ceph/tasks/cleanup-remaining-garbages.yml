@@ -1,12 +1,4 @@
-- name: Remove the Ceph Software Package Repository
-  shell: |
-    cephadm rm-repo
-  register: remove_ceph_repo
-  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
-- debug: msg={{ remove_ceph_repo }}
-  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" )
-
-
+---
 - name: Cleanup the Ceph Configuration Files
   file:
     path: "{{ item }}"
@@ -32,19 +24,12 @@
 #  when: print_debug == true
 
 
-- name: Uninstall Ceph Conmon Packages
-  package:
-    name: "{{ item }}"
-    state: absent
-  with_items: "{{ ceph_pkgs }}"
-# nobest: true
-
-
 - name: Remove LVMs
   shell: |
     for vg in $(`vgs | grep ceph | awk '{print $1}'`); do vgremove $vg -f ;done
     for dm in $(fdisk -l | grep mapper | grep ceph | awk '{print $2}' | cut -d : -f 1); do dmsetup remove $dm ;done
   register: remove_lvms
+  ignore_errors: true
   when: inventory_hostname in groups['osd']
 - debug: msg={{ remove_lvms }}
   when: inventory_hostname in groups['osd'] and print_debug == true
@@ -60,6 +45,7 @@
     blkdiscard {{ item }}
     rm -f 90-ceph-*-haproxy.conf
   register: cleanup_ceph_block_devices
+  ignore_errors: true
   with_items: "{{ nvme_device_array }}"
   when: inventory_hostname in groups['osd']
 - debug: msg={{ cleanup_ceph_block_devices }}
@@ -68,7 +54,6 @@
 
 - name: Reboot Required
   shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
-  ignore_errors: true
   register: reboot_required
   async: 120
   poll: 0
@@ -79,4 +64,5 @@
 
 - meta: flush_handlers
   when: inventory_hostname in groups['all']
+
 

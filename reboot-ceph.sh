@@ -1,7 +1,11 @@
 #!/bin/bash
 
-for i in $(seq 71 77)
+root_pass="changeme"
+
+for i in $(seq 1 6)
 do
-    ssh root@192.168.1.$i reboot
+
+    sshpass -p "$root_pass" ssh -o StrictHostKeyChecking=no root@192.168.2.19$i "reboot"
+
 done
 

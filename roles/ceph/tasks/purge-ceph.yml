@@ -6,42 +6,9 @@
 #  when: print_debug == true
 
 
-#- name: Get FSID for Setting Fact
-#  shell: |
-#    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-#  register: get_fsid
-#  ignore_errors: true
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true and inventory_hostname in groups['control']
-#
-#
-#- name: Set Fact for FSID
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
-#  ignore_errors: true
-#  delegate_to: "{{ item }}"
-#  delegate_facts: True
-#  with_items:
-#    - "{{ groups['mon'] }}"
-#    - "{{ groups['osd'] }}"
-#  when: inventory_hostname in groups['control']
-#
-#
-#- name: Set Fact for cephadm_cmd Command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-#  ignore_errors: true
-#  delegate_to: "{{ item }}"
-#  delegate_facts: true
-#  with_items:
-#    - "{{ groups['mon'] }}"
-#    - "{{ groups['osd'] }}"
-#  when: inventory_hostname in groups['control']
-
-
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
 - name: Remove the Ceph Cluster

@@ -1,35 +1,7 @@
-#---
-#- name: Get FSID for Setting Fact
-#  shell: |
-#    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
-#  register: get_fsid
-#  when: inventory_hostname in groups['control']
-#- debug: msg={{ get_fsid.stdout }}
-#  when: print_debug == true and inventory_hostname in groups['control']
-## [ Get the Name of MGR Node ]
-## ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
-#
-#
-#- name: Set Fact for FSID
-#  set_fact:
-#    _fsid: "{{ get_fsid.stdout }}"
-#  delegate_to: "{{ item }}"
-#  delegate_facts: True
-#  with_items: "{{ groups['all'] }}"
-#  when: inventory_hostname in groups['control']
-#
-#
-#- name: Set Fact for Cephadm Command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
-#  delegate_to: "{{ item }}"
-#  delegate_facts: True
-#  with_items: "{{ groups['all'] }}"
-#  when: inventory_hostname in groups['control']
-
-
+---
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
+  when: inventory_hostname in groups['control']
 
 
 - name: Unlabel the MGR/MDS/Mon Nodes with Its Role
@@ -40,9 +12,9 @@
   delegate_to: "{{ groups['mon'][0] }}"
   delegate_facts: True
   register: ceph_nodes_unlabeled
-  when: inventory_hostname != ceph.control_node
+  when: inventory_hostname != _ceph.control_node
 - debug: msg={{ ceph_nodes_unlabeled }}
-  when: print_debug == true and inventory_hostname != ceph.control_node
+  when: print_debug == true and inventory_hostname != _ceph.control_node
 # ceph orch daemon stop node-exporter.rk9-node01  # ceph-exporter,crash,mon,mgr
 # ceph orch apply {{ item }} "1 rk9-node01"
 
@@ -58,9 +30,9 @@
   delegate_facts: True
   register: cluster_hosts_removed
   ignore_errors: true
-  when: inventory_hostname != ceph.control_node
+  when: inventory_hostname != _ceph.control_node
 - debug: msg={{ cluster_hosts_removed }}
-  when: print_debug == true and inventory_hostname != ceph.control_node
+  when: print_debug == true and inventory_hostname != _ceph.control_node
 # ceph orch host ls
 # ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
 
@@ -71,9 +43,9 @@
     cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
   ignore_errors: true
   register: ceph_cluster_removed
-  when: inventory_hostname != ceph.control_node
+  when: inventory_hostname != _ceph.control_node
 - debug: msg={{ ceph_cluster_removed }}
-  when: print_debug == true and inventory_hostname != ceph.control_node
+  when: print_debug == true and inventory_hostname != _ceph.control_node
 
 
 - name: Reboot Required
@@ -84,11 +56,11 @@
   poll: 0
   notify:
     - Waiting for Server to Come Back after Restart
-  when: print_debug == true and inventory_hostname != ceph.control_node
+  when: print_debug == true and inventory_hostname != _ceph.control_node
 
 
 - meta: flush_handlers
-  when: print_debug == true and inventory_hostname != ceph.control_node
+  when: print_debug == true and inventory_hostname != _ceph.control_node
 
 
 # [ Command Examples ]

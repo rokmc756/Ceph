@@ -1,0 +1,28 @@
+- name: Increase Max PGs per OSD
+  shell: |
+    ceph config set mon mon_max_pg_per_osd 600
+  register: max_pgs_increased
+- debug: msg={{ max_pgs_increased }}
+  when: print_debug == true
+  # 300
+
+
+- name: Create Pool for Data
+  shell: |
+    ceph osd pool create {{ item.name }}_data {{ item.pg_count }}
+  register: pool_data_created
+  with_items: "{{ _cephfs.pool }}"
+- debug: msg={{ pool_data_created }}
+  when: print_debug == true
+  # ceph osd pool create {{ item.name }} {{ item.pg_count }}
+
+
+- name: Create Pool for Metadata
+  shell: |
+    ceph osd pool create {{ item.name }}_metadata {{ item.pg_count }}
+  register: pool_metadata_created
+  with_items: "{{ _cephfs.pool }}"
+- debug: msg={{ pool_metadata_created }}
+  when: print_debug == true
+  # ceph osd pool create {{ item.name }} {{ item.pg_count }}
+

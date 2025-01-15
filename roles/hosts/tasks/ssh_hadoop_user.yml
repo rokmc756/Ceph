@@ -1,0 +1,101 @@
+---
+- name: Create .bash_history if Not Exist
+  become: true
+  become_user: "{{ sudo_user }}"
+  copy:
+    dest: ~/.bash_history
+    content: ""
+    force: no
+
+
+- name: Add Sudo Line to bash History
+  become: true
+  become_user: "{{ sudo_user }}"
+  lineinfile:
+    dest: ~/.bash_history
+    line: "sudo /bin/bash --login"
+    state: present
+
+
+- name: Check .ssh Local Directory Exists
+  become: true
+  become_user: "{{ sudo_user }}"
+  stat:
+    path: ~/.ssh
+  register: ssh_user_directory_exists_check
+
+
+- name: Create ~/.ssh Directory in "{{ sudo_user }}" User Home Directory
+  become: true
+  become_user: "{{ sudo_user }}"
+  file:
+    path: "~/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ sudo_user }}"
+    group: "{{ sudo_group }}"
+  register: ssh_user_directory_creation
+  when: ssh_user_directory_exists_check is defined and ssh_user_directory_exists_check.stat.exists == false
+
+
+- name: Check .ssh Key File Exists
+  become: true
+  become_user: "{{ sudo_user }}"
+  stat:
+    path: "~/.ssh/{{ item }}"
+  register: ssh_user_key_file_exists_check
+  with_items:
+    - "{{ ssh_key_filename }}"
+    - "{{ ssh_key_filename }}.pub"
+
+
+- name: Adding the Fingerprint
+  become: true
+  become_user: "{{ sudo_user }}"
+  shell: "ssh-keyscan -t rsa {{ item }} >> ~/.ssh/known_hosts"
+  register: ssh_user_fingerprint_add
+  with_items:
+    - "{{ groups['all'] }}"
+
+
+- name: Generate ssh Key of "{{ sudo_user }}" User on Local Machine
+  become: true
+  become_user: "{{ sudo_user }}"
+  shell: "/usr/bin/ssh-keygen -t rsa -f ~/.ssh/{{ssh_key_filename}} -P ''"
+  register: ssh_user_key_creation
+  when:
+    - ssh_user_key_file_exists_check is defined and ssh_user_key_file_exists_check.results[0].stat.exists == false and ssh_user_key_file_exists_check.results[1].stat.exists == false
+  failed_when: ssh_user_key_creation.rc != 0
+
+
+- name: Distribute the ssh Key of "{{ sudo_user }}" User to the Remote Hosts
+  become: true
+  become_user: "{{ sudo_user }}"
+  shell: "sshpass -p \"{{sudo_user_pass}}\" ssh-copy-id -i ~/.ssh/{{ ssh_key_filename }}.pub \"{{ sudo_user }}@{{ item }}\""
+  register: ssh_copy_user_id_execution
+  with_items:
+    - "{{ groups['all'] }}"
+  failed_when:
+    - ssh_copy_user_id_execution.rc != 0
+
+
+- name: Add User to "{{ wheel_group }}" Group
+  shell: usermod -aG "{{ wheel_group }}" hadoop
+  args:
+    executable: /bin/bash
+
+
+- name: Check ssh to Remote Hosts Works
+  become: true
+  become_user: "{{ sudo_user }}"
+  shell: "hostname; id"
+  register: ssh_connection_test
+  failed_when: ssh_connection_test.rc != 0
+
+
+- name: Print the Connectivity Test Results
+  become: true
+  become_user: "{{ sudo_user }}"
+  debug:
+    var: ssh_connection_test.stdout_lines
+

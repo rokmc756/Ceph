@@ -1,84 +1,82 @@
 ---
-# For now fail if it's not suppoted OS
 - name: Check OS
-  fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
+  fail: msg="{{ ansible_distribution }} is Not Supported!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 
-- name: Set facts for network and packages informations for Linux Distribution
+- name: Set Facts for Network and Packages Informations
   import_tasks: set-ceph-facts.yml
-  tags:
-    - install
-    - uninstall
-    - upload
-    - init
-    - purge
-    - add-ceph
-    - remove-ceph
-    - add-osd
-    - remove-osd
+  tags: install, uninstall, upload, download, init, purge, add, remove, enable, disable
 
 
-- name: Upload Cephadm Binary
-  import_tasks: upload-cephadm-bin.yml
-  tags: upload
-  when:
-    - upload_cephadm == true and inventory_hostname not in groups['clients']
-    - ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+- name: Enable Ceph Software Package Repo
+  import_tasks: enable-ceph-repo.yml
+  tags: enable
+  when: ( repo is defined and repo == true )
 
 
-- name: Install Ceph Software
-  import_tasks: install-ceph.yml
+- name: Install Ceph Software Packages
+  import_tasks: install-pkgs.yml
   tags: install
-  when: install_ceph == true and inventory_hostname not in groups['clients']
+  when: ( pkgs is defined and pkgs == true )
 
 
 - name: Initialize Ceph
   import_tasks: init-ceph.yml
   tags: init
-  when: init_ceph == true and inventory_hostname in groups['control']
+  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['control']
 
 
 - name: Add Ceph Mon/MGR/MDS Nodes
   import_tasks: add-ceph-nodes.yml
-  tags: add-ceph
-  when: add_ceph_nodes == true and inventory_hostname in groups['mon']
+  tags: add
+  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['mon']
 
 
 - name: Add OSD Nodes
   import_tasks: add-osd-nodes.yml
-  tags: add-osd
-  when: add_osd_nodes == true and inventory_hostname not in groups['clients']
+  tags: add
+  when: ( osd is defined and osd == true )
 
 
 - name: Remove OSD Nodes
   import_tasks: remove-osd-nodes.yml
-  tags: remove-osd
-  when: remove_osd_nodes == true and inventory_hostname not in groups['clients']
+  tags: remove
+  when: ( osd is defined and osd == true )
 
 
 - name: Remove Ceph Mon/MGR/MDS Nodes
   import_tasks: remove-ceph-nodes.yml
-  tags: remove-ceph
-  when: remove_ceph_nodes == true and inventory_hostname in groups['mon']
+  tags: remove
+  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['mon']
 
 
 - name: Purge Ceph Cluster
   import_tasks: purge-ceph.yml
   tags: purge
-  when: purge_ceph == true and ( inventory_hostname in groups['mon'] or inventory_hostname in groups['osd'] )
+  when: ( ceph is defined and ceph == true )
 
 
 - name: Uninstall Ceph Software
-  import_tasks: uninstall-ceph.yml
+  import_tasks: uninstall-pkgs.yml
   tags: uninstall
-  when: uninstall_ceph == true and inventory_hostname not in groups['clients']
+  when: ( pkgs is defined and pkgs == true )
+
+
+- name: Disable Ceph Package Repo
+  import_tasks: disable-ceph-repo.yml
+  tags: disable
+  when: ( repo is defined and repo == true )
+
+
+- name: Cleanup Remaining Gabages
+  import_tasks: cleanup-remaining-garbages.yml
+  tags: clean, destroy
+  when: ( garbage is defined and garbage == true )
 
 
 - name: Remove Cephadm Binary
   import_tasks: remove-cephadm-bin.yml
   tags: uninstall
-  when:
-    - remove_cephadm_bin is defined and remove_cephadm_bin == true and inventory_hostname not in groups['clients']
-    - ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+  when: ( cephadm is defined and cephadm == true )
 

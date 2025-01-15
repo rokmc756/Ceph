@@ -1,0 +1,47 @@
+---
+- name: Create a Pool Named tpool01 with Placement Groups Count 100
+  shell: |
+    ceph osd pool create {{ item.name }} {{ item.pg_count }}
+  register: rbd_pool_created
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ rbd_pool_created }}
+  when: print_debug == true
+
+
+- name: List Available Pools to Confirm It was Created
+  shell: |
+    ceph osd lspools
+  register: ceph_pool_listed
+- debug: msg={{ ceph_pool_listed }}
+  when: print_debug == true
+
+
+# Pools need to be associated with an application before use.
+# Pools that will be used with CephFS or pools that are automatically
+# created by RGW are automatically associated
+- name: Enable Pool for CephFS Filesystem
+  shell: |
+    ceph osd pool application enable {{ item.name }} cephfs
+  register: cephfs_pool_enabled
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ cephfs_pool_enabled }}
+  when: print_debug == true
+
+
+- name: Enable Pool for Rados Block Device
+  shell: |
+    ceph osd pool application enable {{ item.name }} rbd --yes-i-really-mean-it
+  register: rbd_pool_enabled
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ rbd_pool_enabled }}
+  when: print_debug == true
+
+
+- name: Enable Pool for Rados Gateway
+  shell: |
+    ceph osd pool application enable {{ item.name }} rgw --yes-i-really-mean-it
+  register: rgw_pool_enabled
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ rgw_pool_enabled }}
+  when: print_debug == true
+

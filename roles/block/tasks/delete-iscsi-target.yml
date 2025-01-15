@@ -28,7 +28,7 @@
     executable: /bin/bash
   register: pool_disk_removed
   ignore_errors: true
-  with_items: "{{ iscsi.targets }}"
+  with_items: "{{ _iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ pool_disk_removed }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -46,7 +46,7 @@
     executable: /bin/bash
   register: nochap_auth
   ignore_errors: true
-  with_items: "{{ iscsi.initiators }}"
+  with_items: "{{ _iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ nochap_auth }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -64,7 +64,7 @@
     executable: /bin/bash
   register: iscsi_client_deleted
   ignore_errors: true
-  with_items: "{{ iscsi.initiators }}"
+  with_items: "{{ _iscsi.initiators }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_client_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -82,7 +82,7 @@
     executable: /bin/bash
   register: disk_deleted
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  loop: "{{ _iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ disk_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -93,14 +93,14 @@
     cmd: |
       cat <<EOF | {{ podman_iscsi_gw_cmd }} gwcli
       cd /iscsi-targets/{{ item.wwn }}-{{ hostvars[inventory_hostname]['ansible_hostname'] }}/gateways
-      delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ ceph.domain }} confirm=true
+      delete {{ hostvars[inventory_hostname]['ansible_hostname'] }}.{{ _ceph.domain }} confirm=true
       exit
       EOF
   args:
     executable: /bin/bash
   register: iscsi_target_deleted
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  loop: "{{ _iscsi.targets }}"
   when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_target_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -118,7 +118,7 @@
     executable: /bin/bash
   register: iscsi_target_deleted
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
+  loop: "{{ _iscsi.targets }}"
   when: inventory_hostname in groups
 - debug: msg={{ iscsi_target_deleted }}
   when: print_debug == true and inventory_hostname in groups['mon']
@@ -129,10 +129,10 @@
     ceph orch rm iscsi.{{ item.pg_name }}
   register: iscsi_gw_service_deleted
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
-  when: inventory_hostname in ceph.control_node
+  loop: "{{ _iscsi.targets }}"
+  when: inventory_hostname in _ceph.control_node
 - debug: msg={{ iscsi_gw_service_deleted }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in _ceph.control_node
 # ceph orch ps
 
 
@@ -141,9 +141,9 @@
     ceph tell mon.\* injectargs --mon-allow-pool-delete true
   register: delete_pool_allowed
   ignore_errors: true
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in _ceph.control_node
 - debug: msg={{ delete_pool_allowed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in _ceph.control_node
 
 
 - name: Remove Pool
@@ -153,21 +153,21 @@
   delegate_facts: True
   register: pool_removed
   ignore_errors: true
-  loop: "{{ iscsi.targets }}"
-  when: inventory_hostname in ceph.control_node
+  loop: "{{ _iscsi.targets }}"
+  when: inventory_hostname in _ceph.control_node
 - debug: msg={{ pool_removed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in _ceph.control_node
 
 
 - name: Remove iSCSI Gateway
   shell: |
-    ceph dashboard iscsi-gateway-rm {{ item }}.{{ ceph.domain }}
+    ceph dashboard iscsi-gateway-rm {{ item }}.{{ _ceph.domain }}
   register: iscsi_gw_removed
   ignore_errors: true
   with_items: "{{ groups['mon'] }}"
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in _ceph.control_node
 - debug: msg={{ iscsi_gw_removed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in _ceph.control_node
 
 
 - name: Delete iSCSI Gateway Users
@@ -175,9 +175,10 @@
     for i in $(ceph auth list | grep client.iscsi); do ceph auth del $i; done
   register: iscsi_gw_users_deleted
   ignore_errors: true
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in _ceph.control_node
 - debug: msg={{ iscsi_gw_users_deleted }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in _ceph.control_node
+
 
 # https://github.com/ceph/ceph-iscsi/issues/99
 #

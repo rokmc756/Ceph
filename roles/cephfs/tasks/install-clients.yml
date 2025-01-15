@@ -7,38 +7,22 @@
 # https://enterprise-support.nvidia.com/s/article/bring-up-ceph-rdma---developer-s-guide
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 
-# apt-get install ceph-common
-# scp root@192.168.0.71:/etc/ceph/ceph.client* .
-#  cp ceph.client.admin.keyring /etc/ceph/
-# mv /etc/ceph/ceph.client.admin.keyring /etc/ceph/ceph.client.ubt22-client01.keyring
-#  scp root@192.168.0.71:/etc/ceph/ceph.conf .
-#  cp ceph.conf /etc/ceph/
-#  chmod 644 /etc/ceph/ceph.conf
-#  mkdir -p /mnt/cephfs
-#  mount -t ceph 192.168.0.71:6789,192.168.0.72:6789,192.168.0.173:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
-# root@ubt22-client01:/etc/ceph# mount -t ceph 192.168.1.71:6789:/ /mnt/cephfs -o name=ubt22-client01,fs=cephfs-p01-fs01
-# mount error: no mds server is up or the cluster is laggy
 
-
-- name: Upload Cephadm Binary
-  import_tasks: upload-cephadm-bin.yml
-  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-
-
-- name: Add Repo for Ceph {{ ceph.project_name }} for RedHat/Rocky/CentOS
-  shell: |
-    {{ cephadm.base_path }}/cephadm add-repo --release {{ ceph.project_name }}
-  register: add_repo
-  when: ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
-- debug: msg={{ add_repo }}
-  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and ansible_distribution_major_version|int >= 9
+- name: Enable Ceph Repo
+  import_tasks: enable-ceph-repo.yml
+  when:
+    - print_debug == true
+    -  ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and  ansible_distribution_major_version|int >= 9
 
 
 - name: Install CephFS Client Packages
-  package: name={{item}} state=present
+  package: name={{ item }} state=present
+  register: install_cephfs_pkgs
   with_items:
     - "ceph-common"
     - "ceph-fuse"
+- debug: msg={{ install_cephfs_pkgs }}
+  when: print_debug == true
 
 
 - name: Copy Ceph Configuration for CephFS Clients
@@ -51,13 +35,12 @@
       - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: ceph_config_dir_created
+  register: create_ceph_config_dir
   with_items:
     - "/etc/ceph/ceph.conf"
     - "/etc/ceph/ceph.client.admin.keyring"
-  when: inventory_hostname in groups['clients']
-- debug: msg={{ ceph_config_dir_created }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+- debug: msg={{ create_ceph_config_dir }}
+  when: print_debug == true
 
 
 - name: Copy Ceph Configuration for CephFS Clients
@@ -70,68 +53,64 @@
       - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
   delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   delegate_facts: true
-  register: ceph_config_dir_created
+  register: create_ceph_config_dir
   with_items:
-    - "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
-- debug: msg={{ ceph_config_dir_created }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+    - "{{ _cephfs.fs }}"
+- debug: msg={{ create_ceph_config_dir }}
+  when: print_debug == true
 
 
-- name: Change Permission for /etc/ceph/ceph.conf
+- name: Change Permission
   shell: |
-    chmod 644 /etc/ceph/ceph.conf
-    chmod 644 /etc/ceph/ceph.client.admin.keyring
-  register: ceph_conf_perm_changed
-  when: inventory_hostname in groups['clients']
-- debug: msg={{ ceph_conf_perm_changed }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+    chmod 644 /etc/ceph/{{ item }}
+  register: change_ceph_conf_perm
+  with_items:
+    - "ceph.conf"
+    - "ceph.client.admin.keyring"
+- debug: msg={{ change_ceph_conf_perm }}
+  when: print_debug == true
 
 
 - name: Change Permission for /etc/ceph/ceph.client.*.keyring
   shell: |
     chmod 644 /etc/ceph/ceph.client.{{ item.name }}.keyring
-  register: ceph_client_keyring_perm_changed
+  register: change_ceph_client_keyring_perm
   with_items:
-    - "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
-- debug: msg={{ ceph_client_keyring_perm_changed }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+    - "{{ _cephfs.fs }}"
+- debug: msg={{ change_ceph_client_keyring_perm }}
+  when: print_debug == true
 
 
 - name: Create Directory to Mount CephFS Client
   shell: |
     mkdir {{ item.mount_dir }}
   register: create_cephfs_dir
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ create_cephfs_dir  }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
-# mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} \
-# -o name={{ item.name }},fs={{ item.name }},secret=`cat /etc/ceph/ceph.client.{{ item.name }}.keyring | grep key | awk '{print $3}'`
 - name: Mount Stateless CephFS Clients
   shell: |
     mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
   register: mount_cephfs_dir
-  with_items: "{{ cephfs.fs }}"
-  when: print_debug == true and inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
+  when: print_debug == true
 - debug: msg={{ mount_cephfs_dir }}
-  when: print_debug == true and inventory_hostname in groups['clients']
-# mount -v -t ceph splunk@.splunkfs=/ -o secret=$KEY
-# mount -t ceph splunk@.splunkfs=/ /mnt/splunk -o secretfile=/etc/ceph/ceph.client.splunk.key
-# mount -v -t ceph $HOST:6789:/ /mnt/splunk -o name=splunk,fs=splunkfs,secretfile=/etc/ceph/ceph.client.splunk.key
-# mount -v -t ceph splunk@$FSID.splunkfs=/ /mnt/splunk -o 'secretfile=/etc/ceph/ceph.client.splunk.key,mon_addr=$IP'
+  when: print_debug == true
 
 
+# [ Mount Examples ]
 # mount.ceph admin@09afe574-fa70-11ee-80b0-00505693d59b.cephfs-p01-fs01=/ /mnt/cephfs/
 # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+#
 # 10.66.10.1:6789,10.66.10.4:6789,10.66.10.6:6789:/       /mnt/cephfs     ceph    name=vmuser,secretfile=/etc/ceph/vmuser.secret,noatime,_netdev  0       2
 # ceph-fuse -n client.{{ item.name }} {{ item.mount_dir }}
 # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/volumes {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
 # mount -t ceph 192.168.1.71:6789,192.168.1.72:6789,192.168.1.73:6789:/temp {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
 # ,secret=`cat /etc/ceph/ceph.client.admin.keyring | grep key | awk '{print $3}'`
+# mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} \
+# -o name={{ item.name }},fs={{ item.name }},secret=`cat /etc/ceph/ceph.client.{{ item.name }}.keyring | grep key | awk '{print $3}'`
 
 
 - name: Check if CephFS Directory is Mounted
@@ -140,10 +119,9 @@
     ls -al {{ item.mount_dir }}
   register: check_cephfs_mounted
   with_items:
-    - "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+    - "{{ _cephfs.fs }}"
 - debug: msg={{ check_cephfs_mounted  }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 
 - name: Creat Text File with the Content
@@ -153,26 +131,12 @@
     echo "Hello World in {{ item.name }}" >  {{ item.mount_dir }}/{{ item.name }}.txt
     cat {{ item.mount_dir }}/{{ item.name }}.txt
   register: create_cephfs_file
-  with_items: "{{ cephfs.fs }}"
-  when: inventory_hostname in groups['clients']
+  with_items: "{{ _cephfs.fs }}"
 - debug: msg={{ create_cephfs_file }}
-  when: print_debug == true and inventory_hostname in groups['clients']
+  when: print_debug == true
 
 # Need to test switch mode of iptime in order to expand ports from 5 to 10
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-creating-ceph-file-systems
 # https://www.ibm.com/docs/en/storage-ceph/6?topic=system-mounting-ceph-file-as-kernel-client
-
-
-#[root@rk9-node01 ~]# ceph health detail
-#HEALTH_WARN insufficient standby MDS daemons available; Reduced data availability: 1 pg inactive; 14 daemons have recently crashed; 12 slow ops, oldest one blocked for 3183 sec, osd.7 has slow ops
-#[WRN] MDS_INSUFFICIENT_STANDBY: insufficient standby MDS daemons available
-#    have 0; want 1 more
-#[WRN] PG_AVAILABILITY: Reduced data availability: 1 pg inactive
-#    pg 1.0 is stuck inactive for 53m, current state unknown, last acting []
-#[WRN] RECENT_CRASH: 14 daemons have recently crashed
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T05:12:24.529620Z
-#    mds.myfs.rk9-node03.zfdrvq crashed on host rk9-node03 at 2024-04-15T14:20:04.912266Z
-#    mgr.rk9-node02.efrvdh crashed on host rk9-node02 at 2024-04-15T14:26:45.042720Z
-#    ~~ snip
-#[WRN] SLOW_OPS: 12 slow ops, oldest one blocked for 3183 sec, osd.7 has slow ops
+# ceph health detail
 

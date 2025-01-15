@@ -1,0 +1,57 @@
+- name: Mark Down for Filesystem
+  shell: |
+    ceph fs set {{ item.name }} down true
+  register: set_cephfs_down
+  ignore_errors: true
+  with_items: "{{ _cephfs.fs }}"
+- debug: msg={{ set_cephfs_down }}
+  when: print_debug == true
+
+
+- name: Fail Filesystem
+  shell: |
+    ceph fs fail {{ item.name }}
+  register: fail_cephfs
+  ignore_errors: true
+  with_items: "{{ _cephfs.fs }}"
+- debug: msg={{ fail_cephfs }}
+  when: print_debug == true
+
+
+- name: Check Active Status
+  shell: |
+    ceph fs status
+  register: check_fs_status
+  ignore_errors: true
+- debug: msg={{ check_fs_status }}
+  when: print_debug == true
+
+
+#- name: Remove Sub Volumnes of Ceph Filesystem
+#  shell: |
+#    ceph fs subvolume rm {{ item.name }} {{ item.name }}-subvol01
+#  register: remove_cephfs_subvol
+#  ignore_errors: true
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ remove_cephfs_subvol }}
+#  when: print_debug == true
+
+
+- name: Remove Ceph Filesystem
+  shell: |
+    ceph fs rm {{ item.name }} --yes-i-really-mean-it
+  register: remove_cephfs
+  ignore_errors: true
+  with_items: "{{ _cephfs.fs }}"
+- debug: msg={{ remove_cephfs }}
+  when: print_debug == true
+
+
+- name: Verify Filesystem Has Been Removed
+  shell: |
+    ceph fs ls
+  register: check_fs_removed
+  ignore_errors: true
+- debug: msg={{ check_fs_removed }}
+  when: print_debug == true
+

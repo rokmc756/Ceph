@@ -1,0 +1,85 @@
+- name: Uninstall Ceph Conmon Packages
+  package:
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: true
+  with_items: "{{ ceph_pkgs }}"
+# nobest: true
+
+
+#- name: Remove the Ceph Software Package Repository
+#  shell: |
+#    /root/cephadm rm-repo
+#  register: remove_ceph_repo
+#  ignore_errors: true
+#  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky"
+#- debug: msg={{ remove_ceph_repo }}
+#  when: print_debug == true and ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" )
+
+
+#- name: Cleanup the Ceph Configuration Files
+#  file:
+#    path: "{{ item }}"
+#    state: absent
+#  register: cleanup_ceph_config
+#  with_items:
+#    - /var/log/ceph
+#    - /var/run/ceph
+#    - /var/lib/ceph
+#    - /run/ceph
+#    - /etc/ceph
+#- debug: msg={{ cleanup_ceph_config }}
+#  when: print_debug == true
+#
+#
+##- name: Kill processes of conmon and podman
+##  shell: |
+##    killall conmon
+##    killall podman
+##  register: kill_conmon_podman
+##  ignore_errors: true
+##- debug: msg={{ kill_conmon_podman }}
+##  when: print_debug == true
+#
+#
+#- name: Remove LVMs
+#  shell: |
+#    for vg in $(`vgs | grep ceph | awk '{print $1}'`); do vgremove $vg -f ;done
+#    for dm in $(fdisk -l | grep mapper | grep ceph | awk '{print $2}' | cut -d : -f 1); do dmsetup remove $dm ;done
+#  register: remove_lvms
+#  ignore_errors: true
+#  when: inventory_hostname in groups['osd']
+#- debug: msg={{ remove_lvms }}
+#  when: inventory_hostname in groups['osd'] and print_debug == true
+#
+#
+#- name: Cleanup the Ceph Block Devices
+#  shell: |
+#    pvremove -y -ff {{ item }}
+#    dd if=/dev/zero of={{ item }} bs=4096 count=1 conv=notrunc
+#    nvme format {{ item }}
+#    wipefs -a {{ item }}
+#    sgdisk --zap-all --delete {{ item }}
+#    blkdiscard {{ item }}
+#    rm -f 90-ceph-*-haproxy.conf
+#  register: cleanup_ceph_block_devices
+#  ignore_errors: true
+#  with_items: "{{ nvme_device_array }}"
+#  when: inventory_hostname in groups['osd']
+#- debug: msg={{ cleanup_ceph_block_devices }}
+#  when: inventory_hostname in groups['osd'] and print_debug == true
+#
+#
+#- name: Reboot Required
+#  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
+#  register: reboot_required
+#  async: 120
+#  poll: 0
+#  notify:
+#    - Waiting for Server to Come Back after Restart
+#  when: inventory_hostname in groups['all']
+#
+#
+#- meta: flush_handlers
+#  when: inventory_hostname in groups['all']
+
