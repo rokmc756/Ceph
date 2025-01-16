@@ -1,67 +1,64 @@
 ---
-# For now fail if it's not suppoted OS
 - name: Check OS ( NFS )
   fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
   when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
 
 
-- name: Check if Single and Ganesha Both are Enabled to Deploy in groups_vars/all.yml
-  fail: msg="Stopped due to both Single and Ganesha Settings enabled in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
-  when: enable_sinlge_nfs == true and enable_nfs_ganesha == true
-  # when: ceph.protocol.nfs.single == true and ceph.protocol.nfs.ganesha == true
-
-
 - name: Set facts for Network and Packages Informations
   import_tasks: set-nfs-facts.yml
-  tags:
-    - install
-    - uninstall
-
-
-- name: Deploy Ganesha NFS Cluster
-  import_tasks: install-ganesha.yml
-  tags: install
-  when: ( enable_nfs_ganesha is defined and enable_nfs_ganesha == true ) and inventory_hostname not in groups['clients']
-  # when: ceph.protocol.nfs.ganesha == true and inventory_hostname not in groups['clients']
+  tags: install, uninstall
 
 
 - name: Deploy Single NFS Cluster
   import_tasks: install-single.yml
   tags: install
-  when: ( enable_single_nfs is defined and enable_single_nfs == true ) and inventory_hostname not in groups['clients']
-  # when: ceph.protocol.nfs.single == true and inventory_hostname not in groups['clients']
+  when: ( single is defined and single == true ) and inventory_hostname in groups['control']
 
 
-- name: Check if Single and Ganesha Both are Enabled to Install Clients in groups_vars/all.yml
-  fail: msg="Stopped due to both Single and Ganesha Settings enabled to install clients in groups_vars/all.yml. Please Choose One of Them and Rerun playbook"
-  when: (( enable_single_nfs is defined and enable_single_nfs == true ) or ( enable_nfs_ganesha is defined and enable_nfs_ganesha == true )) and (( enable_single_client is defined and enable_single_client == true ) or ( enable_multi_client is defined and enable_multi_client ))
-  # when: ( ceph.protocol.nfs.single == true or ceph.protocol.nfs.ganesha == true ) and ( ceph.client.nfs.single == true or ceph.client.nfs.ganesha == true )
-
-
-- name: Install NFS Clients
-  import_tasks: install-clients.yml
+- name: Deploy Ganesha NFS Cluster
+  import_tasks: install-ganesha.yml
   tags: install
-  when: (( enable_single_client is defined and enable_single_client == true) or ( enable_multi_client is defined and enable_multi_client == true )) and inventory_hostname in groups['clients']
-  # when: ( ceph.client.nfs.ganesha == true or ceph.client.nfs.single == true ) and inventory_hostname in groups['clients']
+  when: ( ganesha is defined and ganesha == true ) and inventory_hostname in groups['control']
 
 
-- name: Uninstall NFS Clients
-  import_tasks: uninstall-clients.yml
+#- name: Deploy Single NFS Clients
+#  import_tasks: install-single.yml
+#  tags: install
+#  when: ( single is defined and single == true ) and inventory_hostname not in groups['clients']
+
+
+- name: Install NFS Single Clients
+  import_tasks: install-single-clients.yml
+  tags: install
+  when: ( sclient is defined and sclient == true) and inventory_hostname in groups['clients']
+
+
+- name: Install NFS Single Clients
+  import_tasks: install-ganesha-clients.yml
+  tags: install
+  when: ( mclient is defined and mclient == true) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall NFS Ganesha Clients
+  import_tasks: uninstall-ganesha-clients.yml
   tags: uninstall
-  when: (( disable_single_client is defined and disable_single_client == true ) or ( disable_multi_client is defined and disable_multi_client == true )) and inventory_hostname in groups['clients']
-  # when: ( ceph.client.nfs.ganesha == true or ceph.client.nfs.single == true ) and inventory_hostname in groups['clients']
+  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall NFS Single Clients
+  import_tasks: uninstall-single-clients.yml
+  tags: uninstall
+  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
 
 
 - name: Destroy Ganesha NFS Cluster
   import_tasks: uninstall-ganesha.yml
   tags: uninstall
-  when: ( disable_nfs_ganesha is defined and disable_nfs_ganesha == true ) and inventory_hostname not in groups['clients']
-  # when: ceph.protocol.nfs.ganesha == true and inventory_hostname not in groups['clients']
+  when: ( ganesha is defined and ganesha == true ) and inventory_hostname in groups['control']
 
 
 - name: Destroy Single NFS Cluster
   import_tasks: uninstall-single.yml
   tags: uninstall
-  when: ( disable_single_nfs is defined and disable_single_nfs == true ) and inventory_hostname not in groups['clients']
-  # when: ceph.protocol.nfs.single == true and inventory_hostname not in groups['clients']
+  when: ( single is defined and single == true ) and inventory_hostname in groups['control']
 

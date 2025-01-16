@@ -36,43 +36,43 @@
 - name: Install MC S3 Client Packages
   import_tasks: install-mc-client.yml
   tags: install
-  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
 
 
 - name: Install S3 Single Clients
   import_tasks: install-s3-single-clients.yml
   tags: install
-  when: ( s3sclient is defined and s3sclient == true ) and inventory_hostname in groups['clients']
+  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
 
 
 - name: Install S3 Multi Clients
   import_tasks: install-s3-multi-clients.yml
   tags: install
-  when: ( s3mclient is defined and s3mclient == true ) and inventory_hostname in groups['clients']
+  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall S3 Multi Clients
   import_tasks: uninstall-s3-multi-clients.yml
   tags: uninstall
-  when: ( s3mclient is defined and s3mclient == true ) and inventory_hostname in groups['clients']
+  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall S3 Single Clients
   import_tasks: uninstall-s3-single-clients.yml
   tags: uninstall
-  when: ( s3sclient is defined and s3sclient == true ) and inventory_hostname in groups['clients']
+  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
 
 
 - name: Delete S3 Base Directory
   import_tasks: delete-s3-base-dir.yml
   tags: uninstall
-  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall MC S3 Client Packages
   import_tasks: uninstall-mc-client.yml
   tags: uninstall
-  when: (( s3sclient is defined and s3sclient == true ) or ( s3mclient is defined and s3mclient == true )) and inventory_hostname in groups['clients']
+  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
 
 
 - name: Remove Multi System User

@@ -1,0 +1,41 @@
+---
+- name: Delete Text File
+  file:
+    state: absent
+    path: "{{ item.mount_dir }}/test-nfs01.txt"
+  register: delete_nfs_files
+  ignore_errors: true
+  with_items: "{{ _nfs.client }}"
+  when: ( disable_multi_client is defined and disable_multi_client == true )
+- debug: msg={{ delete_nfs_files }}
+  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
+
+
+- name: Umount NFS Directory
+  mount:
+    path: "{{ item.mount_dir }}"
+    state: unmounted
+  retries: 10
+  delay: 10
+  register: umount_nfs_dir
+  ignore_errors: true
+  with_items: "{{ _nfs.client }}"
+- debug: msg={{ umount_nfs_dir }}
+  when: print_debug == true and
+  # umount -f -l {{ smb.fs.mount_dir }}
+
+
+- name: Delete Directory to Mount NFS
+  file:
+    state: absent
+    path: "{{ item.mount_dir }}"
+  register: delete_nfs_dir
+  ignore_errors: true
+  with_items: "{{ _nfs.client }}"
+- debug: msg={{ delete_nfs_dir }}
+  when: print_debug == true
+
+
+- name: Uninstall NFS Client Packages
+  package: name={{ nfs_client_pkg_name }} state=absent
+

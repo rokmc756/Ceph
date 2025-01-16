@@ -142,89 +142,42 @@ _ceph:
 ### 04) - Initialize Linux Hosts
 - Initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
-$ vi init-hosts.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: init-hosts }
-
-$ make host r=init s=all
+$ make hosts r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
 ### 05) Upload and Install Ceph Software into All Hosts.
 ```
-$ vi config-ceph.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: ceph }
-
-$ make ceph r=install
+$ make ceph r=install s=pkgs
 ```
 [![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
 
 
 ### 06) Initialize Ceph as Deploying MON and MGR services
 ```
-$ vi config-ceph.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: ceph }
-
-$ make ceph r=init
+$ make ceph r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/2DhiWXthQBU/hqdefault.jpg)](https://www.youtube.com/watch?v=2DhiWXthQBU)
 
 
 ### 07) Add Ceph Nodes for High Availablity
 ```
-$ vi config-ceph.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: ceph }
-
-$ make ceph r=add-ceph
+$ make ceph r=add s=ceph
 ```
 [![YouTube](http://i.ytimg.com/vi/I2lmJJWNGD8/hqdefault.jpg)](https://www.youtube.com/watch?v=I2lmJJWNGD8)
 
 
 ### 08) Add OSD nodes
 ```
-$ vi config-ceph.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: ceph }
-
-$ make ceph r=add-osd
+$ make ceph r=add s=osd
 ```
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
 ### 09) Create Pools and RBDs
 ```
-$ vi config-block.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: block }
-
+$ make block r=install s=pool
 $ make block r=install s=rbd
 ```
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
@@ -232,66 +185,30 @@ $ make block r=install s=rbd
 
 ### 10) Creating Ceph Filesystems and CephFS POSIX Clients
 ```
-$ vi config-block.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: cephfs }
-
-$ make cephfs r=install c=enable
-$ make ceph c=disable # or enable if cephfs is already created
+$ make cephfs r=install s=pool
+$ make cephfs r=install s=fs
+$ make cephfs r=install s=client
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
 
 ### 11) Deploy Multisite Rados Gateway
 ~~~
-$ vi config-rgw.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: radosgw }
-
-$ make rgw r=install s=multi
+$ make rgw r=install s=multisite
 ~~~
 [![YouTube](http://i.ytimg.com/vi/kblAiF7r0a0/hqdefault.jpg)](https://www.youtube.com/watch?v=kblAiF7r0a0)
 
 
 ### 12) Destroy Multisite Rados Gateway
 ~~~
-$ vi config-rgw.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: radosgw }
-
-$ make rgw r=uninstall s=multi
+$ make rgw r=uninstall s=multisite
 ~~~
 [![YouTube](http://i.ytimg.com/vi/138Y5FPVmjA/hqdefault.jpg)](https://www.youtube.com/watch?v=138Y5FPVmjA)
 
 
 ### 13) Deploy NFS Ganesha Cluster with a RGW
 ~~~
-
-$ vi config-rgw.yml
-    print_debug: true
-  roles:
-    - { role: radosgw }
-
-$ make rgw r=install s=single
-
-$ vi config-nfs.yml
-    print_debug: true
-  roles:
-    - { role: radosgw }
-    - { role: nfs }
-
+$ make radosgw r=install s=single
 $ make nfs r=install s=ganesha
 
 ~~~
@@ -300,25 +217,8 @@ $ make nfs r=install s=ganesha
 
 ### 14) Destory NFS Ganesha Cluser with single RGW
 ~~~
-$ vi config-nfs.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: nfs }
-
 $ make nfs r=uninstall s=ganesha
-
-$ vi config-rgw.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: radosgw }
-
-$ make rgw r=uninstall s=single
+$ make radosgw r=uninstall s=single
 ~
 
 ~~~
@@ -327,14 +227,6 @@ $ make rgw r=uninstall s=single
 
 ### 15) Deploy Single NFS Service
 ~~~
-$ vi config-nfs.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: nfs }
-
 $ make nfs r=install s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/A0yBCh9-w7c/hqdefault.jpg)](https://www.youtube.com/watch?v=A0yBCh9-w7c)
@@ -342,14 +234,6 @@ $ make nfs r=install s=single
 
 ### 16) Destroy Single NFS Service
 ~~~
-$ vi install.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: nfs }
-
 $ make nfs r=uninstall s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/dBvBt9ox8kY/hqdefault.jpg)](https://www.youtube.com/watch?v=dBvBt9ox8kY)
@@ -357,14 +241,6 @@ $ make nfs r=uninstall s=single
 
 ### 17) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
-$ vi config-block.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: block }
-
 $ make block r=install s=iscsi c=enable
 
 # In case that you need only disable or enable iscsi client if iscsi gateways are already created
@@ -376,14 +252,6 @@ $ make block r=install s=iscsi c=only
 
 ### 18) Destroy iSCSI Clients and Gateways
 ~~~
-$ vi config-block.yml
-- hosts: all
-  become: yes
-  vars:
-    print_debug: true
-  roles:
-    - { role: block }
-
 $ make block r=uninstall s=iscsi c=disable
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)

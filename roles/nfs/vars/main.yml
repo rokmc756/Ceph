@@ -1,4 +1,4 @@
-nfs:
+_nfs:
   cluster:
     - { name: "jtest-nfs01", pool: "jtest-nfs-pool01", fs: "jtest-nfs-fs01", virtual_ip: "{{ hostvars[groups['mon'][2]][_netdev].ipv4.address }}" }
   users:
@@ -13,7 +13,7 @@ nfs:
     - { cluster: "jtest-nfs01", pseudo_path: "/jtest-rgw-path01", bucket: "jbucket01", user_id: "jomoon", client_addr: "192.168.1.0/24", email: "rokmc756@naver.com", user_name: "jomoon", display_name: "jack.moon", access_key: "changeme", secret_key: "changeme" }
 
 
-ganesha:
+_ganesha:
   cluster:
     - { name: "jtest-ganesha01", pool: "jtest-ganesha-pool01", fs: "jtest-ganesha-fs01", virtual_ip: "192.168.1.88/24" }
   users:

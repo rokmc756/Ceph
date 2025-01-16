@@ -1,0 +1,52 @@
+- name:  Enable Devel Package Repository
+  shell: |
+    dnf config-manager --set-enabled devel
+  register: enable_devel_repo
+- debug: msg={{ enable_devel_repo }}
+  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' )
+
+
+- name: Install NFS Client Packages
+  package: name={{ nfs_client_pkg_name }} state=present
+
+
+- name: Create Directory to mount NFS
+  file:
+    path: "{{ item.mount_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+    recurse: yes
+  register: create_nfs_dir
+  with_items: "{{ _nfs.client }}"
+- debug: msg={{ create_nfs_dir }}
+  when: print_debug == true
+
+
+- name: Mount Ephemeral NFS volume
+  mount:
+    src: "{{ item.virtual_ip }}:{{ item.src }}"
+    path: "{{ item.mount_dir }}"
+    opts: ""
+    fstype: nfs
+    state: ephemeral
+  register: mount_nfs_dir
+  with_items: "{{ _nfs.client }}"
+- debug: msg={{ mount_nfs_dir }}
+  when: print_debug == true
+
+
+- name: Conditionally Create a File if it does not Exist
+  copy:
+    content: "Hellow Ceph NFS World!"
+    dest: "{{ item.mount_dir }}/test-nfs01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644
+  register: file_copied
+  with_items: "{{ _nfs.client }}"
+- debug: msg={{ file_copied }}
+  when: print_debug == true
+

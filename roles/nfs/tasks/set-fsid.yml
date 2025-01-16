@@ -3,9 +3,8 @@
   shell: |
     cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
   register: get_fsid
-  when: inventory_hostname in groups['control']
 - debug: msg={{ get_fsid.stdout }}
-  when: print_debug == true and inventory_hostname in groups['control']
+  when: print_debug == true
 
 
 - name: Set Fact for FSID
@@ -14,16 +13,14 @@
   delegate_to: "{{ item }}"
   delegate_facts: True
   with_items: "{{ groups['all'] }}"
-  when: inventory_hostname in groups['control']
 
 
 - name: Get the Name of MGR Node
   shell: |
     ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
   register: get_mgr_name
-  when: inventory_hostname in groups['control']
 - debug: msg={{ get_mgr_name.stdout }}
-  when: print_debug == true and inventory_hostname in groups['control']
+  when: print_debug == true
 
 
 - name: Set Fact for Cephadm Command
@@ -32,5 +29,4 @@
   delegate_to: "{{ item }}"
   delegate_facts: True
   with_items: "{{ groups['all'] }}"
-  when: inventory_hostname in groups['control']
 

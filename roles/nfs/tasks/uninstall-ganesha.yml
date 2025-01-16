@@ -1,4 +1,3 @@
-# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/5/html/file_system_guide/creating-custom-ceph-file-system-exports_fs
 - name: Set Ceph FSID
   import_tasks: set-fsid.yml
 
@@ -8,78 +7,72 @@
     {{ cephadm_cmd }} ceph nfs export rm {{ item.cluster }} {{ item.src }}
   register: delete_cephfs_nfs_exports
   ignore_errors: true
-  with_items: "{{ ganesha.export }}"
-  when: inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.export }}"
 - debug: msg={{ delete_cephfs_nfs_exports }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true
   # cephadm shell -- ceph nfs export rm {{ nfs.cephfs_name }} /ceph
 
 
 - name: Stop CephFS Metadata for NFS Service
   shell: |
     {{ cephadm_cmd }} ceph orch stop mds.{{ item.fs }}
-  register: cephfs_metadata_stopped
+  register: stop_cephfs_metadata
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ cephfs_metadata_stopped }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ stop_cephfs_metadata }}
+  when: print_debug == true
 
 
 - name: Remove CephFS Metadata for NFS Service
   shell: |
     {{ cephadm_cmd }} ceph orch rm mds.{{ item.fs }}
-  register: cephfs_metadata_removed
+  register: remove_cephfs_metadata
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ cephfs_metadata_removed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ remove_cephfs_metadata }}
+  when: print_debug == true
 
 
 - name: Destroy NFS Cluster
   shell: |
     {{ cephadm_cmd }} ceph nfs cluster rm {{ item.name }}
-  register: nfs_cluster_destroyed
+  register: destroy_nfs_cluster
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ nfs_cluster_destroyed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ destroy_nfs_cluster }}
+  when: print_debug == true
   # Need to check if .nfs pool should be removebal
 
 
 - name: Mark Filesystem Down
   shell: |
     {{ cephadm_cmd }} ceph fs set {{ item.fs }} down true
-  register: cephfs_marked_down
+  register: down_mark_cephfs
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ cephfs_marked_down }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ down_mark_cephfs }}
+  when: print_debug == true
 
 
 - name: Unjoin Filesystem into Ceph Cluster
   shell: |
     {{ cephadm_cmd }} ceph fs set {{ item.fs }} joinable false
-  register: cephfs_unjoined
+  register: unjoin_cephfs
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ cephfs_unjoined }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ unjoin_cephfs }}
+  when: print_debug == true
 
 
 - name: Fail Filesystem
   shell: |
     {{ cephadm_cmd }} ceph fs fail {{ item.fs }}
-  register: cephfs_failed
+  register: fail_cephfs
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ cephfs_failed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ fail_cephfs }}
+  when: print_debug == true
+
 # ceph mds stat                                                                                                                      rk9-node01: Wed Apr 10 05:24:57 2024
 # jtest-fs01:1 {0=jtest-fs01.rk9-node06.mgdctu=up:active} 4 up:standby
 # jtest-fs01:0 3 up:standby
@@ -90,11 +83,10 @@
 - name: Allow to Delete Pool from Mon
   shell: |
     {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
-  register: delete_pool_allowed
+  register: allow_delete_pool
   ignore_errors: true
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ delete_pool_allowed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+- debug: msg={{ allow_delete_pool }}
+  when: print_debug == true
 
 
 - name: Delete CephFS Volume in NFS
@@ -102,10 +94,9 @@
     {{ cephadm_cmd }} ceph fs rm {{ item.fs }} --yes-i-really-mean-it
   register: delete_cephfs_volume_nfs
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
 - debug: msg={{ delete_cephfs_volume_nfs }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true
 
 
 # Need to check when is possible to remove NFS Data and MetaData Pools
@@ -114,10 +105,9 @@
     {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
   register: remove_nfs_data
   ignore_errors: true
-  with_items: "{{ ganesha.export }}"
-  when: inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.export }}"
 - debug: msg={{ remove_nfs_data }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true
 
 
 - name: Remove NFS Metadata Pool
@@ -125,44 +115,40 @@
     {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
   register: remove_nfs_metadata
   ignore_errors: true
-  with_items: "{{ ganesha.export }}"
-  when: inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.export }}"
 - debug: msg={{ remove_nfs_metadata }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true
   # ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
 
 
 - name: Delete NFS Users
   shell: |
     {{ cephadm_cmd }} ceph auth del client.{{ item.name }}
-  register: nfs_user_deleted
+  register: delete_nfs_user
   ignore_errors: true
-  with_items: "{{ ganesha.users }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ nfs_user_deleted }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.users }}"
+- debug: msg={{ delete_nfs_user }}
+  when: print_debug == true
 
 
 - name: Stop NFS Service
   shell: |
     {{ cephadm_cmd }} ceph orch stop nfs.{{ item.name }}
-  register: nfs_service_stopped
+  register: stop_nfs_service
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ nfs_service_stopped }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ stop_nfs_service }}
+  when: print_debug == true
 
 
 - name: Remove NFS Service
   shell: |
     {{ cephadm_cmd }} ceph orch rm nfs.{{ item.name }}
-  register: nfs_service_removed
+  register: remove_nfs_service
   ignore_errors: true
-  with_items: "{{ ganesha.cluster }}"
-  when: inventory_hostname in ceph.control_node
-- debug: msg={{ nfs_service_removed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ remove_nfs_service }}
+  when: print_debug == true
 # ceph nfs export rm <cluster_id> <pseudo_path>
 # radosgw-admin user rm --uid=$USER_NAME
 
