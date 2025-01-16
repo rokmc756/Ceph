@@ -32,7 +32,7 @@ We are using raw devices without any filesystem in this guide. All the required 
 
 ## Supported Platform and OS
 * Virtual Machines or Baremetal
-* CentOS/Rocky Linux 9.x and OpenSUSE 15.x
+* CentOS/Rocky Linux 9.x and OpenSUSE 15.x and Ubuntu 22.x
 
 ## Prerequisite
 * MacOS or Fedora/CentOS/RHEL should have installed ansible as ansible host.
@@ -79,18 +79,34 @@ ssh_key_filename="id_rsa"
 remote_machine_username="jomoon"
 remote_machine_password="changeme"
 
+
 [rgw]
 rk9-node03 ansible_ssh_host=192.168.1.73
+
+
+[primary_rgw]
+rk9-node03 ansible_ssh_host=192.168.1.73
+
+
+[secondary_rgw]
+rk9-node06 ansible_ssh_host=192.168.0.76
+
+
+[control]
+rk9-node01 ansible_ssh_host=192.168.1.71
+
 
 [mon]
 rk9-node01 ansible_ssh_host=192.168.1.71
 rk9-node02 ansible_ssh_host=192.168.1.72
 rk9-node03 ansible_ssh_host=192.168.1.73
 
+
 [osd]
 rk9-node04 ansible_ssh_host=192.168.1.74
 rk9-node05 ansible_ssh_host=192.168.1.75
-rk9-node06 ansible_ssh_host=192.168.1.76
+rk9-node06 ansible_ssh_host=192.168.0.76
+
 
 [clients]
 rk9-node07 ansible_ssh_host=192.168.1.77
@@ -113,20 +129,23 @@ sudo_user_home_dir: "/home/{{ sudo_user }}"
 
 $ vi group_vars/all.yml
 ~~ snip
-_cephadm:
-  major_version: 18
-  minor_version: 2
-  patch_version: 1
-  base_path: /usr/sbin  # /root # RedHat
-  bin_type: tar.gz
+_minio:
   download: false
-
+  client_bin: /usr/local/bin/mc
+  client_install: yes
+  client_url: https://dl.minio.io/client/mc/release/linux-amd64/mc
+  client_checksum:
+  release_date: 20240307
+~~ snip
 _ceph:
-  control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+  project_name: squid  # reef
+  os_version: el9
+  domain: "jtest.futurfusion.io"
+  rdomain: "io.futurfusion.jtest"
   cluster_name: jack-kr-ceph
-  major_version: "18"
+  major_version: "19"
   minor_version: "2"
-  build_version: "1"
+  build_version: "0"
   patch_version: ""
   download_url: ""
   download: false
@@ -134,6 +153,31 @@ _ceph:
   admin_user: admin
   admin_passwd: changeme
   bin_type: tar
+  nvme: true
+  mon_host_num: "{{ groups['mon'] | length }}"
+  osd_host_num: "{{ groups['osd'] | length }}"
+  net:
+    conn: "dpdk"                     # dpdk or udp
+    gateway: "192.168.2.1"
+    ha1: 1
+    ha2: 2
+    type: "virtual"                  # or physical
+    ipaddr0: "192.168.0.7"
+    ipaddr1: "192.168.1.7"
+    ipaddr2: "192.168.2.7"
+  backend:
+    net:
+      type: "virtual"                # or physical
+      ipaddr0: "192.168.0.7"
+      ipaddr1: "192.168.1.7"
+      ipaddr2: "192.168.2.7"
+  client:
+    net:
+      type: "virtual"                # or physical
+      cores: 1
+      ipaddr0: "192.168.0.7"
+      ipaddr1: "192.168.1.7"
+      ipaddr2: "192.168.2.7"
 ~~ snip
 ```
 
@@ -246,17 +290,15 @@ $ make nfs r=uninstall s=single
 ### 17) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
 $ make block r=install s=iscsi
-
-# In case that you need only disable or enable iscsi client if iscsi gateways are already created
-$ make block r=uninstall s=iscsi c=only
-$ make block r=install s=iscsi c=only
+$ make block r=install s=isclient
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 
 
 ### 18) Destroy iSCSI Clients and Gateways
 ~~~
-$ make block r=uninstall s=iscsi c=disable
+$ make block r=uninstall s=isclient
+$ make block r=uninstall s=iscsi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 
@@ -301,7 +343,7 @@ $ vi test.sh
 
 cat << EOF | podman exec -it ceph-ef9ce558-25f6-11ef-915f-c74300a53678-iscsi-jtest-iscsi-pool01-ubt22-node02-gmiiet-tcmu gwcli
 cd /iscsi-targets/iqn.2024-04.com.suse.jtest.iscsi-gw:iscsi-igw-ubt22-node02/gateways
-create ubt22-node02.jtest.suse.com 192.168.1.62 skipchecks=true
+create ubt22-node02.jtest.xxx.io 192.168.1.62 skipchecks=true
 exit
 EOF
 ~~
