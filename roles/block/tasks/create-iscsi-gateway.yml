@@ -1,89 +1,15 @@
-## https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
-## https://www.youtube.com/watch?v=bOPsVM43HOs
-## https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
-## https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
-## https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
-## https://cbs.centos.org/koji/buildinfo?buildID=34736
-#
-#
-#- name: List Hosts for iSCSI Gateway
-#  shell: |
-#    ceph orch host ls
-#  register: hosts_listed
-#  when: inventory_hostname in ceph.control_node
-#- debug: msg={{ hosts_listed }}
-#  when: print_debug == true and inventory_hostname in ceph.control_node
-#and inventory_hostname in groups['control']
-#
-## To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
-## The suggested values are 20, 5 and 15, respectively.
-#- name: Avoid Initiator Timeout
-#  shell: |
-#    ceph config set osd osd_heartbeat_grace 20
-#    ceph config set osd osd_heartbeat_interval 5
-#    ceph config set osd osd_client_watch_timeout 15
-#  register: initiator_timeout_avoided
-#  when: inventory_hostname in ceph.control_node
-#- debug: msg={{ initiator_timeout_avoided }}
-#  when: print_debug == true and inventory_hostname in ceph.control_node
-#and inventory_hostname in groups['control']
-#
-## Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
-#- name: Create a Replicated Pool with replicated_rule Crush Map
-#  shell: |
-#    ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
-#  register: replica_pool_created
-#  with_items: "{{ _iscsi.targets }}"
-#  when: inventory_hostname in ceph.control_node
-#- debug: msg={{ replica_pool_created }}
-#  when: print_debug == true and inventory_hostname in ceph.control_node
-#  # replicated
-#and inventory_hostname in groups['control']
-#
-#- name: Initialize the Pool for RBD Application
-#  shell: |
-#    rbd pool init {{ item.pg_name }}
-#  register: rbd_pool_inited
-#  with_items: "{{ _iscsi.targets }}"
-#  when: inventory_hostname in ceph.control_node
-#- debug: msg={{ rbd_pool_inited }}
-#  when: print_debug == true and inventory_hostname in ceph.control_node
-#and inventory_hostname in groups['control']
-
-
-- name:  Deploy iSCSI Container Services
-  shell: "ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'"
-  register: iscsi_gw_deployed
-  with_items: '{{ _iscsi.targets }}'
-  when: inventory_hostname in groups['control']
-- debug: msg={{ iscsi_gw_deployed }}
-  when: print_debug == true and inventory_hostname in groups['control']
-
-
-## ceph orch ls --service_type=iscsi
-## ceph orch ps --daemon_type=iscsi
-## firewall-cmd --permnent --add-port={5000/tcp,3260/tcp} --zone=public && firewall-cmd --reload
-## podman ps # iscsi - tcmu
-## gwcli ls
-
-
-- pause:
-    seconds: 30
-
-
+---
 - name: Get iSCSI Gateway Container ID
   shell: |
     podman ps | grep ceph | grep tcmu | awk '{print" "$NF}' | tr -d '^[:blank:]'
   register: iscsi_gw_cont_id
-  when: inventory_hostname in groups['mon']
 - debug: msg={{ iscsi_gw_cont_id }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+  when: print_debug == true
 
 
 - name: Set Command Line for Podman iSCSI Gateway Container
   set_fact:
     podman_iscsi_gw_cmd: "podman exec -it {{ iscsi_gw_cont_id.stdout }}"
-  when: inventory_hostname in groups['mon']
 
 
 - name: Create iSCSI Target
@@ -97,15 +23,14 @@
       EOF
   args:
     executable: /bin/bash
-  register: iscsi_target_created
+  register: create_iscsi_target
   ignore_errors: true
-  until: iscsi_target_created is succeeded
+  until: create_iscsi_target is succeeded
   retries: 10
   delay: 5
   with_items: "{{ _iscsi.targets }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ iscsi_target_created }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ create_iscsi_target }}
+  when: print_debug == true
 
 
 - name: Create iSCSI Gateways
@@ -118,12 +43,11 @@
       EOF
   args:
     executable: /bin/bash
-  register: iscsi_target_created
+  register: create_iscsi_target
   ignore_errors: true
   with_items: "{{ _iscsi.targets }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ iscsi_target_created }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ create_iscsi_target }}
+  when: print_debug == true
 
 
 - name: Create Pool and Images
@@ -136,11 +60,10 @@
       EOF
   args:
     executable: /bin/bash
-  register: pool_image_created
+  register: create_pool_image
   with_items: "{{ _iscsi.targets }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ pool_image_created }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ create_pool_image }}
+  when: print_debug == true
 
 
 - name: Create iSCSI Initiator
@@ -153,11 +76,10 @@
       EOF
   args:
     executable: /bin/bash
-  register: iscsi_initiator_created
+  register: create_iscsi_initiator
   with_items: "{{ _iscsi.initiators }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ iscsi_initiator_created }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ create_iscsi_initiator }}
+  when: print_debug == true
 
 
 ##################################################################################################################################################################
@@ -194,11 +116,10 @@
       EOF
   args:
     executable: /bin/bash
-  register: user_password_setup
+  register: setup_user_password
   with_items: "{{ _iscsi.initiators }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ user_password_setup }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ setup_user_password }}
+  when: print_debug == true
   # auth nochap
 
 
@@ -212,11 +133,10 @@
       EOF
   args:
     executable: /bin/bash
-  register: disk_added
+  register: add_disk
   with_items: "{{ _iscsi.initiators }}"
-  when: inventory_hostname in groups['mon']
-- debug: msg={{ disk_added }}
-  when: print_debug == true and inventory_hostname in groups['mon']
+- debug: msg={{ add_disk }}
+  when: print_debug == true
 
 
 # https://github.com/ceph/ceph-ansible/issues/3870
@@ -226,3 +146,4 @@
 
 # gwcli / export copy | jq -r '.["version"]'
 # https://stackoverflow.com/questions/71973210/gwcli-not-working-after-deleting-pool-in-ceph
+

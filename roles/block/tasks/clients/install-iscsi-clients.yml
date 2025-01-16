@@ -1,96 +1,67 @@
 ---
-# iscsiadm -m node --op=update --name node.session.auth.authmethod --value=CHAP
-# iscsiadm -m node --op=update --name node.session.auth.username --value=jomoon-rk9-node01
-# iscsiadm -m node --op=update --name node.session.auth.password --value=changemechangeme
-
-
-#- name: Install iSCSI Initiator
-#  package:
-#    name: "{{ item }}"
-#    state: present
-#  register: iscsi_initiator_installed
-#  with_items:
-#    - "iscsi-initiator-utils"
-#  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
-#- debug: msg={{ iscsi_initiator_installed }}
-#  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
-
-
-#- name: Install iSCSI Initiator
-#  package:
-#    name: "{{ item }}"
-#    state: present
-#  register: iscsi_initiator_installed
-#  with_items:
-#    - "open-iscsi"
-#  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-#- debug: msg={{ iscsi_initiator_installed }}
-#  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
-
-
 - name: Install iSCSI Initiator
   package:
     name: "{{ iscsi_init_pkg_name }}"
     state: present
-  register: iscsi_initiator_installed
-- debug: msg={{ iscsi_initiator_installed }}
+  register: install_iscsi_initiator
+- debug: msg={{ install_iscsi_initiator }}
   when: print_debug == true
 
 
 - name: Copy iSCSId Config Files
   template: src=iscsid.conf.j2 dest=/etc/iscsi/iscsid.conf owner=root group=root mode=644 force=yes
-  register: iscsid_conf_copied
-  with_dict: "{{ iscsi.clients }}"
+  register: copy_iscsid_conf
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ iscsid_conf_copied }}
+- debug: msg={{ copy_iscsid_conf }}
 
 
 - name: Copy iSCSI Initiator Config Files
   template: src=initiatorname.iscsi.j2 dest=/etc/iscsi/initiatorname.iscsi owner=root group=root mode=644 force=yes
-  register: initiatorname_copied
-  with_dict: "{{ iscsi.clients }}"
+  register: copy_initiatorname
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ initiatorname_copied }}
+- debug: msg={{ copy_initiatorname }}
 
 
 - name: Enable and Start iSCSId
   systemd:
     name: iscsid
     state: restarted
-  register: iscsid_restarted
-  until: iscsid_restarted is succeeded
+  register: restart_iscsid
+  until: restart_iscsid is succeeded
   retries: 3
   delay: 10
 
 
 - name: Discover Target
   command: iscsiadm -m discovery -t sendtargets -p {{ item.value['target_ip'] }}
-  register: target_discovered
-  with_dict: "{{ iscsi.clients }}"
+  register: discover_target
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ target_discovered }}
+- debug: msg={{ discover_target }}
 
 
 - name: Confirm Status after Discovery
   command: iscsiadm -m node -o show
-  register: discovery_status_confirmed
-- debug: msg={{ discovery_status_confirmed }}
+  register: confirm_discovery_status
+- debug: msg={{ confirm_discovery_status }}
 
 
 - name: Login to the Target
   command: |
     iscsiadm --mode node --target {{ item.value['mutual_id'] }} --portal {{ item.value['target_ip'] }}  --login
-  register: target_logined
-  with_dict: "{{ iscsi.clients }}"
+  register: login_target
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ target_logined }}
+- debug: msg={{ login_target }}
 
 
 - name: Check the Device Name Attached
   shell: |
     iscsiadm -m session -P 3 | grep 'Target\|disk' | grep Attached | awk '{print $4}'
-  register: device_name_attached
-- debug: msg={{ device_name_attached.stdout }}
+  register: attach_device_name
+- debug: msg={{ attach_device_name.stdout }}
 #  command: cat /proc/partitions
 
 
@@ -98,26 +69,26 @@
   package:
     name: parted
     state: present
-  register: parted_installed
-- debug: msg={{ parted_installed }}
+  register: install_parted
+- debug: msg={{ install_parted }}
 
 
 - name: "Add new partition /dev/{{ device_name_attached.stdout }}1"
   parted:
-    device: "/dev/{{ device_name_attached.stdout }}"
+    device: "/dev/{{ attach_device_name.stdout }}"
     number: 1
     flags: [ lvm ]
     state: present
-  register: partition_added
-- debug: msg={{ partition_added }}
+  register: add_partition
+- debug: msg={{ add_partition }}
 
 
 - name: Format the Partition
   filesystem:
     fstype: xfs
-    dev: "/dev/{{ device_name_attached.stdout }}1"
-  register: partition_formatted
-- debug: msg={{ partition_formatted }}
+    dev: "/dev/{{ attach_device_name.stdout }}1"
+  register: format_partition
+- debug: msg={{ format_partition }}
 
 
 - name: Creates Directory for iSCSI Connection
@@ -128,22 +99,22 @@
     group: root
     mode: 0755
     recurse: yes
-  register: directory_created
-  with_dict: "{{ iscsi.clients }}"
+  register: create_directory
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ directory_created }}
+- debug: msg={{ create_directory }}
 
 
 - name: Mount the Partition
   mount:
     fstype: xfs
-    src: "/dev/{{ device_name_attached.stdout }}1"
+    src: "/dev/{{ attach_device_name.stdout }}1"
     path: "{{ item.value['mount_dir'] }}"
     state: mounted
-  register: partition_mounted
-  with_dict: "{{ iscsi.clients }}"
+  register: mount_partition
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ partition_mounted }}
+- debug: msg={{ mount_partition }}
 
 
 - name: Conditionally Create a File if It Does Not Exist
@@ -154,8 +125,7 @@
     owner: root
     group: root
     mode: 0644
-  register: file_copied
-  with_dict: "{{ iscsi.clients }}"
+  register: copy_file
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ file_copied }}
-
+- debug: msg={{ copy_file }}

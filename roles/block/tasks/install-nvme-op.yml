@@ -3,9 +3,9 @@
   shell: |
     ceph orch host ls
   register: hosts_listed
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in groups['control']
 - debug: msg={{ hosts_listed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in groups['control']
 
 
 # To avoid initiator timeouts, three configuration parameters are suggested to be updated: osd heartbeat grace/interval and client watch timeout.
@@ -16,9 +16,9 @@
 #    ceph config set osd osd_heartbeat_interval 5
 #    ceph config set osd osd_client_watch_timeout 15
 #  register: initiator_timeout_avoided
-#  when: inventory_hostname in ceph.control_node
+#  when: inventory_hostname in groups['control']
 #- debug: msg={{ initiator_timeout_avoided }}
-#  when: print_debug == true and inventory_hostname in ceph.control_node
+#  when: print_debug == true and inventory_hostname in groups['control']
 
 
 # Please note that replicated_rule is the default crush map when a Ceph Cluster is deployed
@@ -27,9 +27,9 @@
     ceph osd pool create nvmeof_pool01
   register: replica_pool_created
   # with_items: "{{ iscsi.targets }}"
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in groups['control']
 - debug: msg={{ replica_pool_created }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in groups['control']
   # replicated
   # ceph osd pool create {{ item.pg_name }} {{ item.pg_num }} {{ item.pgp_num }} {{ item.replica }}
 
@@ -39,9 +39,9 @@
     rbd pool init nvmeof_pool01
   register: rbd_pool_inited
   # with_items: "{{ iscsi.targets }}"
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in groups['control']
 - debug: msg={{ rbd_pool_inited }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in groups['control']
 
 
 - name:  Deploy iSCSI Container Services
@@ -49,9 +49,9 @@
     "ceph orch apply nvmeof nvmeof_pool01 --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'"
   register: iscsi_gw_deployed
   # with_items: '{{ iscsi.targets }}'
-  when: inventory_hostname in ceph.control_node
+  when: inventory_hostname in groups['control']
 - debug: msg={{ iscsi_gw_deployed }}
-  when: print_debug == true and inventory_hostname in ceph.control_node
+  when: print_debug == true and inventory_hostname in groups['control']
   #  "ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'"
 
 

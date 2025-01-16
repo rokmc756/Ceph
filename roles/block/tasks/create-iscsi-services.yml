@@ -1,11 +1,4 @@
-# https://access.redhat.com/documentation/id-id/red_hat_ceph_storage/5/html/operations_guide/management-of-iscsi-gateway-using-the-ceph-orchestrator
-# https://www.youtube.com/watch?v=bOPsVM43HOs
-# https://documentation.suse.com/ses/7.1/html/ses-all/cha-ceph-iscsi.html
-# https://daegonk.medium.com/ceph-iscsi-interface-38ce1889f5e1
-# https://docs.ceph.com/en/quincy/rbd/iscsi-target-cli/
-# https://cbs.centos.org/koji/buildinfo?buildID=34736
-
-
+---
 - name: List Hosts for iSCSI Gateway
   shell: |
     ceph orch host ls
@@ -43,5 +36,35 @@
   register: rbd_pool_inited
   with_items: "{{ _iscsi.targets }}"
 - debug: msg={{ rbd_pool_inited }}
+  when: print_debug == true
+
+
+- name:  Deploy iSCSI Container Services
+  shell: "ceph orch apply iscsi {{ item.pg_name }} admin admin --placement='{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}' --trusted_ip_list='{{ item.trusted_ips }}'"
+  register: iscsi_gw_deployed
+  with_items: '{{ _iscsi.targets }}'
+- debug: msg={{ iscsi_gw_deployed }}
+  when: print_debug == true
+
+
+- name: Validate if iSCSI Gateways are Running Normmally
+  shell: |
+    ceph orch ls --service_type=iscsi | sed 1d | awk '{print $3}' | cut -d '/' -f 1
+  register: check_iscsi_gateways
+  until: _ceph.mon_host_num|int == check_iscsi_gateways.stdout|int
+  retries: 60
+  delay: 10
+- debug: msg={{ check_iscsi_gateways }}
+  when: print_debug == true
+
+
+- name: Validate if iSCSI Containers are Running Normmally
+  shell: |
+    ceph orch ps --daemon_type=iscsi | sed 1d | awk '{print $4}' | grep running | wc -l
+  register: check_iscsi_containers
+  until: _ceph.mon_host_num|int == check_iscsi_containers.stdout|int
+  retries: 60
+  delay: 10
+- debug: msg={{ check_iscsi_containers }}
   when: print_debug == true
 

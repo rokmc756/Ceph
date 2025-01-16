@@ -2,8 +2,9 @@
 - name: Check the Device Name Attached
   shell: |
     iscsiadm -m session -P 3 | grep 'Target\|disk' | grep Attached | awk '{print $4}'
-  register: device_name_attached
-- debug: msg={{ device_name_attached.stdout }}
+  register: attach_device_name
+  ignore_errors: true
+- debug: msg={{ attach_device_name.stdout }}
 
 
 - name: Delete Text File
@@ -12,7 +13,7 @@
     state: absent
   register: delete_iscsi_files
   ignore_errors: true
-  with_dict: "{{ iscsi.clients }}"
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
 - debug: msg={{ delete_iscsi_files }}
 
@@ -21,72 +22,80 @@
   mount:
     path: "{{ item.value['mount_dir'] }}"
     state: "unmounted"
-  register: partition_unmounted
-  with_dict: "{{ iscsi.clients }}"
+  register: unmount_partition
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ partition_unmounted }}
+- debug: msg={{ unmount_partition }}
 
 
 - name: Unmount the Partition and Remove Entry in /etc/fstab
   mount:
     path: "{{ item.value['mount_dir'] }}"
     state: "absent"
-  register: partition_absented
-  with_dict: "{{ iscsi.clients }}"
+  register: remove_fstab_entry
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ partition_absented }}
+- debug: msg={{ remove_fstab_entry }}
 
 
 - name: Delete Directory for iSCSI Connection
   file:
     path: "{{ item.value['mount_dir'] }}"
     state: absent
-  register: directory_deleted
-  with_dict: "{{ iscsi.clients }}"
+  register: delete_directory
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ directory_deleted }}
+- debug: msg={{ delete_directory }}
 
 
 # Remove a partition from iscsi disk
 - parted:
-    device: "/dev/{{ device_name_attached.stdout }}"
+    device: "/dev/{{ attach_device_name.stdout }}"
     number: "1"
     state: absent
-  register: partition_deleted
-- debug: msg={{ partition_deleted }}
+  register: delete_partition
+  ignore_errors: true
+- debug: msg={{ delete_partition }}
 
 
 - name: Uninstall Parted
   package:
     name: parted
     state: absent
-  register: parted_uninstalled
-- debug: msg={{ parted_uninstalled }}
+  register: uninstall_parted
+  ignore_errors: true
+- debug: msg={{ uninstall_parted }}
 # command: cat /proc/partitions
 
 
 - name: Confirm the Established Session
   command: iscsiadm -m session -o show
-  register: established_session_confirmed
-- debug: msg={{ established_session_confirmed }}
+  register: confirm_established_session
+  ignore_errors: true
+- debug: msg={{ confirm_established_session }}
 
 
 - name: Kill iSCSI Session
   command: |
     iscsiadm --mode node -T {{ item.value['mutual_id'] }} -p {{ item.value['target_ip'] }}:3260 -u
-  register: iscsi_session_killed
-  with_dict: "{{ iscsi.clients }}"
+  register: kill_iscsi_session
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ iscsi_session_killed }}
+- debug: msg={{ kill_iscsi_session }}
 
 
 - name: Remove Node to Prevent the Session from Re-Establishing
   command: |
     iscsiadm --mode node -o delete -T {{ item.value['mutual_id'] }}
-  register: node_session_removed
-  with_dict: "{{ iscsi.clients }}"
+  register: remove_node_session
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ node_session_removed }}
+- debug: msg={{ remove_node_session }}
 # command: iscsiadm -m session
 
 
@@ -94,21 +103,19 @@
   file:
     path: "/var/lib/iscsi/nodes/{{ item.value['mutual_id'] }}"
     state: absent
-  register: iscsi_session_directory_deleted
-  with_dict: "{{ iscsi.clients }}"
+  register: delete_iscsi_session_directory
+  ignore_errors: true
+  with_dict: "{{ _iscsi.clients }}"
   when: item.value['name'] == inventory_hostname
-- debug: msg={{ iscsi_session_directory_deleted }}
+- debug: msg={{ delete_iscsi_session_directory }}
 
 
-#- name: Check the filesystem to ensure that not try to re-establish the connection on future boot operation
-#  command: |
-#    ls /var/lib/iscsi/nodes/{{ item.value['mutual_id'] }}
-#  register: reestabliable_connection_checked
-#  with_dict: "{{ iscsi.clients }}"
-#  when: item.value['name'] == inventory_hostname
-#- debug: msg={{ reestabliable_connection_checked }}
+# Check the filesystem to ensure that not try to re-establish the connection on future boot operation
+# ls /var/lib/iscsi/nodes/{{ item.value['mutual_id'] }}
+#
 # Identify the sessions that are still open:
 # iscsiadm -m session
+#
 # Find the one with unitrends.dpu in it.
 # Then run iscsiadm -m node -T <iqn> -p <ip address>:<port number> -u
 
@@ -117,53 +124,32 @@
   systemd:
     name: iscsid
     state: stopped
-  register: iscsid_stopped
-  until: iscsid_stopped is succeeded
+  register: stop_iscsid
+  ignore_errors: true
+  until: stop_iscsid is succeeded
   retries: 3
   delay: 10
-- debug: msg={{ iscsid_stopped }}
+- debug: msg={{ stop_iscsid }}
 
 
 - name: Delete Config Files of iSCSI Initiator
   file:
     path: "{{ item }}"
     state: absent
-  register: iscsi_initator_config_files_deleted
+  register: delete_iscsi_initator_config_files
+  ignore_errors: true
   with_items:
     - "/etc/iscsi/iscsid.conf"
     - "/etc/iscsi/initiatorname.iscsi"
-- debug: msg={{ iscsi_initator_config_files_deleted }}
-
-
-#- name: Uninstall iSCSI Initiator
-#  package:
-#    name: "{{ item }}"
-#    state: absent
-#  register: iscsi_initiator_uninstalled
-#  with_items:
-#    - "iscsi-initiator-utils"
-#  when: ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap'
-#- debug: msg={{ iscsi_initiator_uninstalled }}
-#  when: print_debug == true and ( ansible_distribution == 'RedHat' or ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky' or ansible_distribution == 'openSUSE Leap' )
-
-
-#- name: Uninstall iSCSI Initiator
-#  package:
-#    name: "{{ item }}"
-#    state: absent
-#  register: iscsi_initiator_uninstalled
-#  with_items:
-#    - "open-iscsi"
-#  when: ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
-#- debug: msg={{ iscsi_initiator_uninstalled }}
-#  when: print_debug == true and ( ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu' )
+- debug: msg={{ delete_iscsi_initator_config_files }}
 
 
 - name: Uninstall iSCSI Initiator
   package:
     name: "{{ iscsi_init_pkg_name }}"
     state: absent
-  register: iscsi_initiator_uninstalled
-- debug: msg={{ iscsi_initiator_uninstalled }}
+  register: uninstall_iscsi_initiator
+  ignore_errors: true
+- debug: msg={{ uninstall_iscsi_initiator }}
   when: print_debug == true
 
