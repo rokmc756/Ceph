@@ -122,6 +122,16 @@
 # ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
 
 
+- name: Remove Ganesha Pool
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool rm {{ item.pool }} {{ item.pool }} --yes-i-really-really-mean-it
+  register: remove_ganesha_pool
+  ignore_errors: true
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ remove_ganesha_pool }}
+  when: print_debug == true
+
+
 - name: Delete NFS Users
   shell: |
     {{ cephadm_cmd }} ceph auth del client.{{ item.name }}

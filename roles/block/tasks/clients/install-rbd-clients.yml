@@ -1,0 +1,150 @@
+---
+# https://www.ibm.com/docs/en/storage-ceph/7?topic=ccbduiflkmc-map-mount-ceph-block-device-linux-using-command-line
+# https://du.cesnet.cz/en/navody/object_storage/cesnet_rbd/start
+# https://docs.ceph.com/en/latest/rbd/rados-rbd-cmds/?highlight=orch%20device%20zap
+# https://docs.e-infra.cz/storage/object-storage/rbd-setup/#rbd-configuration-and-its-mapping
+
+- name: Enable Ceph Repo
+  import_tasks: enable-ceph-repo.yml
+  when:
+    - print_debug == true
+    -  ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and  ansible_distribution_major_version|int >= 9
+
+
+- name: Install CephFS Client Packages
+  package: name={{ item }} state=present
+  register: install_cephfs_pkgs
+  with_items:
+    - "ceph-common"
+    - "ceph-fuse"
+- debug: msg={{ install_cephfs_pkgs }}
+  when: print_debug == true
+
+
+- name: Copy Ceph Configuration for CephFS Clients
+  become_user: root
+  synchronize:
+    src:  "/etc/ceph/{{ item }}"
+    dest: "/etc/ceph/{{ item }}"
+    set_remote_user: false
+    rsync_opts:
+      - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
+  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+  delegate_facts: true
+  register: create_ceph_config_dir
+  with_items:
+    - "ceph.conf"
+    - "ceph.client.admin.keyring"
+    - "ceph.pub"
+    - "rbdmap"
+- debug: msg={{ create_ceph_config_dir }}
+  when: print_debug == true
+
+
+#- name: Copy Ceph Configuration for CephFS Clients
+#  become_user: root
+#  synchronize:
+#    src: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
+#    dest: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
+#    set_remote_user: false
+#    rsync_opts:
+#      - "-e ssh"    # "-e ssh -i ~/.ssh/id_rsa.pub"
+#  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+#  delegate_facts: true
+#  register: create_ceph_config_dir
+#  with_items:
+#    - "{{ _rbd.pool }}"
+#- debug: msg={{ create_ceph_config_dir }}
+#  when: print_debug == true
+
+
+- name: Change Permission
+  shell: |
+    chmod 644 /etc/ceph/{{ item }}
+  register: change_ceph_conf_perm
+  with_items:
+    - "ceph.conf"
+    - "ceph.client.admin.keyring"
+    - "ceph.pub"
+    - "rbdmap"
+- debug: msg={{ change_ceph_conf_perm }}
+  when: print_debug == true
+
+
+#- name: Change Permission for /etc/ceph/ceph.client.*.keyring
+#  shell: |
+#    chmod 644 /etc/ceph/ceph.client.{{ item.name }}.keyring
+#  register: change_ceph_client_keyring_perm
+#  with_items:
+#    - "{{ _rbd.pool }}"
+#- debug: msg={{ change_ceph_client_keyring_perm }}
+#  when: print_debug == true
+
+
+
+- name: Map RBD Images
+  shell: |
+    rbd map --pool {{ item.pool }} {{ item.name }} --id admin
+  register: map_rbd_images
+  with_items:
+    - "{{ _rbd.image.default }}"
+    - "{{ _rbd.image.cephfs }}"
+    - "{{ _rbd.image.block }}"
+    - "{{ _rbd.image.rgw }}"
+    - "{{ _rbd.image.nfs }}"
+- debug: msg={{ map_rbd_images }}
+  when: print_debug == true
+
+
+- name: List RBD Devices
+  shell: |
+    rbd device list
+  register: list_rbd_devices
+- debug: msg={{ list_rbd_devices }}
+  when: print_debug == true
+
+
+
+#- name: Create Directory to Mount CephFS Client
+#  shell: |
+#    mkdir {{ item.mount_dir }}
+#  register: create_cephfs_dir
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ create_cephfs_dir  }}
+#  when: print_debug == true
+#
+#
+#- name: Mount Stateless CephFS Clients
+#  shell: |
+#    mount -v -t ceph {{ all_ceph_ipaddrs_with_port }}:/ {{ item.mount_dir }} -o name={{ item.name }},fs={{ item.name }}
+#  register: mount_cephfs_dir
+#  with_items: "{{ _cephfs.fs }}"
+#  when: print_debug == true
+#- debug: msg={{ mount_cephfs_dir }}
+#  when: print_debug == true
+#
+#
+#
+#- name: Check if CephFS Directory is Mounted
+#  shell: |
+#    df -h
+#    ls -al {{ item.mount_dir }}
+#  register: check_cephfs_mounted
+#  with_items:
+#    - "{{ _cephfs.fs }}"
+#- debug: msg={{ check_cephfs_mounted  }}
+#  when: print_debug == true
+#
+#
+#- name: Creat Text File with the Content
+#  become_user: root
+#  shell: |
+#    touch {{ item.mount_dir }}/{{ item.name }}.txt
+#    echo "Hello World in {{ item.name }}" >  {{ item.mount_dir }}/{{ item.name }}.txt
+#    cat {{ item.mount_dir }}/{{ item.name }}.txt
+#  register: create_cephfs_file
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ create_cephfs_file }}
+#  when: print_debug == true
+#
+

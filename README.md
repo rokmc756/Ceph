@@ -296,14 +296,14 @@ $ make nfs r=uninstall s=single
 ### 18) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
 $ make block r=install s=iscsi
-$ make block r=install s=isclient
+$ make block r=install s=iscsic
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 
 
 ### 19) Destroy iSCSI Clients and Gateways
 ~~~
-$ make block r=uninstall s=isclient
+$ make block r=uninstall s=iscsic
 $ make block r=uninstall s=iscsi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)

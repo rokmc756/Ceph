@@ -1,10 +1,17 @@
 ---
+
+# https://www.ibm.com/docs/en/storage-ceph/7?topic=ccbduiflkmc-map-mount-ceph-block-device-linux-using-command-line
+# https://du.cesnet.cz/en/navody/object_storage/cesnet_rbd/start
+# https://docs.ceph.com/en/latest/rbd/rados-rbd-cmds/?highlight=orch%20device%20zap
+# https://docs.e-infra.cz/storage/object-storage/rbd-setup/#rbd-configuration-and-its-mapping
+
+
 - name: Initialize Pool for Rados Block Device
   shell: |
     rbd pool init {{ item.name }}
-  register: rbd_pool_inited
+  register: init_rbd_pool
   with_items: "{{ _rbd.pool }}"
-- debug: msg={{ rbd_pool_inited }}
+- debug: msg={{ init_rbd_pool }}
   when: print_debug == true
 
 
@@ -29,14 +36,14 @@
 - name: Create Rados Block Device in Pool
   shell: |
     rbd create {{ item.name }} --size {{ item.size }} --pool {{ item.pool }}
-  register: rbd_device_created
+  register: create_rbd_device
   with_items:
     - "{{ _rbd.image.default }}"
     - "{{ _rbd.image.cephfs }}"
     - "{{ _rbd.image.block }}"
     - "{{ _rbd.image.rgw }}"
     - "{{ _rbd.image.nfs }}"
-- debug: msg={{ rbd_device_created }}
+- debug: msg={{ create_rbd_device }}
   when: print_debug == true
 
 

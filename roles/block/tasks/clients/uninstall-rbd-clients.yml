@@ -1,0 +1,122 @@
+#---
+#- name: Delete Text File with the Content
+#  become_user: root
+#  file:
+#    path: "{{ item.mount_dir }}/{{ item.name }}.txt"
+#    state: absent
+#  register: delete_cephfs_file
+#  ignore_errors: true
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ delete_cephfs_file }}
+#  when: print_debug == true
+#
+#
+#- name: Check if CephFS Directory is Mounted
+#  shell: |
+#    df -h
+#    ls -al {{ item.mount_dir }}
+#  register: check_cephfs_mounted
+#  ignore_errors: true
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ check_cephfs_mounted  }}
+#  when: print_debug == true
+#
+#
+#- name: Unmount CephFS Directory
+#  shell: |
+#    umount {{ item.mount_dir }}
+#  register: unmount_cephfs_dir
+#  ignore_errors: true
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ unmount_cephfs_dir }}
+#  when: print_debug == true
+#
+#
+#- name: Delete Directory to Mount CephFS
+#  file:
+#    path: "{{ item.mount_dir }}"
+#    state: absent
+#  register: delete_cephfs_dir
+#  ignore_errors: true
+#  with_items: "{{ _cephfs.fs }}"
+#- debug: msg={{ delete_cephfs_dir }}
+#  when: print_debug == true
+#
+#
+#- name: Remove Directory to Be Mount by CephFS Clients
+#  file:
+#    path: "{{ item.mount_dir }}"
+#    state: absent
+#  register: remove_cephfs_dir
+#  ignore_errors: true
+#  with_items:
+#    - "{{ _cephfs.fs }}"
+#- debug: msg={{ remove_cephfs_dir  }}
+#  when: print_debug == true
+
+
+- name: Unmap RBD Images
+  shell: |
+    rbd device unmap $(rbd device list | grep {{ item.pool }} | grep {{ item.name }} | awk '{print $5}')
+  register: unmap_rbd_images
+  with_items:
+    - "{{ _rbd.image.default }}"
+    - "{{ _rbd.image.cephfs }}"
+    - "{{ _rbd.image.block }}"
+    - "{{ _rbd.image.rgw }}"
+    - "{{ _rbd.image.nfs }}"
+- debug: msg={{ unmap_rbd_images }}
+  when: print_debug == true
+
+
+- name: Uninstall Ceph Client Packages
+  become: true
+  package: name={{ item }} state=absent
+  ignore_errors: true
+  with_items:
+    - "ceph-common"
+    - "ceph-fuse"
+
+
+- name: Delete Ceph Config Files
+  file:
+    path: "/etc/ceph/{{ item }}"
+    state: absent
+  register: delete_ceph_config_file
+  ignore_errors: true
+  with_items:
+    - "ceph.conf"
+    - "ceph.pub"
+    - "rbdmap"
+- debug: msg={{ delete_ceph_config_file }}
+  when: print_debug == true
+  #  - "ceph.client.admin.keyring"
+
+
+- name: Delete Ceph User Auth Key
+  file:
+    path: "/etc/ceph/ceph.client.{{ item.name }}.keyring"
+    state: absent
+  register: delete_ceph_user_auth_key
+  ignore_errors: true
+  with_items:
+    - "{{ _rbd.pool }}"
+- debug: msg={{ delete_ceph_user_auth_key }}
+  when: print_debug == true
+
+
+- name: Disable Ceph Repo
+  import_tasks: disable-ceph-repo.yml
+  when:
+    - print_debug == true
+    -  ( ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Rocky" ) and  ansible_distribution_major_version|int >= 9
+
+
+- name: Clear Memory Cache
+  shell: |
+    sync && echo 3 > /proc/sys/vm/drop_caches
+  register: clear_cache_memory
+  ignore_errors: true
+- debug: msg={{ clear_cache_memory }}
+  when: print_debug == true
+

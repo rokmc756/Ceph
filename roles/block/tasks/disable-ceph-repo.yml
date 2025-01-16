@@ -1,0 +1,38 @@
+---
+- name: Delete Ceph Repository Config and Key
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: delete_ceph_repo_config
+  ignore_errors: true
+  with_items:
+    - "/etc/dnf/ceph/keyrings/release.asc"
+    - "/etc/yum.repos.d/ceph.repo"
+- debug: msg={{ delete_ceph_repo_config }}
+  when: print_debug == true
+
+
+- name: Delete Ceph DNF Key Directory
+  file:
+    path: "{{ item }}"
+    state: absent
+  register: delete_ceph_key_dir
+  ignore_errors: true
+  with_items:
+    - "/etc/dnf/ceph"
+- debug: msg={{ delete_ceph_key_dir }}
+  when: print_debug == true
+
+
+- name: Apply New Repository Changes
+  systemd:
+    daemon_reload: true
+
+
+- name: Update Caches for DNF Packages
+  shell: |
+    dnf update --refresh -y
+  register: update_dnf_cache
+- debug: msg={{ update_dnf_cache }}
+  when: print_debug == true
+

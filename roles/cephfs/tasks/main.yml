@@ -11,36 +11,36 @@
 
 - name: Create Pool
   import_tasks: create-pool.yml
-  tags: create
+  tags: create, install
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 
 
 - name: Create Ceph Filesystems
   import_tasks: create-cephfs.yml
-  tags: create
+  tags: create, install
   when: ( fs is defined and fs == true ) and inventory_hostname in groups['control']
 
 
 - name: Install CephFS Clients
   import_tasks: install-clients.yml
-  tags: install
+  tags: create, install
   when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall CephFS Clients
   import_tasks: uninstall-clients.yml
-  tags: uninstall
+  tags: delete, uninstall
   when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Remove Ceph Filesystems
   import_tasks: delete-cephfs.yml
-  tags: delete
+  tags: delete, uninstall
   when: ( fs is defined and fs == true ) and inventory_hostname in groups['control']
 
 
 - name: Remove Pools
   import_tasks: delete-pool.yml
-  tags: delete
+  tags: delete, uninstall
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 
