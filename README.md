@@ -273,8 +273,6 @@ $ make nfs r=install s=mclient
 $ make nfs r=uninstall s=mclient
 $ make nfs r=uninstall s=ganesha
 $ make radosgw r=uninstall s=single
-~
-
 ~~~
 [![YouTube](http://i.ytimg.com/vi/cUFCWH0EMGY/hqdefault.jpg)](https://www.youtube.com/watch?v=cUFCWH0EMGY)
 
