@@ -118,7 +118,8 @@
   with_items: "{{ _ganesha.export }}"
 - debug: msg={{ remove_nfs_metadata }}
   when: print_debug == true
-  # ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
+# When .nfs pool is deleted with the below task, recreating NFS service failed
+# ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
 
 
 - name: Delete NFS Users

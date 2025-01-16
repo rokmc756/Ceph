@@ -26,7 +26,6 @@ _ceph:
   os_version: el9
   domain: "jtest.futurfusion.io"
   rdomain: "io.futurfusion.jtest"
-  control_node: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
   cluster_name: jack-kr-ceph
   major_version: "19"
   minor_version: "2"
@@ -41,11 +40,6 @@ _ceph:
   nvme: true
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
-  obs: false
-  fs: false
-  block:
-    rbd: true
-    iscsi: false
   net:
     conn: "dpdk"                     # dpdk or udp
     gateway: "192.168.2.1"
@@ -61,26 +55,7 @@ _ceph:
       ipaddr0: "192.168.0.7"
       ipaddr1: "192.168.1.7"
       ipaddr2: "192.168.2.7"
-  protocol:
-    smb: false
-    nfs:
-      single: false
-      ganesha: false
-    rgw:
-      single: false
-      multi: false
   client:
-    cephfs: false
-    smb: false
-    block:
-      rbd: false
-      iscsi: false
-    nfs:
-      single: false
-      ganesha: false
-    rgw:
-      single: false
-      multi: false
     net:
       type: "virtual"                # or physical
       cores: 1

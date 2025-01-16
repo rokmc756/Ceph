@@ -6,9 +6,8 @@
   register: delete_nfs_files
   ignore_errors: true
   with_items: "{{ _nfs.client }}"
-  when: ( disable_multi_client is defined and disable_multi_client == true )
 - debug: msg={{ delete_nfs_files }}
-  when: print_debug == true and ( disable_multi_client is defined and disable_multi_client == true )
+  when: print_debug == true
 
 
 - name: Umount NFS Directory
@@ -21,7 +20,7 @@
   ignore_errors: true
   with_items: "{{ _nfs.client }}"
 - debug: msg={{ umount_nfs_dir }}
-  when: print_debug == true and
+  when: print_debug == true
   # umount -f -l {{ smb.fs.mount_dir }}
 
 
