@@ -16,7 +16,7 @@
   ignore_errors: true
   with_items: "{{ _rgw.multisite.users }}"
 - debug: msg={{ delete_parquet_files }}
-  when: print_debug == true and
+  when: print_debug == true
 
 
 - name: Delete S3-Base Test Directory

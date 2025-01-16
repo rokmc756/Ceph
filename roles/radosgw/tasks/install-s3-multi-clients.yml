@@ -40,7 +40,6 @@
   when: print_debug == true
 
 
-# For Multiple Zone
 - name: Set Up an Alias for MinIO to Interact with the RADOS Gateway
   shell: |
     /usr/local/bin/mc alias set {{ item.mc_alias }} http://{{ item.endpoint }}:{{ item.rgw_port }} {{ item.access_key }} {{ item.secret_key }} --api "s3v4" --path "on"

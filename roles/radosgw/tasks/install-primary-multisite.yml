@@ -1,6 +1,4 @@
 ---
-# https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
-
 - name: Create a Realm
   shell: |
     radosgw-admin realm create --rgw-realm={{ item.rgw_realm }} --default
@@ -50,9 +48,10 @@
 - debug: msg={{ create_rep_user }}
   when: print_debug == true
 
-
-# export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
-# export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "${replication_user}-keys" | awk -F'"' '{print $4}')
+# export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
+# export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
+# radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key=$ACCESS_KEY --secret=$SECRET_KEY
+# https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
 
 
 - name: Update Zone Keys with User Keys just Created
@@ -62,10 +61,6 @@
   with_items: "{{ _rgw.multisite.users }}"
 - debug: msg={{ update_zone_keys }}
   when: print_debug == true
-  # radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key={{ item.access_key }} --secret={{ item.secret_key }}
-  # export ACCESS_KEY=$(grep -o '"access_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
-  # export SECRET_KEY=$(grep -o '"secret_key": "[^"]*' "{{ _ceph.base_path }}/{{ item.user_full_name }}-keys" | awk -F'"' '{print $4}')
-  #  radosgw-admin zone modify --rgw-zone={{ item.zone }} --access-key=$ACCESS_KEY --secret=$SECRET_KEY
 
 
 - name: Commit the Changes
@@ -91,5 +86,4 @@
   register: verify_rgw_deploy
 - debug: msg={{ verify_rgw_deploy }}
   when: print_debug == true
-
 

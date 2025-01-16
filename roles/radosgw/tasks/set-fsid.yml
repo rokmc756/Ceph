@@ -9,10 +9,6 @@
   when: print_debug == true
 
 
-# [ Get the Name of MGR Node ]
-# ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
-
-
 - name: Set Fact for FSID
   set_fact:
     _fsid: "{{ get_fsid.stdout }}"
