@@ -181,6 +181,7 @@ _ceph:
 ~~ snip
 ```
 
+
 ### 04) - Initialize Linux Hosts
 - Initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
@@ -189,35 +190,43 @@ $ make hosts r=init s=all
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
-### 05) Upload and Install Ceph Software into All Hosts.
+### 05) - Enable Ceph Package Repository
+- Enable Ceph Package Repository for Red Hat Based Linux. Ubuntu and SuSE included it as default
+```
+$ make ceph r=enable s=repo
+```
+[![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
+
+
+### 06) Upload and Install Ceph Software into All Hosts.
 ```
 $ make ceph r=install s=pkgs
 ```
 [![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
 
 
-### 06) Initialize Ceph as Deploying MON and MGR services
+### 07) Initialize Ceph as Deploying MON and MGR services
 ```
 $ make ceph r=init s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/2DhiWXthQBU/hqdefault.jpg)](https://www.youtube.com/watch?v=2DhiWXthQBU)
 
 
-### 07) Add Ceph Nodes for High Availablity
+### 08) Add Ceph Nodes for High Availablity
 ```
 $ make ceph r=add s=ceph
 ```
 [![YouTube](http://i.ytimg.com/vi/I2lmJJWNGD8/hqdefault.jpg)](https://www.youtube.com/watch?v=I2lmJJWNGD8)
 
 
-### 08) Add OSD nodes
+### 09) Add OSD nodes
 ```
 $ make ceph r=add s=osd
 ```
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
-### 09) Create Pools and RBDs
+### 10) Create Pools and RBDs
 ```
 $ make block r=install s=pool
 $ make block r=install s=rbd
@@ -225,7 +234,7 @@ $ make block r=install s=rbd
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
-### 10) Creating Ceph Filesystems and CephFS POSIX Clients
+### 11) Creating Ceph Filesystems and CephFS POSIX Clients
 ```
 $ make cephfs r=install s=pool
 $ make cephfs r=install s=fs
@@ -234,7 +243,7 @@ $ make cephfs r=install s=client
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
 
-### 11) Deploy Multisite Rados Gateway
+### 12) Deploy Multisite Rados Gateway
 ~~~
 $ make radosgw r=install s=multisite
 $ make radosgw r=install s=mclient
@@ -242,7 +251,7 @@ $ make radosgw r=install s=mclient
 [![YouTube](http://i.ytimg.com/vi/kblAiF7r0a0/hqdefault.jpg)](https://www.youtube.com/watch?v=kblAiF7r0a0)
 
 
-### 12) Destroy Multisite Rados Gateway
+### 13) Destroy Multisite Rados Gateway
 ~~~
 $ make radosgw r=uninstall s=mclient
 $ make radosgw r=uninstall s=multisite
@@ -250,17 +259,16 @@ $ make radosgw r=uninstall s=multisite
 [![YouTube](http://i.ytimg.com/vi/138Y5FPVmjA/hqdefault.jpg)](https://www.youtube.com/watch?v=138Y5FPVmjA)
 
 
-### 13) Deploy NFS Ganesha Cluster with a RGW
+### 14) Deploy NFS Ganesha Cluster with a RGW
 ~~~
 $ make radosgw r=install s=single
 $ make nfs r=install s=ganesha
 $ make nfs r=install s=mclient
-
 ~~~
 [![YouTube](http://i.ytimg.com/vi/e5sEYsm9u5Q/hqdefault.jpg)](https://www.youtube.com/watch?v=e5sEYsm9u5Q)
 
 
-### 14) Destory NFS Ganesha Cluser with single RGW
+### 15) Destory NFS Ganesha Cluser with single RGW
 ~~~
 $ make nfs r=uninstall s=mclient
 $ make nfs r=uninstall s=ganesha
@@ -271,7 +279,7 @@ $ make radosgw r=uninstall s=single
 [![YouTube](http://i.ytimg.com/vi/cUFCWH0EMGY/hqdefault.jpg)](https://www.youtube.com/watch?v=cUFCWH0EMGY)
 
 
-### 15) Deploy Single NFS Service
+### 16) Deploy Single NFS Service
 ~~~
 $ make nfs r=install s=single
 $ make nfs r=install s=sclient
@@ -279,7 +287,7 @@ $ make nfs r=install s=sclient
 [![YouTube](http://i.ytimg.com/vi/A0yBCh9-w7c/hqdefault.jpg)](https://www.youtube.com/watch?v=A0yBCh9-w7c)
 
 
-### 16) Destroy Single NFS Service
+### 17) Destroy Single NFS Service
 ~~~
 $ make nfs r=uninstall s=sclient
 $ make nfs r=uninstall s=single
@@ -287,7 +295,7 @@ $ make nfs r=uninstall s=single
 [![YouTube](http://i.ytimg.com/vi/dBvBt9ox8kY/hqdefault.jpg)](https://www.youtube.com/watch?v=dBvBt9ox8kY)
 
 
-### 17) Deploy iSCSI Gateways and iSCSI Clients
+### 18) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
 $ make block r=install s=iscsi
 $ make block r=install s=isclient
@@ -295,7 +303,7 @@ $ make block r=install s=isclient
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 
 
-### 18) Destroy iSCSI Clients and Gateways
+### 19) Destroy iSCSI Clients and Gateways
 ~~~
 $ make block r=uninstall s=isclient
 $ make block r=uninstall s=iscsi
