@@ -1,0 +1,22 @@
+LOG {
+    COMPONENTS {
+        ALL = FULL_DEBUG;
+    }
+}
+
+EXPORT {
+  Export_Id = 2;
+  Transports = TCP;
+  Path = /;
+  Pseudo = /ceph/;
+  Protocols = 4;
+  Access_Type = RW;
+  Attr_Expiration_Time = 0;
+  Squash = None;
+  FSAL {
+    Name = CEPH;
+    Filesystem = "jtest-fs01";
+    User_Id = "client.jtest-fs01";
+  }
+}
+

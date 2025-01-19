@@ -1,0 +1,64 @@
+---
+- name: Check OS ( NFS )
+  fail: msg="{{ ansible_distribution }} is not supported for this ansible playbook!"
+  when: ansible_distribution != 'RedHat' or ansible_distribution != 'CentOS' or ansible_distribution != 'Rocky' or ansible_distribution != 'Debian' or ansible_distribution != 'Ubuntu'
+
+
+- name: Set facts for Network and Packages Informations
+  import_tasks: set-nfs-facts.yml
+  tags: install, uninstall
+
+
+- name: Deploy Single NFS Cluster
+  import_tasks: install-single.yml
+  tags: install
+  when: ( single is defined and single == true ) and inventory_hostname in groups['control']
+
+
+- name: Deploy Ganesha NFS Cluster
+  import_tasks: install-ganesha.yml
+  tags: install
+  when: ( ganesha is defined and ganesha == true ) and inventory_hostname in groups['control']
+
+
+#- name: Deploy Single NFS Clients
+#  import_tasks: install-single.yml
+#  tags: install
+#  when: ( single is defined and single == true ) and inventory_hostname not in groups['clients']
+
+
+- name: Install NFS Single Clients
+  import_tasks: install-single-clients.yml
+  tags: install
+  when: ( sclient is defined and sclient == true) and inventory_hostname in groups['clients']
+
+
+- name: Install NFS Single Clients
+  import_tasks: install-ganesha-clients.yml
+  tags: install
+  when: ( mclient is defined and mclient == true) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall NFS Ganesha Clients
+  import_tasks: uninstall-ganesha-clients.yml
+  tags: uninstall
+  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Uninstall NFS Single Clients
+  import_tasks: uninstall-single-clients.yml
+  tags: uninstall
+  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
+
+
+- name: Destroy Ganesha NFS Cluster
+  import_tasks: uninstall-ganesha.yml
+  tags: uninstall
+  when: ( ganesha is defined and ganesha == true ) and inventory_hostname in groups['control']
+
+
+- name: Destroy Single NFS Cluster
+  import_tasks: uninstall-single.yml
+  tags: uninstall
+  when: ( single is defined and single == true ) and inventory_hostname in groups['control']
+

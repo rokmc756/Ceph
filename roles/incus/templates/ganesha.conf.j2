@@ -1,0 +1,37 @@
+# create new
+NFS_CORE_PARAM {
+    # disable NLM
+    Enable_NLM = false;
+    # disable RQUOTA (not suported on CephFS)
+    Enable_RQUOTA = false;
+    # NFS protocol
+    Protocols = 4;
+}
+
+EXPORT_DEFAULTS {
+    # default access mode
+    Access_Type = RW;
+}
+
+EXPORT {
+    # unique ID
+    Export_Id = 101;
+    # mount path of CephFS
+    Path = "/";
+    FSAL {
+        name = CEPH;
+        # hostname or IP address of this Node
+        hostname="10.0.0.51";
+    }
+    # setting for root Squash
+    Squash="No_root_squash";
+    # NFSv4 Pseudo path
+    Pseudo="/vfs_ceph";
+    # allowed security options
+    SecType = "sys";
+}
+
+LOG {
+    # default log level
+    Default_Log_Level = WARN;
+}

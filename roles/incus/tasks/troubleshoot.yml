@@ -1,0 +1,9 @@
+# Checking NFS-Ganesha logs with
+# cephadm: The NFS daemons can be listed with:
+# ceph orch ps --daemon-type nfs
+#
+# You can via the logs for a specific daemon (e.g., nfs.mynfs.0.0.myhost.xkfzal) on the relevant host with:
+# cephadm logs --fsid <fsid> --name nfs.mynfs.0.0.myhost.xkfzal
+#
+# rook:
+# kubectl logs -n rook-ceph rook-ceph-nfs-<cluster_id>-<node_id> nfs-ganesha

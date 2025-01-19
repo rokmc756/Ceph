@@ -226,10 +226,11 @@ $ make ceph r=add s=osd
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
-### 10) Create Pools and RBDs
+### 10) Create Pools and RBDs with RBD Clients
 ```
 $ make block r=install s=pool
 $ make block r=install s=rbd
+$ make block r=install s=rbdc     # RBD Client
 ```
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 

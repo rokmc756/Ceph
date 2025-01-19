@@ -1,0 +1,269 @@
+---
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
+
+
+- name: Create a NFS Filesystem Volume
+  shell: |
+    ceph fs volume create {{ item.fs }}
+  register: create_nfs_vol
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ create_nfs_vol }}
+  when: print_debug == true
+
+
+- name: Enable the Ceph Manager NFS Module
+  shell: |
+    {{ cephadm_cmd }} ceph mgr module enable nfs
+  register: enable_nfs_module
+- debug: msg={{ enable_nfs_module }}
+  when: print_debug == true
+
+
+- name: Create RADOS Pools
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool create {{ item.pool }}
+  register: create_rados_pools
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ create_rados_pools }}
+  when: print_debug == true
+
+
+- name: Enable Application for NFS
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool application enable {{ item.pool }} nfs
+  register: enable_nfs_app
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ enable_nfs_app }}
+  when: print_debug == true
+
+
+- name: Initialize RBD Pool
+  shell: |
+    {{ cephadm_cmd }} rbd pool init -p {{ item.pool }}
+  register: init_rbd_pool
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ init_rbd_pool }}
+  when: print_debug == true
+
+
+#- name: Deploy NFS-Ganesha Gateway Using Placement Specification
+#  shell: |
+#    {{ cephadm_cmd }} ceph orch apply nfs {{ item.name }} --placement="{{ _ceph.mon_host_num }} {{ all_mon_hostnames }} "
+#  register: deploy_nfs_ganesha_gw
+#  with_items: "{{ _nfs.ganesha }}"
+#- debug: msg={{ deploy_nfs_ganesha_gw }}
+#  when: print_debug == true
+
+
+- name: Deploy NFS-Ganesha Cluster Using Command Line
+  shell: |
+    {{ cephadm_cmd }} ceph nfs cluster create {{ item.name }} "{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}" --ingress --virtual-ip {{ item.virtual_ip }}
+  register: deploy_nfs_ganesha_gw
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ deploy_nfs_ganesha_gw }}
+  when: print_debug == true
+
+
+- name: Check if NFS Ganesha Serivce is Still Starting
+  shell: |
+    ceph orch ps --daemon_type=nfs
+  register: nfs_ganesha_status
+  until: nfs_ganesha_status.stdout.find("starting") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ nfs_ganesha_status }}
+  when: print_debug == true
+
+
+- name: Check if NFS Ganesha Serivce is Still Starting
+  shell: |
+    ceph orch ps --daemon_type=nfs
+  register: nfs_ganesha_status
+  until: nfs_ganesha_status.stdout.find("unknown") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ nfs_ganesha_status }}
+  when: print_debug == true
+
+
+- name: List Services
+  shell: |
+    {{ cephadm_cmd }} ceph orch ls
+    {{ cephadm_cmd }} ceph orch ps --daemon_type=nfs
+  register: list_services
+- debug: msg={{ list_services }}
+  when: print_debug == true
+
+
+- name: Check the Cluster Info Status when Creating NFS
+  shell: |
+    ceph nfs cluster info {{ item.name }}
+  register: check_nfs_clu_info
+  ignore_errors: true
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ check_nfs_clu_info }}
+  when: print_debug == true
+
+
+- name: Check the ls Status when Creating NFS Ganesha Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph orch ls --service_name=nfs.{{ item.name }}
+    {{ cephadm_cmd }} ceph orch ps --service_name=nfs.{{ item.name }}
+  register: check_nfs_ls
+  ignore_errors: true
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ check_nfs_ls }}
+  when: print_debug == true
+
+
+- name: Copy Ganesha Configuration File
+  template: src=ceph-nfs.conf.j2 dest={{ _ceph.base_path }}/ceph-nfs.conf owner=root group=root mode=644 force=yes
+  register: copy_ganesha_config
+- debug: msg={{ copy_ganesha_config }}
+  when: print_debug == true
+
+
+- name: Create a Configuration File and Apply It to the NFS Cluster
+  shell: |
+    ceph nfs cluster config set {{ item.name }} -i {{ _ceph.base_path }}/ceph-nfs.conf
+  ignore_errors: true
+  register: create_nfs_config
+  with_items: "{{ _ganesha.cluster }}"
+- debug: msg={{ create_nfs_config }}
+  when: print_debug == true
+
+
+- name: View Customized NFS Ganesha Configuration
+  shell: |
+    ceph nfs cluster config get {{ item.cluster }}
+  register: view_customized_nfs_ganesha_config
+  with_items: "{{ _ganesha.export }}"
+- debug: msg={{ view_customized_nfs_ganesha_config }}
+  when: print_debug == true
+
+
+- name: Create a User, nfsclient to Expose CephFS though the NFS server
+  shell: |
+    ceph auth {{ item.action }} client.{{ item.user }} mon '{{ item.mon }}' \
+    osd '{{ item.osd }} pool={{ item.pool }} namespace={{ item.namespace }}, {{ item.cephfs }} data={{ item.data }}' \
+    mds '{{ item.mds }} path={{ item.path }}' > {{ item.key }}
+  ignore_errors: true
+  register: create_nfs_auth
+  with_items: "{{ _ganesha.auth }}"
+- debug: msg={{ create_nfs_auth }}
+  when: print_debug == true
+
+
+# RGW USER EXPORT
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
+#
+# Delete EXPORT
+# ceph nfs export rm <cluster_id> <pseudo_path>
+
+
+- name: Create a CephFS Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+  register: create_cephfs_export
+  with_items: "{{ _ganesha.export }}"
+- debug: msg={{ create_cephfs_export }}
+  when: print_debug == true
+  # ceph nfs export create {{ item.name }} {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+  # ceph fs subvolume getpath cephfs sub0
+
+
+# https://github.com/nfs-ganesha/nfs-ganesha/blob/next/src/config_samples/export.txt
+# ceph nfs export create cephfs {{ item.cluster }} {{ item.src }} {{ item.fs }} --path={{ item.dest }}
+#- name: Create a CephFS Export
+#  shell: |
+#    ceph nfs export create cephfs --cluster-id {{ item.cluster }} --pseudo-path {{ item.src }} --fsname {{ item.fs }} \
+#    --path={{ item.dest }} --client_addr 192.168.1.0/24 --squash no_root_squash
+#  register: create_cephfs_export
+#  with_items: "{{ nfs.export }}"
+#- debug: msg={{ create_cephfs_export }}
+#  when: print_debug == true
+# ceph fs subvolume getpath <vol_name> <subvol_name> [--group_name <subvol_group_name>]
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --bucket mybucket --client_addr 192.168.10.0/24
+# ceph nfs export create rgw --cluster-id mynfs --pseudo-path /bucketdata --user-id myuser --client_addr 192.168.10.0/24
+
+
+#- name: Transfer Ceph Configuration to Rados Gateway Host
+#  shell: |
+#    {{ cephadm_cmd }} radosgw-admin user create --uid={{ item.user_name }} --display-name={{ item.display_name }} \
+#    --email={{ item.email }} --access-key={{ item.access_key }} --secret-key={{ item.secret_key }}
+#  register: rgw_user_created
+#  with_items: "{{ nfs.rgw }}"
+#- debug: msg={{ rgw_user_created }}
+#  when: print_debug == true
+
+
+- name: Create a RGW Bucket Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} \
+    --pseudo-path {{ item.pseudo_path }} --bucket {{ item.bucket }} --client_addr {{ item.client_addr }}
+  register: create_rgw_bucket_export
+  with_items: "{{ _ganesha.rgw }}"
+- debug: msg={{ create_rgw_bucket_export }}
+  when: print_debug == true
+
+
+- name: Create a RGW User Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export create rgw --cluster-id {{ item.cluster }} \
+    --pseudo-path {{ item.pseudo_path }} --user-id {{ item.user_id }} --client_addr {{ item.client_addr }}
+  register: create_rgw_user_export
+  with_items: "{{ _ganesha.rgw }}"
+- debug: msg={{ create_rgw_user_export }}
+  when: print_debug == true
+
+
+- name: List the NFS Exports
+  shell: |
+    {{ cephadm_cmd }}  ceph nfs export ls {{ item.cluster }}
+  register: export_list_nfs
+  with_items: "{{ _ganesha.export }}"
+- debug: msg={{ export_list_nfs }}
+  when: print_debug == true
+
+
+- name: Get the Information of the NFS Export
+  shell: |
+    {{ cephadm_cmd }} ceph nfs cluster info {{ item.cluster }}
+  register: get_nfs_export
+  with_items: "{{ _ganesha.export }}"
+- debug: msg={{ get_nfs_export }}
+  when: print_debug == true
+
+
+- name: Pause until Pools are Started to Scrub
+  pause:
+    seconds: 40
+
+
+- name: Check if Pools are Still Unknown
+  shell: |
+    {{ cephadm_cmd }} ceph pg stat
+  register: check_unknown_pool
+  until: check_unknown_pool.stdout.find("unknown") == -1
+  retries: 30
+  delay: 10
+- debug: msg={{ check_unknown_pool }}
+  when: print_debug == true
+
+
+- name: Check if Pools are Active+Clean
+  shell: |
+    {{ cephadm_cmd }} ceph pg stat
+  register: check_scrub_pool
+  until: check_scrub_pool.stdout.find("scrubbing") == -1
+  retries: 20
+  delay: 15
+- debug: msg={{ check_scrub_pool }}
+  when: print_debug == true
+
+# ceph osd map cephfs.jtest-fs01.data jtest-ns01
+# ceph health detail
+# HEALTH_WARN 1 failed cephadm daemon(s)
+
+

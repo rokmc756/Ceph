@@ -1,0 +1,32 @@
+---
+- name: Get FSID for Setting Fact
+  shell: |
+    cat /etc/ceph/ceph.conf | grep fsid | awk '{print $3}'
+  register: get_fsid
+- debug: msg={{ get_fsid.stdout }}
+  when: print_debug == true
+
+
+- name: Set Fact for FSID
+  set_fact:
+    _fsid: "{{ get_fsid.stdout }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+
+
+- name: Get the Name of MGR Node
+  shell: |
+    ceph -s | grep mgr | awk '{print $2}' | cut -d . -f 1
+  register: get_mgr_name
+- debug: msg={{ get_mgr_name.stdout }}
+  when: print_debug == true
+
+
+- name: Set Fact for Cephadm Command
+  set_fact:
+    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['all'] }}"
+

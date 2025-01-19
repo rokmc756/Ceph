@@ -1,0 +1,153 @@
+---
+- name: Set Ceph FSID
+  import_tasks: set-fsid.yml
+
+
+- name: Delete Ceph File System NFS Exports
+  shell: |
+    {{ cephadm_cmd }} ceph nfs export rm {{ item.cluster }} {{ item.src }}
+  register: delete_cephfs_nfs_exports
+  ignore_errors: true
+  with_items: "{{ _nfs.export }}"
+- debug: msg={{ delete_cephfs_nfs_exports }}
+  when: print_debug == true
+
+
+- name: Stop NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch stop nfs.{{ item.name }}
+  register: stop_nfs_service
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ stop_nfs_service }}
+  when: print_debug == true
+
+
+- name: Stop CephFS Metadata for NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch stop mds.{{ item.fs }}
+  register: stop_cephfs_metadata
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ stop_cephfs_metadata }}
+  when: print_debug == true
+
+
+- name: Remove CephFS Metadata for NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch rm mds.{{ item.fs }}
+  register: remove_cephfs_metadata
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ remove_cephfs_metadata }}
+  when: print_debug == true
+
+
+- name: Destroy NFS Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph nfs cluster rm {{ item.name }}
+  register: destroy_nfs_cluster
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ destroy_nfs_cluster }}
+  when: print_debug == true
+  # Need to check if .nfs pool should be removal
+
+
+- name: Mark Filesystem Down
+  shell: |
+    {{ cephadm_cmd }} ceph fs set {{ item.fs }} down true
+  register: down_mark_cephfs
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ down_mark_cephfs }}
+  when: print_debug == true
+
+
+- name: Unjoin Filesystem into Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph fs set {{ item.fs }} joinable false
+  register: unjoin_cephfs
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ unjoin_cephfs }}
+  when: print_debug == true
+
+
+- name: Fail Filesystem
+  shell: |
+    {{ cephadm_cmd }} ceph fs fail {{ item.fs }}
+  register: fail_cephfs
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ fail_cephfs }}
+  when: print_debug == true
+
+# ceph mds stat                                                                                                                      rk9-node01: Wed Apr 10 05:24:57 2024
+# jtest-fs01:1 {0=jtest-fs01.rk9-node06.mgdctu=up:active} 4 up:standby
+# jtest-fs01:0 3 up:standby
+# ceph fs dump | grep mds | grep {{ item.fs }}
+# ceph mds stat | grep {{ item.fs }}
+
+
+- name: Allow to Delete Pool from Mon
+  shell: |
+    {{ cephadm_cmd }} ceph tell mon.\* injectargs --mon-allow-pool-delete true
+  register: allow_delete_pool
+  ignore_errors: true
+- debug: msg={{ allow_delete_pool }}
+  when: print_debug == true
+
+
+- name: Delete CephFS Volume in NFS
+  shell: |
+    {{ cephadm_cmd }} ceph fs rm {{ item.fs }} --yes-i-really-mean-it
+  register: delete_cephfs_volume_nfs
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ delete_cephfs_volume_nfs }}
+  when: print_debug == true
+
+
+# Need to check when is possible to remove NFS Data and MetaData Pools
+- name: Remove NFS Data Pool
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.data cephfs.{{ item.fs }}.data --yes-i-really-really-mean-it
+  register: remove_nfs_data
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ remove_nfs_data }}
+  when: print_debug == true
+
+
+- name: Remove NFS Metadata Pool
+  shell: |
+    {{ cephadm_cmd }} ceph osd pool rm cephfs.{{ item.fs }}.meta cephfs.{{ item.fs }}.meta --yes-i-really-really-mean-it
+  register: remove_nfs_metadata
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ remove_nfs_metadata }}
+  when: print_debug == true
+# When .nfs pool is deleted with the below task, recreating NFS service failed
+# ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
+
+
+- name: Delete NFS Users
+  shell: |
+    {{ cephadm_cmd }} ceph auth del client.{{ item.name }}
+  register: delete_nfs_user
+  ignore_errors: true
+  with_items: "{{ _nfs.users }}"
+- debug: msg={{ delete_nfs_user }}
+  when: print_debug == true
+
+
+- name: Remove NFS Service
+  shell: |
+    {{ cephadm_cmd }} ceph orch rm nfs.{{ item.name }}
+  register: remove_nfs_service
+  ignore_errors: true
+  with_items: "{{ _nfs.cluster }}"
+- debug: msg={{ remove_nfs_service }}
+  when: print_debug == true
+

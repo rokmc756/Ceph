@@ -62,11 +62,11 @@ _ceph:
       ipaddr0: "192.168.0.7"
       ipaddr1: "192.168.1.7"
       ipaddr2: "192.168.2.7"
-  ext_storage:
+  incus:
     net:
-      ipaddr0: "192.168.0."
-      ipaddr1: "192.168.1."
-      ipaddr2: "192.168.2."
+      ipaddr0: "192.168.0.8"
+      ipaddr1: "192.168.1.8"
+      ipaddr2: "192.168.2.8"
 
 
 vms:
