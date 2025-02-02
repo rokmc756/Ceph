@@ -31,7 +31,7 @@
 
 - name: Update Caches for DNF Packages
   shell: |
-    dnf update --refresh -y
+    dnf makecache
   register: update_dnf_cache
 - debug: msg={{ update_dnf_cache }}
   when: print_debug == true
