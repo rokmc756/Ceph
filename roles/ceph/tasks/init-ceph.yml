@@ -2,7 +2,7 @@
 - name: Initialize Ceph Cluster Monitor On Ceph Admin Node
   become_user: root
   shell: |
-    {{ _ceph.base_path }}/cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]][_netdev]['ipv4']['address'] }} \
+    cephadm bootstrap --mon-ip {{ hostvars[groups['control'][0]][_netdev]['ipv4']['address'] }} \
     --cluster-network {{ _ceph_network_range }} \
     --dashboard-password-noupdate \
     --initial-dashboard-user {{ _ceph.admin_user }} \
@@ -13,8 +13,6 @@
 - debug: msg={{ init_ceph }}
   when: print_debug == true
 
-- debug: msg={{ _ceph_network_range }}
-
 # cephadm bootstrap \
 #--registry-url registry.redhat.io \
 #--registry-username '<user>' \
@@ -23,11 +21,6 @@
 #--single-host-defaults
 # cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
 # --cluster-network 192.168.1.0/24 \
-
-
-#- name: Set Fact for cephadm_cmd Command
-#  set_fact:
-#    cephadm_cmd: "/usr/sbin/cephadm shell --fsid {{ _fsid }} -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring --"
 
 
 - name: Set Ceph FSID
@@ -41,8 +34,6 @@
 #  with_items:
 #    - "on --license sharing-1-0"
 #    - "enable channel perf"                     # or ceph telemetry off
-#
-#
 #- debug: msg={{ activate_telemetry_module }}
 #  when: print_debug == true
 

@@ -104,7 +104,21 @@
 
 
 
-# Handling NVME Devices about define number and list
+- name: Get NVME Devices With a Line
+  shell: |
+    nvme list | sed 1,2d | awk '{print $1}' | cut -d "/" -f 3 | tr '\n' ' ' | sed -e 's/ $//'
+  register: nvme_devices_line
+- debug: msg={{ nvme_devices_line.stdout_lines }}
+  when: print_debug == true
+
+
+- name: Set Fact for NVME Devices with a Line
+  set_fact:
+    nvme_devices: "{{ nvme_devices_line.stdout }}"
+- debug: msg={{ nvme_devices }}
+  when: print_debug == true
+
+
 - name: Get NVME Devices List
   shell: |
     nvme list | sed 1,2d | awk '{print $1}' | paste -sd "," -
