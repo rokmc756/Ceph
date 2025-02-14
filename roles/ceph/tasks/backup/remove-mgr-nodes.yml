@@ -1,6 +1,6 @@
 ---
 - name: Set Ceph FSID
-  import_tasks: set-fsid.yml
+  import_tasks: ext/set-fsid.yml
   when: inventory_hostname in groups['control']
 
 
@@ -11,8 +11,6 @@
   delegate_facts: True
   with_items: "{{ groups['all'] }}"
   when: inventory_hostname in groups['control']
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
 #- debug: msg={{ mgr_name }}
 #- meta: end_play
 
@@ -22,10 +20,8 @@
     ceph mon stat
   register: ceph_mon_stat
   when: inventory_hostname in groups['control']
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ ceph_mon_stat }}
   when: print_debug == true and inventory_hostname in groups['control']
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 # cephadm ls | grep mon | grep name | grep -v service_name | awk '{print $2}' | sed -e s/\"//g | sed -e s/,$//g
 # mon.rk9-node01
@@ -39,9 +35,8 @@
 #  delegate_to: "{{ mgr_name }}"
 #  register: ceph_mon_failed
 #  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ ceph_mon_failed }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 
 
 #- name: X
@@ -50,9 +45,8 @@
 #  register: osd_nodes_unlabled
 #  ignore_errors: true
 #  with_items: "{{ groups['mon'] }}"
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ osd_nodes_unlabled }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 
 
 #- name: Fail MGR Node
@@ -61,9 +55,8 @@
 #  delegate_to: "{{ mgr_name }}"
 #  register: ceph_mon_failed
 #  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ ceph_mon_failed }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 
 
 #- name: Remove MGR Node
@@ -72,9 +65,8 @@
 #  delegate_to: "{{ mgr_name }}"
 #  register: ceph_mon_stat
 #  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ ceph_mon_stat }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 
 
 #- name: Disable Scrub
@@ -84,9 +76,8 @@
 #  register: scrub_disabled
 #  delegate_to: "{{ mgr_name }}"
 #  ignore_errors: true
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ scrub_disabled }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 
 
 #- name:  Remove Monitoring Stacks
@@ -100,9 +91,8 @@
 #  register: mon_stacks_removed
 #  ignore_errors: true
 #  with_items: "{{ groups['mon'] }}"
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 #- debug: msg={{ mon_stacks_removed }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
+#  when: print_debug == true
 # ceph orch status
 
 
@@ -111,10 +101,8 @@
     ceph -s
   register: ceph_mon_stat
   when: inventory_hostname in groups['control']
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 - debug: msg={{ ceph_mon_stat }}
   when: print_debug == true and inventory_hostname in groups['control']
-  # when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 
 
 - name: Remove the Cluster Hosts and Check If There is Ceph Daemon Running
@@ -125,31 +113,4 @@
   register: remove_cluster_hosts
   with_items: "{{ groups['mon'] }}"
   when: inventory_hostname in groups['control']
-  # when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-
-
-#- name: Reboot Required
-#  shell: ( /bin/sleep 5 ; /sbin/shutdown -r now "Ansible updates triggered" ) &
-#  register: reboot_required
-#  async: 120
-#  poll: 0
-#  notify:
-#    - Waiting for Server to Come Back after Restart
-#  ignore_errors: true
-#  when: inventory_hostname in groups['mon']
-
-
-#- meta: flush_handlers
-#  when: inventory_hostname in groups['mon']
-
-
-#- name: Validate if Devices has still filesytem and is insufficent space
-#  shell: ceph orch device ls
-#  register: fs_space_checked
-#  until: fs_space_checked.stdout.find("Has a FileSystem, Insufficient space") == -1
-#  retries: 100
-#  delay: 10
-#  when: inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
-#- debug: msg={{ fs_space_checked }}
-#  when: print_debug == true and inventory_hostname in hostvars[groups['mon'][0]]['ansible_hostname']
 

@@ -9,86 +9,40 @@
   tags: install, uninstall, upload, download, init, purge, add, remove, enable, disable, clean, deploy, destroy
 
 
-- name: Enable Ceph Software Package Repo
-  import_tasks: enable-ceph-repo.yml
-  tags: enable
-  when: ( repo is defined and repo == true )
+- name: Import Packages Playbook
+  import_tasks: pkgs/main.yml
+  when: ( repo is defined and repo == true ) or ( pkgs is defined and pkgs == true )
 
 
-- name: Install Ceph Software Packages
-  import_tasks: install-pkgs.yml
-  tags: install
-  when: ( pkgs is defined and pkgs == true )
+- name: Import Init/Purge and Add/Remove Ceph Hosts
+  import_tasks: setup/main.yml
+  when: ( cluster is defined and cluster == true ) or ( host is defined and host == true )
 
 
-- name: Initialize Ceph
-  import_tasks: init-ceph.yml
-  tags: init
-  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['control']
+- name: Import MGR/MDS/MON Service Playbook
+  import_tasks: service/main.yml
+  when: ( mgr is defined and mgr == true ) or ( mds is defined and mds == true ) or ( mon is defined and mon == true )
 
 
-- name: Add Ceph Mon/MGR/MDS Nodes
-  import_tasks: add-ceph-nodes.yml
-  tags: add
-  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['mon']
-
-
-- name: Add OSD Nodes
-  import_tasks: add-osd-nodes.yml
-  tags: add
+- name: Import OSD Service Playbook
+  import_tasks: osd/main.yml
   when: ( osd is defined and osd == true )
 
 
-- name: Clean OSDs
-  import_tasks: clean-osds.yml
-  tags: remove
-  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
-
-
-- name: Remove OSD Nodes
-  import_tasks: remove-osd-nodes.yml
-  tags: remove
-  when: ( osd is defined and osd == true ) and inventory_hostname in groups['osd']
-
-
-- name: Validate that Clean Devices are Up
-  import_tasks: validate-clean-devices-up.yml
-  tags: remove
-  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
-
-
-- name: Remove Ceph Mon/MGR/MDS Nodes
-  import_tasks: remove-ceph-nodes.yml
-  tags: remove
-  when: ( ceph is defined and ceph == true ) and inventory_hostname in groups['control']
-
-
-- name: Purge Ceph Cluster
-  import_tasks: purge-ceph.yml
-  tags: purge
-  when: ( ceph is defined and ceph == true )
-
-
-- name: Uninstall Ceph Software
-  import_tasks: uninstall-pkgs.yml
-  tags: uninstall
-  when: ( pkgs is defined and pkgs == true )
-
-
-- name: Disable Ceph Package Repo
-  import_tasks: disable-ceph-repo.yml
-  tags: disable
-  when: ( repo is defined and repo == true )
+- name: Reboot All Hosts
+  import_tasks: ext/reboot-hosts.yml
+  tags: remove, purge, uninstall
+  when: ( osd is defined and osd == true ) or ( ceph is defined and ceph == true ) or ( pkgs is defined and pkgs == true )
 
 
 - name: Cleanup Remaining Gabages
-  import_tasks: cleanup-remaining-garbages.yml
+  import_tasks: ext/cleanup-remaining-garbages.yml
   tags: clean, destroy
   when: ( garbage is defined and garbage == true )
 
 
 - name: Remove Cephadm Binary
-  import_tasks: remove-cephadm-bin.yml
+  import_tasks: ext/remove-cephadm-bin.yml
   tags: uninstall
   when: ( cephadm is defined and cephadm == true )
 

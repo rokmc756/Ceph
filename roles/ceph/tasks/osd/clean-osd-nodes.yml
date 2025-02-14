@@ -1,0 +1,36 @@
+---
+- name: Remove Ceph Volume Groups
+  shell: |
+    for vg in $(`vgs | grep ceph | awk '{print $1}'`); do vgremove $vg -f ;done
+  register: remove_vgs
+  ignore_errors: true
+- debug: msg={{ remove_vgs }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- name: Remove Ceph Device Mapper
+  shell: |
+    for dm in $(fdisk -l | grep mapper | grep ceph | awk '{print $2}' | cut -d : -f 1); do dmsetup remove $dm ;done
+  register: remove_dm
+  ignore_errors: true
+- debug: msg={{ remove_dm }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+- import_tasks: ext/cleanup-nvme-devices.yml
+
+
+- name: Clear Memory Cache
+  shell: |
+    sync && echo 3 > /proc/sys/vm/drop_caches
+  register: clear_cache_memory
+  ignore_errors: true
+- debug: msg={{ clear_cache_memory }}
+  ignore_errors: true
+  when: print_debug == true
+
+
+# - import_tasks: ext/reboot-hosts.yml
+

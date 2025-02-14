@@ -1,6 +1,6 @@
 ---
 - name: Set Ceph FSID
-  import_tasks: set-fsid.yml
+  import_tasks: ext/set-fsid.yml
 
 
 - name: Unlabel the MGR/MDS/Mon Nodes with Its Role
@@ -32,7 +32,6 @@
 # ceph orch ps --daemon_type mon                   # mgr,mds, crash,ceph-exporter,node-exporter
 
 
-
 #- name: Remove the Ceph Cluster
 #  shell: |
 #    cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
@@ -42,22 +41,7 @@
 #  when: print_debug == true
 
 
-- name: Reboot Required
-  shell: ( /bin/sleep 5; /sbin/shutdown -r now "Ansible updates triggered" ) &
-  register: reboot_required
-  ignore_errors: true
-  async: 120
-  poll: 0
-  delegate_to: "{{ item }}"
-  delegate_facts: true
-  loop: "{{ groups['mon'] }}"
-  notify:
-    - Waiting for Server to Come Back after Restart
-  when: print_debug == true
-
-
-- meta: flush_handlers
-  when: print_debug == true
+# - import_tasks: ext/reboot-hosts.yml
 
 
 # [ Command Examples ]

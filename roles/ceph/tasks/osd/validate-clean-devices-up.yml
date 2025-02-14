@@ -8,5 +8,6 @@
   retries: 100
   delay: 10
 - debug: msg={{ check_fs_space }}
+  ignore_errors: true
   when: print_debug == true
 

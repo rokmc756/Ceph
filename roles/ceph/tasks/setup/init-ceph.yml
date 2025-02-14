@@ -8,23 +8,22 @@
     --initial-dashboard-user {{ _ceph.admin_user }} \
     --initial-dashboard-password {{ _ceph.admin_passwd }} \
     --skip-firewalld \
+    --allow-fqdn-hostname \
     --allow-overwrite
   register: init_ceph
 - debug: msg={{ init_ceph }}
   when: print_debug == true
-
-# cephadm bootstrap \
+#
 #--registry-url registry.redhat.io \
 #--registry-username '<user>' \
 #--registry-password '<passwd>' \
-#--allow-fqdn-hostname \
-#--single-host-defaults
-# cephadm bootstrap --mon-ip <ip-addr> --ssh-private-key cephadm-ssh-key --ssh-signed-cert cephadm-ssh-key-cert.pub
-# --cluster-network 192.168.1.0/24 \
+#--single-host-defaults \
+#--ssh-private-key cephadm-ssh-key \
+#--ssh-signed-cert cephadm-ssh-key-cert.pub
 
 
 - name: Set Ceph FSID
-  import_tasks: set-fsid.yml
+  import_tasks: ext/set-fsid.yml
 
 
 #- name: Activate the Telemetry Module
@@ -38,26 +37,17 @@
 #  when: print_debug == true
 
 
-- name: Check if Container is Created
-  shell: |
-    podman images
-  register: check_containers
-- debug: msg={{ check_containers }}
+# $(NF-9) is Serivce Field to Display Running
+- name: Check if All Services are Running
+  shell: "ceph orch ps | sed 1d | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_all_service
+  until: check_all_service.stdout|int >= 8
+  retries: 30
+  delay: 10
+- debug: msg={{ check_all_service }}
   when: print_debug == true
-
-
-- name: List the Containers If Using Podman
-  shell: |
-    podman ps
-  register: list_podman
-- debug: msg={{ list_podman }}
-  when: print_debug == true
-
-
-- name: List the Containers If Using Podman
-  shell: |
-    systemctl list-units 'ceph*'
-  register: list_containers
-- debug: msg={{ list_containers }}
-  when: print_debug == true
+#
+# podman images
+# podman ps
+# systemctl list-units 'ceph*'
 

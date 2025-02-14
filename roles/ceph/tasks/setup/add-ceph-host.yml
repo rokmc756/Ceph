@@ -1,0 +1,44 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Enable Ceph CLI
+  shell: |
+    {{ cephadm_cmd }} ceph -s
+  register: enable_ceph_cli
+- debug: msg={{ enable_ceph_cli }}
+  when: print_debug == true
+
+
+- name: Copy SSH Keys to Other Ceph Nodes
+  shell: |
+    ssh-copy-id -f -i /etc/ceph/ceph.pub root@{{ hostvars[item]['ansible_hostname'] }}
+  register: copy_ssh_keys
+  with_items: "{{ groups['all'] }}"
+
+
+- name: Allow Monitor Daemons Deployment On Arbitrary Hosts in order to Add the Nodes into Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
+  register: append_hosts
+  with_items:
+    - "{{ groups['append'] }}"
+- debug: msg={{ append_hosts }}
+  when: print_debug == true
+# {{ cephadm_cmd }} ceph orch apply mon --unmanaged
+
+
+
+# $(NF-9) is Serivce Field to Display Running
+- name: Check if All Services are Running
+  shell: "ceph orch ps | grep {{ hostvars[item]['ansible_hostname'] }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_all_service
+  until: check_all_service.stdout|int >= 4
+  retries: 30
+  delay: 10
+  with_items:
+    - "{{ groups['append'] }}"
+- debug: msg={{ check_all_service }}
+  when: print_debug == true
+

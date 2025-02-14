@@ -1,0 +1,36 @@
+---
+- name: Add Ceph MGR Nodes
+  import_tasks: service/mgr/add-mgr-nodes.yml
+  tags: add
+  when: ( mgr is defined and mgr == true ) and inventory_hostname in groups['control']
+
+
+- name: Add Ceph MDS Nodes
+  import_tasks: service/mds/add-mds-nodes.yml
+  tags: add
+  when: ( mds is defined and mds == true ) and inventory_hostname in groups['control']
+
+
+- name: Add Ceph Mon Nodes
+  import_tasks: service/mon/add-mon-nodes.yml
+  tags: add
+  when: ( mon is defined and mon == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove Ceph Mon Nodes
+  import_tasks: service/mon/remove-mon-nodes.yml
+  tags: remove
+  when: ( mon is defined and mon == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove Ceph MDS Nodes
+  import_tasks: service/mds/remove-mds-nodes.yml
+  tags: remove
+  when: ( mds is defined and mds == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove Ceph Mgr Nodes
+  import_tasks: service/mgr/remove-mgr-nodes.yml
+  tags: remove
+  when: ( mgr is defined and mgr == true ) and inventory_hostname in groups['control']
+

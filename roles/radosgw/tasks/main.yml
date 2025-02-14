@@ -10,25 +10,25 @@
 
 
 - name: Copy Ceph Config
-  import_tasks: copy-ceph-config.yml
+  import_tasks: single/copy-ceph-config.yml
   tags: install
   when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))
 
 
 - name: Install Single Rados Gateway
-  import_tasks: install-single.yml
+  import_tasks: single/install-single.yml
   tags: install
   when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
 
 
 - name: Install Primary Multisite Rados Gateway
-  import_tasks: install-primary-multisite.yml
+  import_tasks: multisite/install-primary-multisite.yml
   tags: install
   when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Install Secondary Multisite Rados Gateway
-  import_tasks: install-secondary-multisite.yml
+  import_tasks: multisite/install-secondary-multisite.yml
   tags: install
   when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
 
@@ -76,31 +76,31 @@
 
 
 - name: Remove Multi System User
-  import_tasks: remove-multisite-system-user.yml
+  import_tasks: multisite/remove-multisite-system-user.yml
   tags: uninstall
   when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Uninstall Secondary Multisite Rados Gateway
-  import_tasks: uninstall-secondary-multisite.yml
+  import_tasks: multisite/uninstall-secondary-multisite.yml
   tags: uninstall
   when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
 
 
 - name: Uninstall Primary Multisite Rados Gateway
-  import_tasks: uninstall-primary-multisite.yml
+  import_tasks: multisite/uninstall-primary-multisite.yml
   tags: uninstall
   when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Uninstall Single Rados Gateway
-  import_tasks: uninstall-single.yml
+  import_tasks: single/uninstall-single.yml
   tags: uninstall
   when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
 
 
 - name: Delete Rados Gateway Pools
-  import_tasks: delete-radosgw-pools.yml
+  import_tasks: single/delete-radosgw-pools.yml
   tags: uninstall
   when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))  and inventory_hostname in groups['control']
 

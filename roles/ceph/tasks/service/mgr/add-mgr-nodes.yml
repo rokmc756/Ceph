@@ -1,0 +1,22 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+# Provide Additionally External Monitoring and Monitoring Interfaces Running with Ceph Manager Daemon. The MGR Role is Assigned into All Nodes
+- name: Apply the MGR Role
+  shell: "{{ cephadm_cmd }} ceph orch apply mgr --placement='{{ all_mon_hostnames }}'"
+  register: apply_mgr
+- debug: msg={{ apply_mgr }}
+  when: print_debug == true
+
+
+- name: Label the MGR Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
+  register: label_ceph_nodes
+  with_items: "{{ groups['mon'] }}"
+- debug: msg={{ label_ceph_nodes }}
+  when: print_debug == true
+
+

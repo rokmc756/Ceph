@@ -1,0 +1,45 @@
+---
+#- name: Stop and Remove Ceph and Node Exporters's Containers
+#  shell: |
+#    for i in `systemctl list-units '*ceph*' | grep running | awk '{print $1}'`; do systemctl stop $i && systemctl disable $i ; done
+#  ignore_errors: true
+#  register: stop_exporter_containers
+#  delegate_to: "{{ item }}"
+#  delegate_facts: True
+#  loop: "{{ groups['osd'] }}"
+#- debug: msg={{ stop_exporter_containers }}
+#  when: print_debug == true
+
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
+# https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
+# podman images | awk '{print $3}'
+# podman rmi -f 1c40e0e88d74
+
+
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/1.2.3/html/red_hat_ceph_administration_guide/removing-osds-manual
+#- name: Delete OSD Users
+#  shell: |
+#    {{ cephadm_cmd }} ceph auth del client.ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
+#    {{ cephadm_cmd }} ceph auth del client.crash.{{ hostvars[item]['ansible_hostname'] }}
+#  register: delete_osd_users
+#  ignore_errors: true
+#  loop: "{{ groups['osd'] }}"
+#- debug: msg={{ delete_osd_users }}
+#  when: print_debug == true
+
+
+#- name: Remove FSID Directory
+#  file:
+#    path: "/var/lib/ceph/{{ _fsid }}"
+#    state: absent
+#  register: remove_fsid_dir
+#  ignore_errors: true
+#  delegate_to: "{{ item }}"
+#  delegate_facts: True
+#  loop: "{{ groups['osd'] }}"
+#- debug: msg={{ remove_fsid_dir }}
+#  when: print_debug == true
+#
+# https://access.redhat.com/documentation/ko-kr/red_hat_ceph_storage/4/html/operations_guide/removing-a-ceph-osd-node_ops
+# https://www.ibm.com/docs/en/storage-ceph/5?topic=failure-removing-ceph-osd-node
+

@@ -1,0 +1,60 @@
+---
+- name: Get All OSDs not UP
+  shell: |
+    ceph osd df | sed 1d | head -n -2 | awk '{ if($NF!="up") print $1 }' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+  register: all_osd_down_ids
+  when: inventory_hostname in groups['control']
+- debug: msg={{ all_osd_down_ids }}
+  when: print_debug == true and inventory_hostname in groups['control']
+# ceph osd df | sed 1d | head -n -2 | awk '{print $1","$20}'
+
+
+- set_fact:
+    all_osds: "{{ all_osd_down_ids.stdout | split(',')}}"
+  when: inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+- debug: msg={{ item }}
+  with_items: "{{ all_osds }}"
+  when: print_debug == true and inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+
+
+- name: Reconfig and Redeploy Node & Ceph Exporters and Crash
+  shell: |
+    {{ cephadm_cmd }} ceph orch daemon reconfig crash.{{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch daemon redeploy crash.{{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch daemon reconfig ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch daemon redeploy ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch daemon reconfig node-exporter.{{ hostvars[item]['ansible_hostname'] }}
+    {{ cephadm_cmd }} ceph orch daemon redeploy node-exporter.{{ hostvars[item]['ansible_hostname'] }}
+  register: node_exporter_reconfig
+  with_items: "{{ groups['osd'] }}"
+  when: inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+- debug: msg={{ node_exporter_reconfig }}
+  when: print_debug == true and inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+
+
+- name: Reconfig and Redeploy OSDs
+  shell: |
+    {{ cephadm_cmd }} ceph orch daemon reconfig osd.{{ item }}
+    {{ cephadm_cmd }} ceph orch daemon redeploy osd.{{ item }}
+  register: osd_reconfig
+  with_items: "{{ all_osds }}"
+  when: inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+- debug: msg={{ osd_reconfig }}
+  when: print_debug == true and inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+
+# ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+# ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+# ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
+
+- name: Validate if OSDs are still Down
+  shell: |
+    ceph osd df | sed 1d | head -n -2 | awk '{ if($NF=="down") print $NF }' | uniq
+  register: osd_down_status
+  ignore_errors: true
+  until: osd_down_status.stdout.find("down") == -1
+  retries: 20
+  delay: 10
+  when: inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+- debug: msg={{ osd_down_status }}
+  when: print_debug == true and inventory_hostname in groups['control'] and ( all_osd_down_ids.stdout | length > 0 )
+

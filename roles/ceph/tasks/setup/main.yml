@@ -1,0 +1,24 @@
+---
+- name: Initialize Ceph
+  import_tasks: setup/init-ceph.yml
+  tags: init
+  when: ( cluster is defined and cluster == true ) and inventory_hostname in groups['control']
+
+
+- name: Add Ceph Host
+  import_tasks: setup/add-ceph-host.yml
+  tags: add
+  when: ( host is defined and host == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove Ceph Hosts
+  import_tasks: setup/remove-ceph-host.yml
+  tags: remove
+  when: ( host is defined and host == true ) and inventory_hostname in groups['control']
+
+
+- name: Purge Ceph Cluster
+  import_tasks: setup/purge-ceph.yml
+  tags: purge
+  when: ( cluster is defined and cluster == true ) and inventory_hostname in groups['control']
+

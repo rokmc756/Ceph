@@ -1,9 +1,32 @@
 # server_url: "https://download.ceph.com/rpm-{{ cephadm.major_version }}.{{ cephadm.minor_version }}.{{ cephadm.patch_version }}/el9/noarch/cephadm"
 
-pool:
+_pool:
   pg_name: sysdocu
   pg_number: 128
   pg_custom_volume_name: volume01
   pg_custom_volume_size: 1G
   cephfs_name: myfs
+
+
+_dns:
+  zone:
+    - { name: jtest.futurfustion.io, type: forward }
+    - { name: 1.168.192.in-addr.arpa, type: reverse }
+  resource:
+    forward:
+      - {  name: "rk9-node01",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.171"  }
+      - {  name: "rk9-node02",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.172"  }
+      - {  name: "rk9-node03",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.173"  }
+      - {  name: "rk9-node04",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.174"  }
+      - {  name: "rk9-node05",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.175"  }
+      - {  name: "rk9-node06",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.176"  }
+      - {  name: "rk9-node07",  zone: "jtest.futurfusion.io",  type: "-a-rec",  value: "192.168.1.177"  }
+    reverse:
+      - { name: "171",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node01.futurfusion.io."  }
+      - { name: "172",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node02.futurfusion.io."  }
+      - { name: "173",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node03.futurfusion.io."  }
+      - { name: "174",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node04.futurfusion.io."  }
+      - { name: "175",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node05.futurfusion.io."  }
+      - { name: "176",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node06.futurfusion.io."  }
+      - { name: "177",  zone: 1.168.192.in-addr.arpa,  type: "--ptr-rec", value: "rk9-node07.futurfusion.io."  }
 

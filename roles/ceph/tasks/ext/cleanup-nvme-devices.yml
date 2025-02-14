@@ -1,0 +1,60 @@
+---
+- name: Remove Physical Volumes
+  shell: |
+    pvremove -y -ff {{ item }}
+  register: remove_pvs
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ remove_pvs }}
+  when: print_debug == true
+
+
+#- name: Format NVME Devices
+#  shell: |
+#    nvme format {{ item }} --force
+#  register: format_nvme_devices
+#  ignore_errors: true
+#  with_items: "{{ nvme_device_array }}"
+#- debug: msg={{ format_nvme_devices }}
+#  when: print_debug == true
+
+
+- name: Purge Block Devices
+  shell: |
+    dd if=/dev/zero of={{ item }} bs=4096 count=1 conv=notrunc
+  register: purge_block_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ purge_block_devices }}
+  when: print_debug == true
+
+
+- name: Wipe Filesystem in NVME Devices
+  shell: |
+    wipefs -a {{ item }}
+  register: wipefs_nvme_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ wipefs_nvme_devices }}
+  when: print_debug == true
+
+
+- name: Delete Zap in NVME Devices
+  shell: |
+    sgdisk --zap-all --delete {{ item }}
+  register: delete_zap_nvme_devices
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ delete_zap_nvme_devices }}
+  when: print_debug == true
+
+
+- name: Discard Block ID
+  shell: |
+    blkdiscard {{ item }}
+  register: discard_block_id
+  ignore_errors: true
+  with_items: "{{ nvme_device_array }}"
+- debug: msg={{ discard_block_id }}
+  when: print_debug == true
+

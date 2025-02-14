@@ -1,0 +1,22 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Apply the MGR Role
+  shell: "ceph orch apply mgr --placement='1 {{ inventory_hostname }}'"
+  register: apply_new_mgr_role
+  ignore_errors: true
+- debug: msg={{ apply_new_mgr_role }}
+  when: print_debug == true
+
+
+- name: Unlabel the MGR Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mgr
+  register: unlabel_mgr_nodes
+  ignore_errors: true
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ unlabel_mgr_nodes }}
+  when: print_debug == true
+

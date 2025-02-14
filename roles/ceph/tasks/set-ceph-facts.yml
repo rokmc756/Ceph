@@ -103,7 +103,6 @@
   when: ansible_distribution == "openSUSE Leap"
 
 
-
 - name: Get NVME Devices With a Line
   shell: |
     nvme list | sed 1,2d | awk '{print $1}' | cut -d "/" -f 3 | tr '\n' ' ' | sed -e 's/ $//'
@@ -128,7 +127,8 @@
   when: print_debug == true and _ceph.nvme == true
 
 
-- set_fact:
+- name: Set NVME Device List
+  set_fact:
     nvme_device_list: "{{ nvme_device_list0.stdout }}"
   when: _ceph.nvme == true
 - debug: msg={{ nvme_device_list }}
@@ -144,9 +144,17 @@
   when: print_debug == true and _ceph.nvme == true
 
 
-- set_fact:
+- name: Set Number of NVME Devices
+  set_fact:
+    nvme_device_count: "{{ nvme_device_array0.stdout_lines|length }}"
+  when: _ceph.nvme == true
+- debug: msg={{ nvme_device_count }}
+  when: print_debug == true and _ceph.nvme == true
+
+
+- name: Set NVME Device Arrary
+  set_fact:
     nvme_device_array: "{{ nvme_device_array0.stdout_lines }}"
   when: _ceph.nvme == true
 - debug: msg={{ nvme_device_array }}
   when: print_debug == true and _ceph.nvme == true
-

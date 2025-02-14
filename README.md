@@ -81,35 +81,35 @@ remote_machine_password="changeme"
 
 
 [rgw]
-rk9-node03 ansible_ssh_host=192.168.1.73
+rk9-node03 ansible_ssh_host=192.168.1.173
 
 
 [primary_rgw]
-rk9-node03 ansible_ssh_host=192.168.1.73
+rk9-node03 ansible_ssh_host=192.168.1.173
 
 
 [secondary_rgw]
-rk9-node06 ansible_ssh_host=192.168.0.76
+rk9-node06 ansible_ssh_host=192.168.0.176
 
 
 [control]
-rk9-node01 ansible_ssh_host=192.168.1.71
+rk9-node01 ansible_ssh_host=192.168.1.171
 
 
 [mon]
-rk9-node01 ansible_ssh_host=192.168.1.71
-rk9-node02 ansible_ssh_host=192.168.1.72
-rk9-node03 ansible_ssh_host=192.168.1.73
+rk9-node01 ansible_ssh_host=192.168.1.171
+rk9-node02 ansible_ssh_host=192.168.1.172
+rk9-node03 ansible_ssh_host=192.168.1.173
 
 
 [osd]
-rk9-node04 ansible_ssh_host=192.168.1.74
-rk9-node05 ansible_ssh_host=192.168.1.75
-rk9-node06 ansible_ssh_host=192.168.0.76
+rk9-node04 ansible_ssh_host=192.168.1.174
+rk9-node05 ansible_ssh_host=192.168.1.175
+rk9-node06 ansible_ssh_host=192.168.0.176
 
 
 [clients]
-rk9-node07 ansible_ssh_host=192.168.1.77
+rk9-node07 ansible_ssh_host=192.168.1.177
 ```
 
 #### 03) Configure variables for deploying Ceph
@@ -182,46 +182,64 @@ _ceph:
 ```
 
 
-### 04) - Initialize Linux Hosts
+### 04) - Initialize or Uninitialize Linux Hosts
 - Initialize linux hosts in order to prepare deploy ceph cluster by ansible such as creating users, exchanging ssh keys and configure /etc/hosts in all hosts.
 ```
 $ make hosts r=init s=all
+or
+$ make hosts r=uninit s=all
 ```
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
-### 05) - Enable Ceph Package Repository
+### 05) - Enable or Disable Ceph Package Repository
 - Enable Ceph Package Repository for Red Hat Based Linux. Ubuntu and SuSE included it as default
 ```
 $ make ceph r=enable s=repo
+or
+$ make ceph r=disable s=repo
 ```
 [![YouTube](http://i.ytimg.com/vi/1BEf_Hntagk/hqdefault.jpg)](https://www.youtube.com/watch?v=1BEf_Hntagk)
 
 
-### 06) Upload and Install Ceph Software into All Hosts.
+### 06) Upload/Install Ceph Software into All Hosts.
 ```
 $ make ceph r=install s=pkgs
+or
+$ make ceph r=uninstall s=pkgs
 ```
 [![YouTube](http://i.ytimg.com/vi/qeE46zWnbTs/hqdefault.jpg)](https://www.youtube.com/watch?v=qeE46zWnbTs)
 
 
-### 07) Initialize Ceph as Deploying MON and MGR services
+### 07) Initialize/Purge Ceph as Deploying MON and MGR services
 ```
-$ make ceph r=init s=ceph
+$ make ceph r=init s=cluster
+or
+$ make ceph r=purge s=cluster
 ```
 [![YouTube](http://i.ytimg.com/vi/2DhiWXthQBU/hqdefault.jpg)](https://www.youtube.com/watch?v=2DhiWXthQBU)
 
 
-### 08) Add Ceph Nodes for High Availablity
+### 08) Add/Remove Ceph(MGR/MDS/MON) Nodes for High Availablity
 ```
-$ make ceph r=add s=ceph
+$ make ceph r=add s=host
+$ make ceph r=add s=mgr
+$ make ceph r=add s=mds
+$ make ceph r=add s=mon
+or
+$ make ceph r=remove s=mon
+$ make ceph r=remove s=mds
+$ make ceph r=remove s=mgr
+$ make ceph r=remove s=host
 ```
 [![YouTube](http://i.ytimg.com/vi/I2lmJJWNGD8/hqdefault.jpg)](https://www.youtube.com/watch?v=I2lmJJWNGD8)
 
 
-### 09) Add OSD nodes
+### 09) Add/Remove OSD nodes
 ```
 $ make ceph r=add s=osd
+or
+$ make ceph r=remove s=osd
 ```
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 

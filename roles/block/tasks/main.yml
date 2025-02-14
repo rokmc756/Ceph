@@ -10,25 +10,25 @@
 
 
 - name: Create Pools for Rados Block Devices
-  import_tasks: create-pool.yml
+  import_tasks: rbd/create-pool.yml
   tags: create, install
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 
 
 - name: Create Rados Block Devices on Pools
-  import_tasks: create-rbd.yml
+  import_tasks: rbd/create-rbd.yml
   tags: create, install
   when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
 
 
 - name: Create iSCSI Container Services
-  import_tasks: create-iscsi-services.yml
+  import_tasks: iscsi/create-iscsi-services.yml
   tags: create, install
   when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['control']
 
 
 - name: Create iSCSI Gateways
-  import_tasks: create-iscsi-gateway.yml
+  import_tasks: iscsi/create-iscsi-gateway.yml
   tags: create, install
   when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['mon']
 
@@ -58,25 +58,25 @@
 
 
 - name: Delete iSCSI Gateways
-  import_tasks: delete-iscsi-gateway.yml
+  import_tasks: iscsi/delete-iscsi-gateway.yml
   tags: delete, uninstall
   when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['mon']
 
 
 - name: Delete iSCSI Container Services
-  import_tasks: delete-iscsi-services.yml
+  import_tasks: iscsi/delete-iscsi-services.yml
   tags: delete, uninstall
   when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['control']
 
 
 - name: Delete Rados Block Devices on Pools
-  import_tasks: delete-rbd.yml
+  import_tasks: rbd/delete-rbd.yml
   tags: delete, uninstall
   when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
 
 
 - name: Delete Pools for Rados Block Devices
-  import_tasks: delete-pool.yml
+  import_tasks: rbd/delete-pool.yml
   tags: delete, uninstall
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 

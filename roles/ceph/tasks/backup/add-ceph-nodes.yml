@@ -1,6 +1,6 @@
 ---
 - name: Set Ceph FSID
-  import_tasks: set-fsid.yml
+  import_tasks: ext/set-fsid.yml
   when: inventory_hostname in groups['control']
 
 
@@ -26,14 +26,13 @@
   register: add_nodes
   delegate_to: "{{ hostvars[groups['control'][0]]['ansible_hostname'] }}"
   delegate_facts: True
-  when: inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname']
+  when: inventory_hostname != inventory_hostname in groups['control']
 - debug: msg={{ add_nodes }}
-  when: print_debug == true and ( inventory_hostname != hostvars[groups['control'][0]]['ansible_hostname'] )
-  # {{ cephadm_cmd }} ceph orch apply mon --unmanaged
+  when: print_deubg == true and ( inventory_hostname != inventory_hostname in groups['control'] )
+# {{ cephadm_cmd }} ceph orch apply mon --unmanaged
 
 
-# Provide additionally external monitoring and monitoring interfaces running with Ceph Manager Daemon
-# The MGR Role is assigned into all nodes
+# Provide additionally external monitoring and monitoring interfaces running with Ceph Manager Daemon. The MGR Role is assigned into all nodes
 - name: Apply the Role of MGR for All Nodes
   shell: "{{ cephadm_cmd }} ceph orch apply mgr --placement='{{ all_mon_hostnames }}'"
   register: apply_mgr
@@ -42,10 +41,9 @@
   when: print_debug == true and inventory_hostname in groups['control']
 
 
-# Creaet MDS and assign the role of MDS into all nodes in order to use CephRBD and CephFS
-# In this case myfs would be created to identify filesystem
+# Creaet MDS and assign the role of MDS into all nodes in order to use CephRBD and CephFS. In this case myfs would be created to identify filesystem
 - name: Apply the Role of MDS for All Nodes
-  shell: "{{ cephadm_cmd }} ceph orch apply mds {{ pool.cephfs_name }} --placement='{{ _ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'"
+  shell: "{{ cephadm_cmd }} ceph orch apply mds {{ _pool.cephfs_name }} --placement='{{ _ceph.mon_host_num|int*5 }} {{ all_mon_hostnames }}'"
   register: apply_mds
   when: inventory_hostname in groups['control']
 - debug: msg={{ apply_mds }}

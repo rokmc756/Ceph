@@ -1,0 +1,36 @@
+---
+- name: Add OSD Nodes
+  import_tasks: osd/add-osd-nodes.yml
+  tags: add
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove OSDs
+  import_tasks: osd/remove-osds.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove OSD Services
+  import_tasks: osd/remove-osd-services.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+
+
+- name: Remove OSD Nodes
+  import_tasks: osd/remove-osd-nodes.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+
+
+- name: Clean OSD Nodes
+  import_tasks: osd/clean-osd-nodes.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['osd']
+
+
+- name: Validate that Clean Devices are Up
+  import_tasks: osd/validate-clean-devices-up.yml
+  tags: remove
+  when: ( osd is defined and osd == true ) and inventory_hostname in groups['control']
+

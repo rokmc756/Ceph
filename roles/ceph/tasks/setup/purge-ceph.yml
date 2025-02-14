@@ -1,0 +1,34 @@
+#- name: Disable Cephadm to stop all orchestration operations (so we avoid deploying new daemons)
+#  shell: |
+#    ceph mgr module disable cephadm
+#  register: all_ops_stopped
+#- debug: msg={{ all_ops_stopped.stdout }}
+#  when: print_debug == true
+
+
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Purge the Ceph Cluster
+  shell: |
+    cephadm rm-cluster --force --zap-osds --fsid {{ _fsid }}
+  register: remove_ceph_cluster
+  ignore_errors: true
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  with_items:
+    - "{{ groups['mon'] }}"
+    - "{{ groups['osd'] }}"
+- debug: msg={{ remove_ceph_cluster }}
+  when: print_debug == true
+
+
+- name: Check the Ceph Cluster
+  shell: |
+    cephadm ls
+  ignore_errors: true
+  register: check_ceph
+- debug: msg={{ check_ceph }}
+  when: print_debug == true
+

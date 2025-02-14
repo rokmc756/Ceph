@@ -1,0 +1,87 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Add the OSD Nodes to the Ceph Cluster
+  shell: |
+    {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
+  register: add_osd_nodes
+  with_items: "{{ groups['osd'] }}"
+- debug: msg={{ add_osd_nodes }}
+  when: print_debug == true
+
+
+# {{ cephadm_cmd }} ceph orch host ls
+# {{ cephadm_cmd }} ceph orch device ls
+# {{ cephadm_cmd }} ceph config set osd osd_memory_target_autotune true
+- name: Disable the Automatic Creation of OSDs on Avaialble Devices
+  shell: |
+    {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true  # --method {raw|lvm}
+  register: disable_auto_creation
+- debug: msg={{ disable_auto_creation }}
+  when: print_debug == true
+
+
+- name: Maually Create OSDs with Specific Devices on Specific Hosts
+  shell: |
+    {{ cephadm_cmd }} ceph orch daemon add osd {{ hostvars[item]['ansible_hostname'] }}:data_devices={{ nvme_device_list }}
+  register: create_manual_osds
+  with_items: "{{ groups['osd'] }}"
+- debug: msg={{ create_manual_osds }}
+  when: print_debug == true
+
+
+# {{ cephadm_cmd }} ceph osd up all
+- name: Check if OSDs are All Up
+  shell: |
+    ceph osd df | sed 1d | awk '{print" "$NF}' | sed 's/[[:space:]]//g' | grep up | wc -l
+  register: check_osd_down
+  until: check_osd_down.stdout|int == 12  # Need check the number of NVME Disk
+  retries: 30
+  delay: 20
+  ignore_errors: true
+- debug: msg={{ check_osd_down }}
+  when: print_debug == true
+
+
+- name: Label the OSD Nodes with It's Role
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
+  register: label_osd_nodes
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ label_osd_nodes }}
+  when: print_debug == true
+
+
+# $(NF-9) is Serivce Field to Display Running
+- name: Check if All OSD Services are Running
+  shell: "ceph orch ps | grep {{ hostvars[item]['ansible_hostname'] }} | grep osd | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_all_osd_service
+  until: check_all_osd_service.stdout|int >= nvme_device_count|int
+  retries: 30
+  delay: 10
+  with_items:
+    - "{{ groups['osd'] }}"
+- debug: msg={{ check_all_osd_service }}
+  when: print_debug == true
+
+
+- name: Check Ceph Cluster Health
+  shell: |
+    {{ cephadm_cmd }} ceph -s
+  register: check_ceph_health
+- debug: msg={{ check_ceph_health }}
+  when: print_debug == true
+# ceph osd tree
+# ceph orch ps
+# podman ps
+
+
+- name: List the Containers if Using Podman
+  shell: |
+    systemctl list-units 'ceph*'
+  register: list_containers
+- debug: msg={{ list_containers }}
+  when: print_debug == true
+

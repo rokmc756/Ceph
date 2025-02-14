@@ -1,0 +1,42 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Remove MDS Service
+  shell: |
+    for i in $(ceph orch ls | grep mds | grep -E '^mds' | awk '{print $1}'); do ceph orch rm $i; done
+  register: remove_mds_service
+  ignore_errors: true
+- debug: msg={{ remove_mds_service }}
+  when: print_debug == true
+
+
+- name: Check if MDS Service is Deleted
+  shell: |
+    ceph orch ls | grep mds | grep -E '^mds' | awk '{print $1}' | wc -l
+  register: check_mds_service
+  until: check_mds_service.stdout|int == 0
+  retries: 60
+  delay: 10
+- debug: msg={{ check_mds_service }}
+  when: print_debug == true
+
+
+- name: Apply the New Role of MDS
+  shell: "ceph orch apply mds {{ _pool.cephfs_name }} --placement='1 {{ inventory_hostname }}'"
+  register: apply_new_mds_role
+  ignore_errors: true
+- debug: msg={{ apply_new_mds_role }}
+  when: print_debug == true
+
+
+- name: Unlabel the MDS Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mds
+  register: unlabel_mds_nodes
+  ignore_errors: true
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ unlabel_mds_nodes }}
+  when: print_debug == true
+

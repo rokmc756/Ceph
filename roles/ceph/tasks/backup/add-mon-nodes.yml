@@ -1,6 +1,6 @@
 ---
 - name: Set Ceph FSID
-  import_tasks: set-fsid.yml
+  import_tasks: ext/set-fsid.yml
   when: inventory_hostname in groups['control']
 
 

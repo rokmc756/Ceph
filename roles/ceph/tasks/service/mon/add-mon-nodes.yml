@@ -1,0 +1,21 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Apply the MON Role
+  shell: "{{ cephadm_cmd }} ceph orch apply mon --placement='{{ all_mon_hostnames }}'"
+  register: apply_monitors
+- debug: msg={{ apply_monitors }}
+  when: print_debug == true
+
+
+- name: Label the MON Nodes
+  shell: |
+    {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-mon
+  register: ceph_nodes_labeled
+  with_items: "{{ groups['mon'] }}"
+- debug: msg={{ ceph_nodes_labeled }}
+  when: print_debug == true
+# {{ cephadm_cmd }} ceph orch host ls
+

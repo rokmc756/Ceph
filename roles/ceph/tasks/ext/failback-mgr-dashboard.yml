@@ -1,0 +1,41 @@
+
+# ceph orch daemon start mgr.<hostname>
+# ceph orch daemon stop mgr.<hostname>
+# ceph orch daemon restart mgr.<hostname>
+
+for i in `ceph orch ps | grep -e ^mgr | awk '{print $1}'`
+do
+  ceph orch daemon restart $i
+done
+
+ceph config rm mgr mgr/dashboard/server_addr
+ceph config rm mgr mgr/dashboard/server_port
+ceph config rm mgr mgr/dashboard/ssl_server_port
+ceph config rm mgr mgr/prometheus/server_addr
+ceph config rm mgr mgr/prometheus/server_port
+
+
+exit
+ceph config dump
+ceph config dump | grep dashboard
+
+ceph config set mgr mgr/dashboard/server_addr 192.168.1.171
+ceph config set mgr mgr/dashboard/server_port 80 #?
+ceph config set mgr mgr/dashboard/ssl_server_port 8443
+
+ceph config set mgr mgr/prometheus/server_port 9284
+ceph config set mgr mgr/prometheus/server_addr 192.168.1.171
+
+ceph mgr module disable dashboard
+ceph mgr module enable dashboard
+
+ceph mgr services
+
+
+
+##
+ceph config set mgr mgr/prometheus/server_addr rk9-node01.jtest.futurfusion.io
+ceph config set mgr mgr/prometheus/server_port 9284
+ceph config set mgr mgr/dashboard/server_addr rk9-node01.jtest.futurfusion.io
+ceph config set mgr mgr/dashboard/ssl_server_port 8443
+

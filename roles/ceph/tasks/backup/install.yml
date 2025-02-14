@@ -1,3 +1,4 @@
+---
 - name: Install Ceph - Project Name ( {{ ceph.project_name }} )
   shell: |
     {{ _ceph.base_path }}/cephadm install

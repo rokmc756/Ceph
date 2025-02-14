@@ -1,0 +1,24 @@
+---
+- name: Enable Ceph Software Package Repo
+  import_tasks: pkgs/enable-ceph-repo.yml
+  tags: enable
+  when: ( repo is defined and repo == true )
+
+
+- name: Install Ceph Software Packages
+  import_tasks: pkgs/install-pkgs.yml
+  tags: install
+  when: ( pkgs is defined and pkgs == true )
+
+
+- name: Uninstall Ceph Software
+  import_tasks: pkgs/uninstall-pkgs.yml
+  tags: uninstall
+  when: ( pkgs is defined and pkgs == true )
+
+
+- name: Disable Ceph Package Repo
+  import_tasks: pkgs/disable-ceph-repo.yml
+  tags: disable
+  when: ( repo is defined and repo == true )
+

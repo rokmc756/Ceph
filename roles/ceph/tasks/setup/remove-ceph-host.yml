@@ -1,0 +1,76 @@
+---
+- name: Set Ceph FSID
+  import_tasks: ext/set-fsid.yml
+
+
+- name: Remove Ceph Exporter Service
+  shell: |
+    for i in $(ceph orch ls | grep ceph-exporter | grep -E '^ceph-exporter' | awk '{print $1}'); do ceph orch rm $i; done
+  register: remove_ceph_exporter_service
+  ignore_errors: true
+- debug: msg={{ remove_ceph_exporter_service }}
+  when: print_debug == true
+
+
+- name: Check if Ceph Exporter is Deleted
+  shell: |
+    ceph orch ls | grep ceph-exporter | grep -E '^ceph-exporter' | awk '{print $1}' | wc -l
+  register: check_ceph_exporter_service
+  ignore_errors: true
+  until: check_ceph_exporter_service.stdout|int == 0
+  retries: 60
+  delay: 10
+- debug: msg={{ check_ceph_exporter_service }}
+  when: print_debug == true
+
+
+- name: Remove Remaining Ceph Services
+  shell: "ceph orch apply {{ item }} --placement='1 {{ inventory_hostname }}'"
+  register: remove_remain_ceph_services
+  ignore_errors: true
+  with_items:
+    - "crash"
+    - "node-exporter"
+- debug: msg={{ remove_remain_ceph_services }}
+  when: print_debug == true
+
+
+- name: Remove the Cluster Hosts
+  shell: |
+    {{ cephadm_cmd }} ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
+  register: remove_ceph_cluster_hosts
+  ignore_errors: true
+  loop: "{{ groups['append'] }}"
+- debug: msg={{ remove_ceph_cluster_hosts }}
+  when: print_debug == true
+
+
+- name: Drain the Cluster Hosts
+  shell: |
+    {{ cephadm_cmd }} ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
+  register: drain_cluster_hosts
+  ignore_errors: true
+  loop: "{{ groups['append'] }}"
+- debug: msg={{ drain_cluster_hosts }}
+  when: print_debug == true
+
+
+- name: Force Remove the Cluster Hosts
+  shell: |
+    {{ cephadm_cmd }} ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
+  register: force_remove_cluster_hosts
+  ignore_errors: true
+  loop: "{{ groups['append'] }}"
+- debug: msg={{ force_remove_cluster_hosts }}
+  when: print_debug == true
+
+
+- name: Check if There is Ceph Daemon Running
+  shell: |
+    {{ cephadm_cmd }} ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
+  register: check_ceph_daemon
+  ignore_errors: true
+  loop: "{{ groups['append'] }}"
+- debug: msg={{ check_ceph_daemon }}
+  when: print_debug == true
+
