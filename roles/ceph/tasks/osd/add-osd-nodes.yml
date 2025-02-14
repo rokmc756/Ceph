@@ -12,9 +12,9 @@
   when: print_debug == true
 
 
-# {{ cephadm_cmd }} ceph orch host ls
-# {{ cephadm_cmd }} ceph orch device ls
-# {{ cephadm_cmd }} ceph config set osd osd_memory_target_autotune true
+# ceph orch host ls
+# ceph orch device ls
+# ceph config set osd osd_memory_target_autotune true
 - name: Disable the Automatic Creation of OSDs on Avaialble Devices
   shell: |
     {{ cephadm_cmd }} ceph orch apply osd --all-available-devices --unmanaged=true  # --method {raw|lvm}
@@ -32,7 +32,6 @@
   when: print_debug == true
 
 
-# {{ cephadm_cmd }} ceph osd up all
 - name: Check if OSDs are All Up
   shell: |
     ceph osd df | sed 1d | awk '{print" "$NF}' | sed 's/[[:space:]]//g' | grep up | wc -l

@@ -6,7 +6,6 @@
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
 - debug: msg={{ remove_osd_hosts }}
-  ignore_errors: true
   when: print_debug == true
 
 
@@ -17,7 +16,6 @@
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
 - debug: msg={{ drain_osd_hosts }}
-  ignore_errors: true
   when: print_debug == true
 
 
@@ -28,7 +26,6 @@
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
 - debug: msg={{ force_remove_osd_hosts }}
-  ignore_errors: true
   when: print_debug == true
 
 
@@ -39,6 +36,5 @@
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
 - debug: msg={{ check_osd_hosts }}
-  ignore_errors: true
   when: print_debug == true
 

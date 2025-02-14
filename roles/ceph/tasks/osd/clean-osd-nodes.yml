@@ -5,7 +5,6 @@
   register: remove_vgs
   ignore_errors: true
 - debug: msg={{ remove_vgs }}
-  ignore_errors: true
   when: print_debug == true
 
 
@@ -15,7 +14,6 @@
   register: remove_dm
   ignore_errors: true
 - debug: msg={{ remove_dm }}
-  ignore_errors: true
   when: print_debug == true
 
 
@@ -28,7 +26,6 @@
   register: clear_cache_memory
   ignore_errors: true
 - debug: msg={{ clear_cache_memory }}
-  ignore_errors: true
   when: print_debug == true
 
 
