@@ -1,0 +1,63 @@
+---
+- name: Replace Node Exporter
+  shell: "ceph orch apply node-exporter --placement='{{ all_mon_hostnames }}'"
+  register: replace_node_exporter
+  ignore_errors: true
+- debug: msg={{ replace_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Node Exporter is Replaced
+  shell: |
+    ceph orch ps | grep node-exporter | grep {{ inventory_hostname }} |  grep running | wc -l
+  register: check_replace_node_exporter
+  ignore_errors: true
+  until: check_replace_node_exporter.stdout|int == 1
+  retries: 10
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_node_exporter }}
+  when: print_debug == true
+
+
+- name: Replace Crash
+  shell: "ceph orch apply crash --placement='{{ all_mon_hostnames }}'"
+  register: replace_crash
+  ignore_errors: true
+- debug: msg={{ replace_crash }}
+  when: print_debug == true
+
+
+- name: Check if Crash is Replaced
+  shell: |
+    ceph orch ps | grep crash | grep {{ inventory_hostname }} | grep running | wc -l
+  register: check_replace_crash
+  ignore_errors: true
+  until: check_replace_crash.stdout|int == 1
+  retries: 10
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_crash }}
+  when: print_debug == true
+
+
+- name: Replace Ceph Exporter
+  shell: "ceph orch apply ceph-exporter --placement='{{ all_mon_hostnames }}'"
+  register: replace_ceph_exporter
+  ignore_errors: true
+- debug: msg={{ replace_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Ceph Exprter is Replaced
+  shell: |
+    ceph orch ps | grep ceph-exporter | grep {{ inventory_hostname }} | grep running | wc -l
+  register: check_replace_ceph_exporter
+  ignore_errors: true
+  until: check_replace_ceph_exporter.stdout|int == 1
+  retries: 10
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_ceph_exporter }}
+  when: print_debug == true
+

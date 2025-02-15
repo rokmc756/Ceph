@@ -1,6 +1,6 @@
 ---
-- name: Set Ceph FSID
-  import_tasks: ext/set-fsid.yml
+#- name: Set Ceph FSID
+#  import_tasks: ext/set-fsid.yml
 
 
 - name: Get All OSD IDs
@@ -9,8 +9,6 @@
   register: all_osd_ids
 - debug: msg={{ all_osd_ids }}
   when: print_debug == true
-# ceph config dump | grep -E '^osd\.' | grep iops_ssd | awk '{print $1}' | cut -d . -f 2 | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
-# ceph osd status | grep -E '{{ all_osd_nodes }}' | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
 
 
 - name: Set Facts for All OSD IDs
@@ -21,9 +19,9 @@
   when: print_debug == true
 
 
-- name: Unlabel the OSD Nodes with Its Role
+- name: Unlabel the OSD Nodes
   shell: |
-    {{ cephadm_cmd }} ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
+    ceph orch host label rm {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
   register: unlabel_osd_nodes
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
@@ -31,116 +29,103 @@
   when: print_debug == true
 
 
-# ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
-#- name: Disable Scrub for OSDs
-#  shell: |
-#    {{ cephadm_cmd }} ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
-#    {{ cephadm_cmd }} ceph osd set noscrub
-#    {{ cephadm_cmd }} ceph osd set nodeep-scrub
-#  register: disable_scrub
-#  ignore_errors: true
-#- debug: msg={{ disable_scrub }}
-#  when: print_debug == true
-
-
-- name: Out OSDs
+- name: Disable Scrub for OSDs
   shell: |
-    {{ cephadm_cmd }} ceph osd out all
-  register: osd_out
+    ceph osd set noscrub
+    ceph osd set nodeep-scrub
+    ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 1 --osd-recovery-op-priority 1
+  register: disable_scrub
   ignore_errors: true
-- debug: msg={{ osd_out }}
-  when: print_debug == true
-
-
-# ceph osd down {{ item }} --definitely-dead
-- name: Down OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd down all
-  register: down_osd
-  ignore_errors: true
-- debug: msg={{ down_osd }}
-  when: print_debug == true
-
-
-- name: Remove OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd rm {{ item }}
-  register: remove_osd
-  ignore_errors: true
-  loop: "{{ all_osd }}"
-- debug: msg={{ remove_osd }}
-  when: print_debug == true
-
-
-- name: Remove Auth of OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph auth del osd.{{ item }}
-  register: remove_osd_auth
-  ignore_errors: true
-  loop: "{{ all_osd }}"
-- debug: msg={{ remove_osd_auth }}
-  when: print_debug == true
-
-
-- name:  Destroy OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph osd destroy {{ item }} --force
-  register: destroy_osd
-  ignore_errors: true
-  loop: "{{ all_osd }}"
-- debug: msg={{ destroy_osd }}
+- debug: msg={{ disable_scrub }}
   when: print_debug == true
 
 
 - name: Remove Crush OSDs
   shell: |
-    {{ cephadm_cmd }} ceph osd crush rm osd.{{ item }}
+    ceph osd crush rm osd.{{ item }}
   register: remove_osd
   ignore_errors: true
-  loop: "{{ all_osd }}"
+  loop: "{{ groups['osd'] }}"
 - debug: msg={{ remove_osd }}
+  when: print_debug == true
+
+
+# ceph osd down {{ item }} --definitely-dead
+# {{ cephadm_cmd }} ceph osd down all | wc -l
+- name: Down OSDs
+  shell: |
+    ceph osd down all | wc -l
+  register: down_osd
+  ignore_errors: true
+  until: down_osd.stdout|int == 0
+  retries: 5
+  delay: 20
+- debug: msg={{ down_osd }}
+  when: print_debug == true
+
+
+- name: Out OSDs
+  shell: |
+    ceph osd out all | wc -l
+  register: osd_out
+  until: osd_out.stdout|int == 0
+  retries: 10
+  delay: 10
+  ignore_errors: true
+- debug: msg={{ osd_out }}
+  when: print_debug == true
+
+
+- name: Stop OSD Daemon Service
+  shell: |
+    ceph orch daemon stop osd.{{ item }}
+  register: stop_osd_daemon_service
+  loop: "{{ all_osd }}"
+  ignore_errors: true
+- debug: msg={{ stop_osd_daemon_service }}
+  when: print_debug == true
+
+
+# $(NF-9) is Serivce Field to Display Running
+- name: Check if All OSD Services are Stopped
+  shell: "ceph orch ps | grep {{ hostvars[item]['ansible_hostname'] }} | grep osd | grep stopped | wc -l"
+  register: check_all_osd_service
+  ignore_errors: true
+  until: check_all_osd_service.stdout|int >= nvme_device_count|int
+  retries: 10
+  delay: 10
+  with_items:
+    - "{{ groups['osd'] }}"
+- debug: msg={{ check_all_osd_service }}
+  when: print_debug == true
+
+
+- name: Remove OSD Daemon Service
+  shell: |
+    ceph orch daemon rm osd.{{ item }} --force
+  register: remove_osd_daemon_service
+  loop: "{{ all_osd }}"
+  ignore_errors: true
+- debug: msg={{ remove_osd_daemon_service }}
+  when: print_debug == true
+
+
+- name: Remove Unmanaged OSD Devices
+  shell: |
+    ceph orch rm osd.all-available-devices
+  register: remove_unmanaged_osd_devices
+  ignore_errors: true
+- debug: msg={{ remove_unmanaged_osd_devices }}
   when: print_debug == true
 
 
 - name: Purge OSDs
   shell: |
-    {{ cephadm_cmd }} ceph osd purge {{ item }} --force --yes-i-really-mean-it
+    ceph osd down osd.{{ item }}
+    ceph osd purge osd.{{ item }} --force --yes-i-really-mean-it
   register: purge_osd
   ignore_errors: true
   loop: "{{ all_osd }}"
 - debug: msg={{ purge_osd }}
-  when: print_debug == true
-
-
-- name: Remove Host Bucket in Crush Map
-  shell: |
-    {{ cephadm_cmd }} ceph osd crush rm {{ item }}
-  register: remove_bucket
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_bucket }}
-  when: print_debug == true
-
-
-- name: Unset Scrub for OSDs
-  shell: |
-    {{ cephadm_cmd }} ceph tell osd.* injectargs --osd-max-backfills 1 --osd-recovery-max-active 3 --osd-recovery-op-priority 3
-    {{ cephadm_cmd }} ceph osd unset noscrub
-    {{ cephadm_cmd }} ceph osd unset nodeep-scrub
-    {{ cephadm_cmd }} ceph osd unset noup
-  register: unset_scrub
-  ignore_errors: true
-- debug: msg={{ unset_scrub }}
-  when: print_debug == true
-
-
-- name: Delete OSD Users
-  shell: |
-    {{ cephadm_cmd }} ceph auth del client.ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
-    {{ cephadm_cmd }} ceph auth del client.crash.{{ hostvars[item]['ansible_hostname'] }}
-  register: delete_osd_users
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ delete_osd_users }}
   when: print_debug == true
 

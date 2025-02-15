@@ -1,66 +1,106 @@
 ---
-- name: Remove OSD Node Exporter
+- name: Remove Node Exporter
   shell: |
-    ceph orch rm node-exporter.{{ hostvars[item]['ansible_hostname'] }}
-  register: remove_osd_node_exporter
+    ceph orch rm node-exporter
+  register: remove_node_exporter
   ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_osd_node_exporter }}
+- debug: msg={{ remove_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Node Exported is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^node-exporter" | wc -l
+  register: check_node_exporter
+  ignore_errors: true
+  until: check_node_exporter.stdout|int == 0
+  retries: 10
+  delay: 10
+- debug: msg={{ check_node_exporter }}
   when: print_debug == true
 
 
 - name: Check if OSD Node Exporter is Removed
   shell: |
-    "ceph orch ps | grep node-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+    ceph orch ps | grep node-exporter | grep {{ inventory_hostname }} | grep running | wc -l
   register: check_osd_node_exporter
   ignore_errors: true
   until: check_osd_node_exporter.stdout|int == 0
   retries: 60
   delay: 10
+  loop: "{{ groups['osd'] }}"
 - debug: msg={{ check_osd_node_exporter }}
   when: print_debug == true
 
 
-- name: Remove OSD Crash
+- name: Remove Crash
   shell: |
-    ceph orch rm ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
-  register: remove_osd_crash
+    ceph orch rm crash
+  register: remove_crash
   ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_osd_crash }}
+- debug: msg={{ remove_crash }}
+  when: print_debug == true
+
+
+- name: Check if Crash is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^crash" | wc -l
+  register: check_crash
+  ignore_errors: true
+  until: check_crash.stdout|int == 0
+  retries: 10
+  delay: 10
+- debug: msg={{ check_crash }}
   when: print_debug == true
 
 
 - name: Check if OSD Crash is Removed
   shell: |
-    "ceph orch ps | grep crash | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+    ceph orch ps | grep crash | grep {{ inventory_hostname }} | grep running | wc -l
   register: check_osd_crash
   ignore_errors: true
   until: check_osd_crash.stdout|int == 0
   retries: 60
   delay: 10
+  loop: "{{ groups['osd'] }}"
 - debug: msg={{ check_osd_crash }}
   when: print_debug == true
 
 
-- name: Remove OSD Ceph Exporter
+- name: Remove Ceph Exporter
   shell: |
-    ceph orch rm ceph-exporter.{{ hostvars[item]['ansible_hostname'] }}
-  register: remove_osd_ceph_exporter
+    ceph orch rm ceph-exporter
+  register: remove_ceph_exporter
   ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_osd_ceph_exporter }}
+- debug: msg={{ remove_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Ceph Exported is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^ceph-exporter" | wc -l
+  register: check_ceph_exporter
+  ignore_errors: true
+  until: check_ceph_exporter.stdout|int == 0
+  retries: 10
+  delay: 10
+- debug: msg={{ check_ceph_exporter }}
   when: print_debug == true
 
 
 - name: Check if OSD Ceph Exprter is Deleted
   shell: |
-    "ceph orch ps | grep ceph-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+    ceph orch ps | grep ceph-exporter | grep {{ inventory_hostname }} | grep running | wc -l
   register: check_osd_ceph_exporter
   ignore_errors: true
   until: check_osd_ceph_exporter.stdout|int == 0
   retries: 60
   delay: 10
+  loop: "{{ groups['osd'] }}"
 - debug: msg={{ check_osd_ceph_exporter }}
   when: print_debug == true
+
+
+- name: Replace OSD Services
+  import_tasks: osd/replace-osd-services.yml
 

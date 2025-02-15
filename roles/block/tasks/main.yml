@@ -12,25 +12,25 @@
 - name: Create Pools for Rados Block Devices
   import_tasks: rbd/create-pool.yml
   tags: create, install
-  when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
+  when: (( pool is defined and pool == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Create Rados Block Devices on Pools
   import_tasks: rbd/create-rbd.yml
   tags: create, install
-  when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
+  when: (( rbd is defined and rbd == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Create iSCSI Container Services
   import_tasks: iscsi/create-iscsi-services.yml
-  tags: create, install
-  when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['control']
+  tags: setup, create, install
+  when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Create iSCSI Gateways
   import_tasks: iscsi/create-iscsi-gateway.yml
-  tags: create, install
-  when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['mon']
+  tags: setup, create, install
+  when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['mon']
 
 
 - name: Install iSCSI Clients
@@ -59,13 +59,13 @@
 
 - name: Delete iSCSI Gateways
   import_tasks: iscsi/delete-iscsi-gateway.yml
-  tags: delete, uninstall
+  tags: delete, remove, uninstall
   when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['mon']
 
 
 - name: Delete iSCSI Container Services
   import_tasks: iscsi/delete-iscsi-services.yml
-  tags: delete, uninstall
+  tags: delete, remove, uninstall
   when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
@@ -78,5 +78,5 @@
 - name: Delete Pools for Rados Block Devices
   import_tasks: rbd/delete-pool.yml
   tags: delete, remove, uninstall
-  when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
+  when: (( pool is defined and pool == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 

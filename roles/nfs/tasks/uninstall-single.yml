@@ -129,7 +129,6 @@
 - debug: msg={{ remove_nfs_metadata }}
   when: print_debug == true
 # When .nfs pool is deleted with the below task, recreating NFS service failed
-# ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
 
 
 - name: Delete NFS Users
@@ -149,5 +148,14 @@
   ignore_errors: true
   with_items: "{{ _nfs.cluster }}"
 - debug: msg={{ remove_nfs_service }}
+  when: print_debug == true
+
+
+- name: Remove NFS Pool
+  shell: |
+     ceph osd pool rm .nfs .nfs --yes-i-really-really-mean-it
+  register: remove_nfs_pool
+  ignore_errors: true
+- debug: msg={{ remove_nfs_pool }}
   when: print_debug == true
 

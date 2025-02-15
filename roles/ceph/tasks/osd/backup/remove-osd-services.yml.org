@@ -1,0 +1,168 @@
+---
+- name: Remove Node Exporter
+  shell: |
+    ceph orch rm node-exporter
+  register: remove_node_exporter
+  ignore_errors: true
+- debug: msg={{ remove_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Node Exported is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^node-exporter" | wc -l
+  register: check_node_exporter
+  until: check_osd_exporter.stdout|int == 0
+  retries: 10
+  delay: 10
+  ignore_errors: true
+- debug: msg={{ check_node_exporter }}
+  when: print_debug == true
+
+
+- name: Replace OSD Node Exporter
+  shell: |
+    "{{ cephadm_cmd }} ceph orch apply node-exporter --placement='{{ all_mon_hostnames }}'"
+  register: replace_osd_node_exporter
+  ignore_errors: true
+- debug: msg={{ replace_osd_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Node Exporter is Removed
+  shell: |
+    "ceph orch ps | grep node-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_osd_node_exporter
+  ignore_errors: true
+  until: check_osd_node_exporter.stdout|int == 0
+  retries: 60
+  delay: 10
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ check_osd_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Node Exporter is Replaced
+  shell: |
+    "ceph orch ps | grep node-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_replace_osd_node_exporter
+  ignore_errors: true
+  until: check_replace_osd_node_exporter.stdout|int == 1
+  retries: 60
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_osd_node_exporter }}
+  when: print_debug == true
+
+
+- name: Remove Crash
+  shell: |
+    ceph orch rm crash
+  register: remove_crash
+  ignore_errors: true
+- debug: msg={{ remove_crash }}
+  when: print_debug == true
+
+
+- name: Check if Crash is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^crash" | wc -l
+  register: check_crash
+  until: check_crash.stdout|int == 0
+  retries: 10
+  delay: 10
+  ignore_errors: true
+- debug: msg={{ check_crash }}
+  when: print_debug == true
+
+
+- name: Replace OSD Crace
+  shell: |
+    "{{ cephadm_cmd }} ceph orch apply crash --placement='{{ all_mon_hostnames }}'"
+  register: replace_osd_crash
+  ignore_errors: true
+- debug: msg={{ replace_osd_crash }}
+  when: print_debug == true
+
+
+- name: Check if OSD Crash is Removed
+  shell: |
+    "ceph orch ps | grep crash | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_osd_crash
+  ignore_errors: true
+  until: check_osd_crash.stdout|int == 0
+  retries: 60
+  delay: 10
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ check_osd_crash }}
+  when: print_debug == true
+
+
+- name: Check if OSD Crash is Replaced
+  shell: |
+    "ceph orch ps | grep crash | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_replace_osd_crash
+  ignore_errors: true
+  until: check_replace_osd_crash.stdout|int == 1
+  retries: 60
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_osd_crash }}
+  when: print_debug == true
+
+
+- name: Remove Ceph Exporter
+  shell: |
+    ceph orch rm ceph-exporter
+  register: remove_ceph_exporter
+  ignore_errors: true
+- debug: msg={{ remove_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if Ceph Exported is Deleted Normally
+  shell: |
+    ceph orch ls | grep -e "^ceph-exporter" | wc -l
+  register: check_ceph_exporter
+  until: check_ceph_exporter.stdout|int == 0
+  retries: 10
+  delay: 10
+  ignore_errors: true
+- debug: msg={{ check_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Replace OSD Ceph Exporter
+  shell: |
+    "{{ cephadm_cmd }} ceph orch apply ceph-exporter --placement='{{ all_mon_hostnames }}'"
+  register: replace_osd_ceph_exporter
+  ignore_errors: true
+- debug: msg={{ replace_osd_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Ceph Exprter is Deleted
+  shell: |
+    "ceph orch ps | grep ceph-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_osd_ceph_exporter
+  ignore_errors: true
+  until: check_osd_ceph_exporter.stdout|int == 0
+  retries: 60
+  delay: 10
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ check_osd_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Ceph Exprter is Replaced
+  shell: |
+    "ceph orch ps | grep ceph-exporter | grep {{ inventory_hostname }} | awk -F' ' '{print $(NF-9)}' | grep running | wc -l"
+  register: check_replace_osd_ceph_exporter
+  ignore_errors: true
+  until: check_replace_osd_ceph_exporter.stdout|int == 1
+  retries: 60
+  delay: 10
+  loop: "{{ groups['mon'] }}"
+- debug: msg={{ check_replace_osd_ceph_exporter }}
+  when: print_debug == true
+

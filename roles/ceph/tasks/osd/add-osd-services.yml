@@ -1,0 +1,60 @@
+---
+- name: Replace OSD Node Exporter
+  shell: "ceph orch apply node-exporter --placement='{{ all_mon_hostnames }} {{ all_osd_hostname }}'"
+  register: replace_osd_node_exporter
+  ignore_errors: true
+- debug: msg={{ replace_osd_node_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Node Exporter is Replaced
+  shell: |
+    ceph orch ps | grep node-exporter | grep running | wc -l
+  register: check_replace_osd_node_exporter
+  ignore_errors: true
+  until: check_replace_osd_node_exporter.stdout|int == 6
+  retries: 10
+  delay: 10
+- debug: msg={{ check_replace_osd_node_exporter }}
+  when: print_debug == true
+
+
+- name: Replace OSD Crace
+  shell: "ceph orch apply crash --placement='{{ all_mon_hostnames }} {{ all_osd_hostname }}'"
+  register: replace_osd_crash
+  ignore_errors: true
+- debug: msg={{ replace_osd_crash }}
+  when: print_debug == true
+
+
+- name: Check if OSD Crash is Replaced
+  shell: |
+    ceph orch ps | grep crash | grep running | wc -l
+  register: check_replace_osd_crash
+  ignore_errors: true
+  until: check_replace_osd_crash.stdout|int == 6
+  retries: 10
+  delay: 10
+- debug: msg={{ check_replace_osd_crash }}
+  when: print_debug == true
+
+
+- name: Replace OSD Ceph Exporter
+  shell: "ceph orch apply ceph-exporter --placement='{{ all_mon_hostnames }} {{ all_osd_hostname }}'"
+  register: replace_osd_ceph_exporter
+  ignore_errors: true
+- debug: msg={{ replace_osd_ceph_exporter }}
+  when: print_debug == true
+
+
+- name: Check if OSD Ceph Exprter is Replaced
+  shell: |
+    ceph orch ps | grep ceph-exporter | grep running | wc -l
+  register: check_replace_osd_ceph_exporter
+  ignore_errors: true
+  until: check_replace_osd_ceph_exporter.stdout|int == 6
+  retries: 10
+  delay: 10
+- debug: msg={{ check_replace_osd_ceph_exporter }}
+  when: print_debug == true
+

@@ -19,14 +19,14 @@
   when: print_debug == true
 
 
-- name: Force the OSD Hosts
-  shell: |
-    ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
-  register: force_remove_osd_hosts
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ force_remove_osd_hosts }}
-  when: print_debug == true
+#- name: Force the OSD Hosts
+#  shell: |
+#    ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
+#  register: force_remove_osd_hosts
+#  ignore_errors: true
+#  loop: "{{ groups['osd'] }}"
+#- debug: msg={{ force_remove_osd_hosts }}
+#  when: print_debug == true
 
 
 - name: Check the OSD Hosts

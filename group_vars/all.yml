@@ -40,6 +40,12 @@ _ceph:
   nvme: true
   mon_host_num: "{{ groups['mon'] | length }}"
   osd_host_num: "{{ groups['osd'] | length }}"
+  mgr:
+    label: "mgr"
+  mds:
+    label: "mds"
+  mon:
+    label: "mon"
   net:
     conn: "dpdk"                     # dpdk or udp
     gateway: "192.168.1.1"

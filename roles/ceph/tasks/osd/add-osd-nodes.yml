@@ -10,6 +10,7 @@
   with_items: "{{ groups['osd'] }}"
 - debug: msg={{ add_osd_nodes }}
   when: print_debug == true
+  # {{ cephadm_cmd }} ceph orch host add {{ hostvars[item]['ansible_hostname'] }}
 
 
 # ceph orch host ls
@@ -44,7 +45,7 @@
   when: print_debug == true
 
 
-- name: Label the OSD Nodes with It's Role
+- name: Label the OSD Nodes
   shell: |
     {{ cephadm_cmd }} ceph orch host label add {{ hostvars[item]['ansible_hostname'] }} {{ hostvars[item]['ansible_hostname'] }}-osd
   register: label_osd_nodes
@@ -83,4 +84,8 @@
   register: list_containers
 - debug: msg={{ list_containers }}
   when: print_debug == true
+
+
+- name: Replace OSD Services
+  import_tasks: osd/add-osd-services.yml
 
