@@ -248,7 +248,7 @@ $ make ceph r=remove s=osd
 ```
 $ make block r=create s=pool
 $ make block r=create s=rbd
-$ make block r=setup s=rbd c=client     # RBD Client
+$ make block r=setup  s=rbd c=client     # RBD Client
 
 or
 $ make block r=remove s=rbd c=client     # RBD Client
@@ -274,57 +274,57 @@ $ make cephfs r=delete s=pool
 
 ### 12) Deploy Multisite Rados Gateway
 ~~~
-$ make radosgw r=install s=multisite
-$ make radosgw r=install s=mclient
+$ make radosgw r=setup s=multisite
+$ make radosgw r=setup s=multisite c=client
 ~~~
 [![YouTube](http://i.ytimg.com/vi/kblAiF7r0a0/hqdefault.jpg)](https://www.youtube.com/watch?v=kblAiF7r0a0)
 
 
 ### 13) Destroy Multisite Rados Gateway
 ~~~
-$ make radosgw r=uninstall s=mclient
-$ make radosgw r=uninstall s=multisite
+$ make radosgw r=remove s=multisite c=client
+$ make radosgw r=remove s=multisite
 ~~~
 [![YouTube](http://i.ytimg.com/vi/138Y5FPVmjA/hqdefault.jpg)](https://www.youtube.com/watch?v=138Y5FPVmjA)
 
 
 ### 14) Deploy NFS Ganesha Cluster with a RGW
 ~~~
-$ make radosgw r=install s=single
-$ make nfs r=install s=ganesha
-$ make nfs r=install s=mclient
+$ make radosgw r=setup s=single
+$ make nfs r=setup s=ganesha
+$ make nfs r=setup s=ganesha c=client
 ~~~
 [![YouTube](http://i.ytimg.com/vi/e5sEYsm9u5Q/hqdefault.jpg)](https://www.youtube.com/watch?v=e5sEYsm9u5Q)
 
 
 ### 15) Destory NFS Ganesha Cluser with single RGW
 ~~~
-$ make nfs r=uninstall s=mclient
-$ make nfs r=uninstall s=ganesha
-$ make radosgw r=uninstall s=single
+$ make nfs r=remove s=ganesha c=client
+$ make nfs r=remove s=ganesha
+$ make radosgw r=remove s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/cUFCWH0EMGY/hqdefault.jpg)](https://www.youtube.com/watch?v=cUFCWH0EMGY)
 
 
 ### 16) Deploy Single NFS Service
 ~~~
-$ make nfs r=install s=single
-$ make nfs r=install s=sclient
+$ make nfs r=setup s=single
+$ make nfs r=setup s=single c=client
 ~~~
 [![YouTube](http://i.ytimg.com/vi/A0yBCh9-w7c/hqdefault.jpg)](https://www.youtube.com/watch?v=A0yBCh9-w7c)
 
 
 ### 17) Destroy Single NFS Service
 ~~~
-$ make nfs r=uninstall s=sclient
-$ make nfs r=uninstall s=single
+$ make nfs r=remove s=single c=client
+$ make nfs r=remove s=single
 ~~~
 [![YouTube](http://i.ytimg.com/vi/dBvBt9ox8kY/hqdefault.jpg)](https://www.youtube.com/watch?v=dBvBt9ox8kY)
 
 
 ### 18) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
-$ make block r=create s=iscsi
+$ make block r=setup s=iscsi
 $ make block r=setup s=iscsi c=client
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
@@ -333,7 +333,7 @@ $ make block r=setup s=iscsi c=client
 ### 19) Destroy iSCSI Clients and Gateways
 ~~~
 $ make block r=remove s=iscsi c=client
-$ make block r=delete s=iscsi
+$ make block r=remove s=iscsi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 
