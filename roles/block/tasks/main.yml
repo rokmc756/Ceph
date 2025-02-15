@@ -6,7 +6,7 @@
 
 - name: Set Facts for Network and Packages Fnformations
   import_tasks: set-block-facts.yml
-  tags: install, uninstall, enable, disable, create, delete, prepare
+  tags: install, uninstall, enable, disable, create, delete, prepare, setup, remove
 
 
 - name: Create Pools for Rados Block Devices
@@ -35,48 +35,48 @@
 
 - name: Install iSCSI Clients
   import_tasks: clients/install-iscsi-clients.yml
-  tags: create, install
-  when: ( iscsic is defined and iscsic == true)  and inventory_hostname in groups['clients']
+  tags: setup, create, install
+  when: (( iscsi is defined and iscsi == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Install RBD Clients
   import_tasks: clients/install-rbd-clients.yml
-  tags: create, install
-  when: ( rbdc is defined and rbdc == true)  and inventory_hostname in groups['clients']
+  tags: setup, create, install
+  when: (( rbd is defined and rbd == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall RBD Clients
   import_tasks: clients/uninstall-rbd-clients.yml
-  tags: delete, uninstall
-  when: ( rbdc is defined and rbdc == true ) and inventory_hostname in groups['clients']
+  tags: remove, delete, uninstall
+  when: (( rbd is defined and rbd == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall iSCSI Clients
   import_tasks: clients/uninstall-iscsi-clients.yml
-  tags: delete, uninstall
-  when: ( iscsic is defined and iscsic == true ) and inventory_hostname in groups['clients']
+  tags: remove, delete, uninstall
+  when: (( iscsi is defined and iscsi == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Delete iSCSI Gateways
   import_tasks: iscsi/delete-iscsi-gateway.yml
   tags: delete, uninstall
-  when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['mon']
+  when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['mon']
 
 
 - name: Delete iSCSI Container Services
   import_tasks: iscsi/delete-iscsi-services.yml
   tags: delete, uninstall
-  when: ( iscsi is defined and iscsi == true ) and inventory_hostname in groups['control']
+  when: (( iscsi is defined and iscsi == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Delete Rados Block Devices on Pools
   import_tasks: rbd/delete-rbd.yml
-  tags: delete, uninstall
-  when: ( rbd is defined and rbd == true ) and inventory_hostname in groups['control']
+  tags: delete, remove, uninstall
+  when: (( rbd is defined and rbd == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Delete Pools for Rados Block Devices
   import_tasks: rbd/delete-pool.yml
-  tags: delete, uninstall
+  tags: delete, remove, uninstall
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 

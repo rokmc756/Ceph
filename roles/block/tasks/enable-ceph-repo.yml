@@ -22,7 +22,7 @@
   when: print_debug == true
 
 
-- name: Download Repo Key for Ceph Repository
+- name: Download Ceph Repository Key
   get_url:
     url: "https://download.ceph.com/keys/release.asc"
     dest: "/etc/dnf/ceph/keyrings/release.asc"
@@ -57,7 +57,7 @@
     daemon_reload: true
 
 
-- name: Update Caches for DNF Packages
+- name: Update DNF Package Cache
   shell: |
     dnf makecache
   register: update_dnf_cache

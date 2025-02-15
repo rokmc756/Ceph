@@ -48,7 +48,7 @@
 # ceph fs authorize {{ item.name }} client.{{ item.name }} / r /temp rw
 
 
-- name: Print Authentication Key for Ceph Users
+- name: Print Ceph Users Authentication Key
   shell: |
     ceph auth get client.{{ item.name }}
   register: ceph_user_key_printed

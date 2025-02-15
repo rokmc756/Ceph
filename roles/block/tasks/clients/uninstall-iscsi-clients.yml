@@ -51,8 +51,8 @@
 - debug: msg={{ delete_directory }}
 
 
-# Remove a partition from iscsi disk
-- parted:
+- name: Remove iSCSI Disk Partition
+  parted:
     device: "/dev/{{ attach_device_name.stdout }}"
     number: "1"
     state: absent
@@ -132,7 +132,7 @@
 - debug: msg={{ stop_iscsid }}
 
 
-- name: Delete Config Files of iSCSI Initiator
+- name: Delete iSCSI Initiator Config
   file:
     path: "{{ item }}"
     state: absent

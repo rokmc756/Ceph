@@ -26,8 +26,8 @@
   register: create_iscsi_target
   ignore_errors: true
   until: create_iscsi_target is succeeded
-  retries: 10
-  delay: 5
+  retries: 3
+  delay: 30
   with_items: "{{ _iscsi.targets }}"
 - debug: msg={{ create_iscsi_target }}
   when: print_debug == true

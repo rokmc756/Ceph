@@ -67,6 +67,8 @@ temp:
 		if [ ! -z ${r} ] && [ "${s}" != "all" ]; then\
 			if [ -z ${c} ];  then\
 				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} setup-temp.yml -e '{"${s}": True}' --tags='${r}';\
+			elif [ ! -z ${c} ];  then\
+				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} setup-temp.yml -e '{"${s}": True}' -e '{"${c}": True}' --tags='${r}';\
 			else\
 				echo "No actions to create/delete temp";\
 			fi\
@@ -79,7 +81,7 @@ temp:
 		else\
 			echo "No actions to create/delete temp";\
 		fi;\
-	elif [ "${r}" = "add" ] || [ "${r}" = "remove" ]; then\
+	elif [ "${r}" = "add" ] || [ "${r}" = "setup" ] || [ "${r}" = "remove" ]; then\
 		if [ ! -z ${r} ] && [ "${s}" != "all" ]; then\
 			if [ -z ${c} ];  then\
 				ansible-playbook --ssh-common-args='-o UserKnownHostsFile=./known_hosts' -u ${USERNAME} setup-temp.yml -e '{"${s}": True}' --tags='${r}';\

@@ -244,20 +244,31 @@ $ make ceph r=remove s=osd
 [![YouTube](http://i.ytimg.com/vi/6ptuBjDHaCQ/hqdefault.jpg)](https://www.youtube.com/watch?v=6ptuBjDHaCQ)
 
 
-### 10) Create Pools and RBDs with RBD Clients
+### 10) Create/Delete Pools and RBDs with RBD Clients
 ```
-$ make block r=install s=pool
-$ make block r=install s=rbd
-$ make block r=install s=rbdc     # RBD Client
+$ make block r=create s=pool
+$ make block r=create s=rbd
+$ make block r=setup s=rbd c=client     # RBD Client
+
+or
+$ make block r=remove s=rbd c=client     # RBD Client
+$ make block r=delete s=rbd
+$ make block r=delete s=pool
 ```
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
 ### 11) Creating Ceph Filesystems and CephFS POSIX Clients
 ```
-$ make cephfs r=install s=pool
-$ make cephfs r=install s=fs
-$ make cephfs r=install s=client
+$ make cephfs r=create s=pool
+$ make cephfs r=create s=fs
+$ make cephfs r=setup s=fs s=client
+
+or
+$ make cephfs r=remove s=fs s=client
+$ make cephfs r=delete s=fs
+$ make cephfs r=delete s=pool
+
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 
@@ -314,16 +325,16 @@ $ make nfs r=uninstall s=single
 
 ### 18) Deploy iSCSI Gateways and iSCSI Clients
 ~~~
-$ make block r=install s=iscsi
-$ make block r=install s=iscsic
+$ make block r=create s=iscsi
+$ make block r=setup s=iscsi c=client
 ~~~
 [![YouTube](http://i.ytimg.com/vi/424LwFCZwjg/hqdefault.jpg)](https://www.youtube.com/watch?v=424LwFCZwjg)
 
 
 ### 19) Destroy iSCSI Clients and Gateways
 ~~~
-$ make block r=uninstall s=iscsic
-$ make block r=uninstall s=iscsi
+$ make block r=remove s=iscsi c=client
+$ make block r=delete s=iscsi
 ~~~
 [![YouTube](http://i.ytimg.com/vi/wunlKs8cLug/hqdefault.jpg)](https://www.youtube.com/watch?v=wunlKs8cLug)
 

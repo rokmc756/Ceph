@@ -29,7 +29,7 @@
     daemon_reload: true
 
 
-- name: Update Caches for DNF Packages
+- name: Update DNF Package Caches
   shell: |
     dnf makecache
   register: update_dnf_cache

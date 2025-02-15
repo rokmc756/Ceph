@@ -1,7 +1,7 @@
-for i in `seq 7 7`
+for i in `seq 1 6`
 do
 
-    ssh root@192.168.1.7$i "mount -l | grep -E 'nfs|smb|ceph|iscsi'"
+    ssh root@192.168.1.17$i "mount -l | grep -E 'nfs|smb|cephfs'"
 
 done
 

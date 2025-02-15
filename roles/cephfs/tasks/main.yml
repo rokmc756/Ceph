@@ -23,13 +23,13 @@
 
 - name: Install CephFS Clients
   import_tasks: install-clients.yml
-  tags: create, install
+  tags: setup, create, install
   when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall CephFS Clients
   import_tasks: uninstall-clients.yml
-  tags: delete, uninstall
+  tags: remove, delete, uninstall
   when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 

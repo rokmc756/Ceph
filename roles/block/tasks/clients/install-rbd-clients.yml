@@ -21,7 +21,7 @@
   when: print_debug == true
 
 
-- name: Copy Ceph Configuration for CephFS Clients
+- name: Copy Cephfs Clients Configuration
   become_user: root
   synchronize:
     src:  "/etc/ceph/{{ item }}"
@@ -81,7 +81,6 @@
 #  when: print_debug == true
 
 
-
 - name: Map RBD Images
   shell: |
     rbd map --pool {{ item.pool }} {{ item.name }} --id admin
@@ -104,7 +103,6 @@
   when: print_debug == true
 
 
-
 #- name: Create Directory to Mount CephFS Client
 #  shell: |
 #    mkdir {{ item.mount_dir }}
@@ -122,7 +120,6 @@
 #  when: print_debug == true
 #- debug: msg={{ mount_cephfs_dir }}
 #  when: print_debug == true
-#
 #
 #
 #- name: Check if CephFS Directory is Mounted
@@ -146,5 +143,3 @@
 #  with_items: "{{ _cephfs.fs }}"
 #- debug: msg={{ create_cephfs_file }}
 #  when: print_debug == true
-#
-
