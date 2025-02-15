@@ -1,0 +1,49 @@
+---
+- name: Check if Ceph Config Directory Exists
+  stat: path=/etc/ceph
+  register: ceph_conf_dir_exists
+- debug: msg={{ ceph_conf_dir_exists }}
+  when: print_debug == true
+
+
+- name: Create a Ceph Directory
+  file:
+    path: /etc/ceph
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  register: create_ceph_dir
+  ignore_errors: true
+  when: ceph_conf_dir_exists.stat.exists == false
+- debug: msg={{ create_ceph_dir }}
+  when: print_debug == true and ceph_conf_dir_exists.stat.exists
+
+
+#- name: Copy Ceph Configuration to Rados Gateway Host
+#  synchronize:
+#    src:  "{{ item }}"
+#    dest: "{{ item }}"
+#    rsync_opts:
+#      - "-e ssh"          # "-e ssh -i ~/.ssh/id_rsa.pub"
+#    ssh_args:
+#      - "-p changeme -o StrictHostKeyChecking=no"  #  - "-e ssh -i /remote/path/to/mykey"
+#  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+#  delegate_facts: true
+#  register: create_ceph_config_dir
+#  with_items:
+#    - "/etc/ceph/ceph.conf"
+#    - "/etc/ceph/ceph.client.admin.keyring"
+#- debug: msg={{ create_ceph_config_dir }}
+#  when: print_debug == true
+
+
+- name: Copy Ceph Configuration with Rsync for CephFS Clients
+  # become_user: root
+  shell: |
+    rsync -a --rsh='/usr/bin/sshpass -p changeme ssh -o StrictHostKeyChecking=no' {{ item }} {{ inventory_hostname }}:{{ item }}
+  delegate_to: "{{ hostvars[groups['mon'][0]]['ansible_hostname'] }}"
+  with_items:
+    - "/etc/ceph/ceph.conf"
+    - "/etc/ceph/ceph.client.admin.keyring"
+

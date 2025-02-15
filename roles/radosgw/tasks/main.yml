@@ -6,102 +6,101 @@
 
 - name: Set Facts for Network and Packages Informations
   import_tasks: set-rgw-facts.yml
-  tags: install, uninstall, create, delete
+  tags: install, uninstall, create, delete, setup, remove
 
 
 - name: Copy Ceph Config
-  import_tasks: single/copy-ceph-config.yml
-  tags: install
-  when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))
+  import_tasks: ext/copy-ceph-config.yml
+  tags: setup, create, install
+  when: ( single is defined and single == true ) or ( multisite is defined and multisite == true )
 
 
 - name: Install Single Rados Gateway
   import_tasks: single/install-single.yml
-  tags: install
-  when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
+  tags: setup, create, install
+  when: (( single is defined and single == true ) and ( client is not defined )) and inventory_hostname in groups['rgw']
 
 
 - name: Install Primary Multisite Rados Gateway
   import_tasks: multisite/install-primary-multisite.yml
-  tags: install
-  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
+  tags: setup, create, install
+  when: (( multisite is defined and multisite == true ) and ( client is not defined )) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Install Secondary Multisite Rados Gateway
   import_tasks: multisite/install-secondary-multisite.yml
-  tags: install
-  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
+  tags: setup, create, install
+  when: (( multisite is defined and multisite == true ) and ( client is not defined )) and inventory_hostname in groups['secondary_rgw']
 
 
 - name: Install MC S3 Client Packages
-  import_tasks: install-mc-client.yml
-  tags: install
-  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
+  import_tasks: client/install-mc-client.yml
+  tags: setup, create, install
+  when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Install S3 Single Clients
-  import_tasks: install-s3-single-clients.yml
-  tags: install
-  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
+  import_tasks: client/install-s3-single-clients.yml
+  tags: setup, create, install
+  when: (( single is defined and single == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Install S3 Multi Clients
-  import_tasks: install-s3-multi-clients.yml
-  tags: install
-  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
+  import_tasks: client/install-s3-multi-clients.yml
+  tags: setup, create, install
+  when: (( multisite is defined and multisite == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall S3 Multi Clients
-  import_tasks: uninstall-s3-multi-clients.yml
-  tags: uninstall
-  when: ( mclient is defined and mclient == true ) and inventory_hostname in groups['clients']
+  import_tasks: client/uninstall-s3-multi-clients.yml
+  tags: remove, delete, uninstall
+  when: (( multisite is defined and multisite == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall S3 Single Clients
-  import_tasks: uninstall-s3-single-clients.yml
-  tags: uninstall
-  when: ( sclient is defined and sclient == true ) and inventory_hostname in groups['clients']
+  import_tasks: client/uninstall-s3-single-clients.yml
+  tags: remove, delete, uninstall
+  when: (( single is defined and single == true ) and ( client is defined and client == true )) and inventory_hostname in groups['clients']
 
 
 - name: Delete S3 Base Directory
-  import_tasks: delete-s3-base-dir.yml
-  tags: uninstall
-  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
+  import_tasks: client/delete-s3-base-dir.yml
+  tags: remove, delete, uninstall
+  when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Uninstall MC S3 Client Packages
-  import_tasks: uninstall-mc-client.yml
-  tags: uninstall
-  when: (( sclient is defined and sclient == true ) or ( mclient is defined and mclient == true )) and inventory_hostname in groups['clients']
+  import_tasks: client/uninstall-mc-client.yml
+  tags: remove, delete, uninstall
+  when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
 
 
 - name: Remove Multi System User
   import_tasks: multisite/remove-multisite-system-user.yml
-  tags: uninstall
-  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
+  tags: delete, remove, uninstall
+  when: (( multisite is defined and multisite == true ) and ( client is not defined )) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Uninstall Secondary Multisite Rados Gateway
   import_tasks: multisite/uninstall-secondary-multisite.yml
-  tags: uninstall
-  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['secondary_rgw']
+  tags: delete, remove, uninstall
+  when: (( multisite is defined and multisite == true ) and ( client is not defined )) and inventory_hostname in groups['secondary_rgw']
 
 
 - name: Uninstall Primary Multisite Rados Gateway
   import_tasks: multisite/uninstall-primary-multisite.yml
-  tags: uninstall
-  when: ( multisite is defined and multisite == true ) and inventory_hostname in groups['primary_rgw']
+  tags: delete, remove, uninstall
+  when: (( multisite is defined and multisite == true ) and ( client is not defined )) and inventory_hostname in groups['primary_rgw']
 
 
 - name: Uninstall Single Rados Gateway
   import_tasks: single/uninstall-single.yml
-  tags: uninstall
-  when: ( single is defined and single == true ) and inventory_hostname in groups['rgw']
+  tags: remove, delete, uninstall
+  when: (( single is defined and single == true ) and ( client is not defined )) and inventory_hostname in groups['rgw']
 
 
 - name: Delete Rados Gateway Pools
-  import_tasks: single/delete-radosgw-pools.yml
-  tags: uninstall
-  when: (( single is defined and single == true ) or ( multisite is defined and multisite == true ))  and inventory_hostname in groups['control']
-
+  import_tasks: ext/delete-radosgw-pools.yml
+  tags: delete, remove, uninstall
+  when: (( single is defined and single == true ) or ( multisite is defined and multisite == true )) and ( client is not defined ) and inventory_hostname in groups['control']
 

@@ -258,17 +258,16 @@ $ make block r=delete s=pool
 [![YouTube](http://i.ytimg.com/vi/imcsu2QF3io/hqdefault.jpg)](https://www.youtube.com/watch?v=imcsu2QF3io)
 
 
-### 11) Creating Ceph Filesystems and CephFS POSIX Clients
+### 11) Create/Delete Ceph Filesystems and CephFS POSIX Clients
 ```
 $ make cephfs r=create s=pool
 $ make cephfs r=create s=fs
-$ make cephfs r=setup s=fs s=client
+$ make cephfs r=setup s=client
 
 or
-$ make cephfs r=remove s=fs s=client
+$ make cephfs r=remove s=client
 $ make cephfs r=delete s=fs
 $ make cephfs r=delete s=pool
-
 ```
 [![YouTube](http://i.ytimg.com/vi/x6z-ErtC7Ho/hqdefault.jpg)](https://www.youtube.com/watch?v=x6z-ErtC7Ho)
 

@@ -35,12 +35,12 @@
 
 - name: Remove Ceph Filesystems
   import_tasks: delete-cephfs.yml
-  tags: delete, uninstall
+  tags: delete, remove, uninstall
   when: ( fs is defined and fs == true ) and inventory_hostname in groups['control']
 
 
 - name: Remove Pools
   import_tasks: delete-pool.yml
-  tags: delete, uninstall
+  tags: delete, remove, uninstall
   when: ( pool is defined and pool == true ) and inventory_hostname in groups['control']
 
