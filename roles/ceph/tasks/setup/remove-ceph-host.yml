@@ -18,7 +18,7 @@
   register: check_ceph_exporter_service
   ignore_errors: true
   until: check_ceph_exporter_service.stdout|int == 0
-  retries: 60
+  retries: 20
   delay: 10
 - debug: msg={{ check_ceph_exporter_service }}
   when: print_debug == true

@@ -1,11 +1,11 @@
 ---
-- name: Validate if Devices has still filesytem and is insufficent space
+- name: Validate if Devices has still Filesytem and is Insufficent Space
   shell: |
     ceph orch device ls | grep -v "VMware_Virtual_SATA_CDRW_Drive"
   register: check_fs_space
   ignore_errors: true
   until: check_fs_space.stdout.find("Has a FileSystem, Insufficient space") == -1
-  retries: 100
+  retries: 20
   delay: 10
 - debug: msg={{ check_fs_space }}
   ignore_errors: true

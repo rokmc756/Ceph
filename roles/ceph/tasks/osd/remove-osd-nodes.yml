@@ -1,17 +1,7 @@
 ---
-- name: Remove the OSD Hosts
-  shell: |
-    ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
-  register: remove_osd_hosts
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_osd_hosts }}
-  when: print_debug == true
-
-
 - name: Drain the OSD Hosts
   shell: |
-    ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
+    ceph orch host drain --force {{ hostvars[item]['ansible_hostname'] }}
   register: drain_osd_hosts
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
@@ -19,22 +9,36 @@
   when: print_debug == true
 
 
-#- name: Force the OSD Hosts
+- name: Force Remove the OSD Hosts
+  shell: |
+    ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
+  register: force_remove_osd_hosts
+  ignore_errors: true
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ force_remove_osd_hosts }}
+  when: print_debug == true
+# ceph orch host rm {{ hostvars[item]['ansible_hostname'] }}
+
+
+#- name: Drain the OSD Hosts
 #  shell: |
-#    ceph orch host rm --force {{ hostvars[item]['ansible_hostname'] }}
-#  register: force_remove_osd_hosts
+#    ceph orch host drain {{ hostvars[item]['ansible_hostname'] }}
+#  register: drain_osd_hosts
 #  ignore_errors: true
 #  loop: "{{ groups['osd'] }}"
-#- debug: msg={{ force_remove_osd_hosts }}
+#- debug: msg={{ drain_osd_hosts }}
 #  when: print_debug == true
 
 
 - name: Check the OSD Hosts
   shell: |
-    ceph orch ps {{ hostvars[item]['ansible_hostname'] }}
+    ceph orch ps {{ hostvars[item]['ansible_hostname'] }} | grep -e "^No daemons reported" | wc -l
   register: check_osd_hosts
   ignore_errors: true
   loop: "{{ groups['osd'] }}"
+  until: check_osd_hosts.stdout|int == 1
+  retries: 10
+  delay: 10
 - debug: msg={{ check_osd_hosts }}
   when: print_debug == true
 

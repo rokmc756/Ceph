@@ -1,8 +1,4 @@
 ---
-#- name: Set Ceph FSID
-#  import_tasks: ext/set-fsid.yml
-
-
 - name: Get All OSD IDs
   shell: |
     ceph osd status | sed 1d | awk '{print $1}' | sort -nr | tr '\n' ',' | sed 's/,$/\n/'
@@ -40,42 +36,6 @@
   when: print_debug == true
 
 
-- name: Remove Crush OSDs
-  shell: |
-    ceph osd crush rm osd.{{ item }}
-  register: remove_osd
-  ignore_errors: true
-  loop: "{{ groups['osd'] }}"
-- debug: msg={{ remove_osd }}
-  when: print_debug == true
-
-
-# ceph osd down {{ item }} --definitely-dead
-# {{ cephadm_cmd }} ceph osd down all | wc -l
-- name: Down OSDs
-  shell: |
-    ceph osd down all | wc -l
-  register: down_osd
-  ignore_errors: true
-  until: down_osd.stdout|int == 0
-  retries: 5
-  delay: 20
-- debug: msg={{ down_osd }}
-  when: print_debug == true
-
-
-- name: Out OSDs
-  shell: |
-    ceph osd out all | wc -l
-  register: osd_out
-  until: osd_out.stdout|int == 0
-  retries: 10
-  delay: 10
-  ignore_errors: true
-- debug: msg={{ osd_out }}
-  when: print_debug == true
-
-
 - name: Stop OSD Daemon Service
   shell: |
     ceph orch daemon stop osd.{{ item }}
@@ -92,11 +52,71 @@
   register: check_all_osd_service
   ignore_errors: true
   until: check_all_osd_service.stdout|int >= nvme_device_count|int
-  retries: 10
+  retries: 20
   delay: 10
   with_items:
     - "{{ groups['osd'] }}"
 - debug: msg={{ check_all_osd_service }}
+  when: print_debug == true
+
+
+# ceph osd down {{ item }} --definitely-dead
+# {{ cephadm_cmd }} ceph osd down all | wc -l
+- name: Down OSDs
+  shell: |
+    ceph osd down all
+  register: down_osd
+  ignore_errors: true
+  # until: down_osd.stdout|int == 0
+  # retries: 5
+  # delay: 20
+- debug: msg={{ down_osd }}
+  when: print_debug == true
+
+
+# 0 : check up or out
+# ceph osd stat | sed 2d | awk '{print $3}'
+
+
+- name: Out OSDs
+  shell: |
+    ceph osd out all
+  register: osd_out
+  ignore_errors: true
+  # until: osd_out.stdout|int == 0
+  # retries: 10
+  # delay: 10
+- debug: msg={{ osd_out }}
+  when: print_debug == true
+
+
+- name: Remove OSDs
+  shell: |
+    ceph osd rm osd.{{ item }}
+  register: remove_osd
+  ignore_errors: true
+  loop: "{{ all_osd }}"
+- debug: msg={{ remove_osd }}
+  when: print_debug == true
+
+
+- name: Remove OSD Crush Map
+  shell: |
+    ceph osd crush rm osd.{{ item }}
+  register: remove_osd_crush_map
+  ignore_errors: true
+  loop: "{{ all_osd }}"
+- debug: msg={{ remove_osd_crush_map }}
+  when: print_debug == true
+
+
+- name: Remove Host Crush Map
+  shell: |
+    ceph osd crush rm {{ item }}
+  register: remove_host_crush_map
+  ignore_errors: true
+  loop: "{{ groups['osd'] }}"
+- debug: msg={{ remove_host_crush_map }}
   when: print_debug == true
 
 
@@ -121,7 +141,6 @@
 
 - name: Purge OSDs
   shell: |
-    ceph osd down osd.{{ item }}
     ceph osd purge osd.{{ item }} --force --yes-i-really-mean-it
   register: purge_osd
   ignore_errors: true

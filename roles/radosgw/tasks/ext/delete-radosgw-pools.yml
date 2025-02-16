@@ -38,6 +38,7 @@
     - "default.rgw.meta"
     - "default.rgw.control"
     - ".rgw.root"
+    - ".mgr"
 - debug: msg={{ remove_rgw_pool }}
   when: print_debug == true
 
