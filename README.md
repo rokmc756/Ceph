@@ -386,7 +386,7 @@ create ubt22-node02.jtest.xxx.io 192.168.1.62 skipchecks=true
 exit
 EOF
 ```
-[ ] 6. Error to run script with sudo user jomoon. It looks there might need onther cnonfigure for cgroup
+- [ ] 6. Error to run script with sudo user jomoon. It looks there might need onther cnonfigure for cgroup
 $ sh test.sh
 ```
 WARN[0000] The cgroupv2 manager is set to systemd but there is no systemd user session available
@@ -398,7 +398,7 @@ Error: error creating tmpdir: mkdir /run/user/1000: permission denied
 ```
 - https://superuser.com/questions/1788594/podman-the-cgroupv2-manager-is-set-to-systemd-but-there-is-no-systemd-user-sess
 
-[ ] 7. Podman Issue
+- [ ] 7. Podman Issue
 - https://www.server-world.info/en/note?os=Ubuntu_22.04&p=podman&f=12
 - https://unix.stackexchange.com/questions/731645/podman-w-docker-compose-run-as-user
 
