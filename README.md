@@ -348,27 +348,18 @@ $ make block r=remove s=iscsi
 - https://cray-hpe.github.io/docs-csm/en-10/operations/utility_storage/manage_ceph_services/
 - https://www.server-world.info/en/note?os=Ubuntu_20.04&p=ceph15&f=1
 - https://kifarunix.com/how-to-deploy-ceph-storage-cluster-on-rocky-linux/?expand_article=1
-- https://kifarunix.com/install-docker-on-rocky-linux/?expand_article=1
 - https://www.flamingbytes.com/blog/how-to-uninstall-ceph-storage-cluster/
 - https://gist.github.com/fmount/6203013d1c423dd831e3717b9986551b
 - https://www.ibm.com/docs/en/storage-ceph/5?topic=mcog-deploying-ceph-object-gateway-using-command-line-interface
 - https://docs.ceph.com/en/latest/install/get-packages/
 - https://vineetcic.medium.com/how-to-remove-add-osd-from-ceph-cluster-1c038eefe522
-- https://www.ibm.com/docs/en/storage-ceph/5?topic=osds-deploying-ceph-all-available-devices
-- https://serverfault.com/questions/1117213/why-is-ceph-is-not-detecting-ssd-device-on-a-new-node
 - https://docs.huihoo.com/ceph/v0.80.5/rados/operations/add-or-rm-osds/index.html
-- https://www.ibm.com/docs/en/storage-ceph/5?topic=crush-adding-osd
 - https://docs.ceph.com/en/latest/rados/operations/add-or-rm-osds/
 - https://medium.com/@avmor/how-to-configure-rgw-multisite-in-ceph-65e89a075c1f
 - https://medium.com/@arslankhanali/ceph-setup-rados-gateway-with-multi-site-replication-b158ee5c0e86
-- https://www.symmcom.com/docs/how-tos/storages/how-to-configure-s3-compatible-object-storage-on-ceph
 - https://docs.ceph.com/en/latest/cephadm/services/smb/
 - https://cyuu.tistory.com/145
-- https://reintech.io/blog/setting-up-pxe-boot-server-windows-deployment-ubuntu
-- https://medium.com/jacklee26/set-up-pxe-server-on-ubuntu20-04-and-window-10-e69733c1de87
-- https://blog.zabbix.com/installing-the-zabbix-server-with-ansible/13317/
 - https://www.ibm.com/docs/en/storage-ceph/7?topic=preview-removing-nvme-service
-
 
 
 ## TODO
@@ -397,7 +388,6 @@ WARN[0000] XDG_RUNTIME_DIR is pointing to a path which is not writable. Most lik
 Error: error creating tmpdir: mkdir /run/user/1000: permission denied
 ```
 - https://superuser.com/questions/1788594/podman-the-cgroupv2-manager-is-set-to-systemd-but-there-is-no-systemd-user-sess
-
 - [ ] 7. Podman Issue
 - https://www.server-world.info/en/note?os=Ubuntu_22.04&p=podman&f=12
 - https://unix.stackexchange.com/questions/731645/podman-w-docker-compose-run-as-user
