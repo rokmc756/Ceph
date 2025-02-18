@@ -44,3 +44,7 @@
   tags: uninstall
   when: weka.protocol.smb == true and inventory_hostname in groups['workers']
 
+
+
+# https://ceph.io/en/news/blog/2025/smb-manager-module/
+

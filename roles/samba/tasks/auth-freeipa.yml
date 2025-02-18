@@ -1,0 +1,76 @@
+# https://superuser.com/questions/1120335/samba-use-freeipa-auth-for-windows-clients-accessing-cifs-share
+
+The complete set of information is at https://bgstack15.wordpress.com/2017/05/10/samba-share-with-freeipa-auth/.
+
+On the freeipa controller:
+
+yum -y install ipa-server-trust-ad
+ipa-adtrust-install --add-sids
+After running the --add-sids, users need to reset their passwords, in order for freeipa to generate the ipaNTHash value of their passwords.
+
+On the samba server:
+
+yum -y install ipa-server-trust-ad
+Open the firewall ports it asks for (TCP 135,138,139,445,1024-1300; UDP 138,139,389,445)
+
+Allow samba to read passwords
+
+ipa permission-add "CIFS server can read user passwords" \
+   --attrs={ipaNTHash,ipaNTSecurityIdentifier} \
+   --type=user --right={read,search,compare} --bindtype=permission
+ipa privilege-add "CIFS server privilege"
+ipa privilege-add-permission "CIFS server privilege" \
+   --permission="CIFS server can read user passwords"
+ipa role-add "CIFS server"
+ipa role-add-privilege "CIFS server" --privilege="CIFS server privilege"
+ipa role-add-member "CIFS server" --services=cifs/host2.vm.example.com
+Prepare samba conf and restart samba.
+
+tf=/etc/samba/smb.conf
+touch "${tf}"; chmod 0644 "${tf}"; chown root:root "${tf}"; restorecon "${tf}"
+cat < "${tf}"
+[global]
+    debug pid = yes
+    realm = VM.EXAMPLE.COM
+    workgroup = VM
+    domain master = Yes
+    ldap group suffix = cn=groups,cn=accounts
+    ldap machine suffix = cn=computers,cn=accounts
+    ldap ssl = off
+    ldap suffix = dc=vm,dc=example,dc=com
+    ldap user suffix = cn=users,cn=accounts
+    log file = /var/log/samba/log
+    max log size = 100000
+    domain logons = Yes
+    registry shares = Yes
+    disable spoolss = Yes
+    dedicated keytab file = FILE:/etc/samba/samba.keytab
+    kerberos method = dedicated keytab
+    #passdb backend = ipasam:ldapi://%2fvar%2frun%2fslapd-VM-EXAMPLE-COM.socket
+    #passdb backend = ldapsam:ldapi://%2fvar%2frun%2fslapd-VM-EXAMPLE-COM.socket
+    passdb backend = ipasam:ldap://host2.vm.example.com ldap://host1.vm.example.com
+    security = USER
+    create krb5 conf = No
+    rpc_daemon:lsasd = fork
+    rpc_daemon:epmd = fork
+    rpc_server:tcpip = yes
+    rpc_server:netlogon = external
+    rpc_server:samr = external
+    rpc_server:lsasd = external
+    rpc_server:lsass = external
+    rpc_server:lsarpc = external
+    rpc_server:epmapper = external
+    ldapsam:trusted = yes
+    idmap config * : backend = tdb
+
+    ldap admin dn = cn=Directory Manager
+
+[homes]
+    comment = Home Directories
+    valid users = %S, %D%w%S
+    browseable = No
+    read only = No
+    inherit acls = Yes
+EOFCONF
+systemctl restart smb.service
+

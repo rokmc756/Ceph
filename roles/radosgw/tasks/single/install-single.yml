@@ -117,12 +117,6 @@
   when: print_debug == true
 
 
-- name: Pause for 30 Seconds to Wait for Compleiting Initializaion of Rados Gateway
-  pause:
-    seconds: 30
-  when: inventory_hostname in groups['rgw']
-
-
 # radosgw-admin sync status
 #          realm  ()
 #      zonegroup e183e46b-c10b-4f5a-834d-a3077847ed8c (default)
