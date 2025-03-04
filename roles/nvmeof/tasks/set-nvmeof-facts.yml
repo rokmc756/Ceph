@@ -1,0 +1,34 @@
+---
+- name: Get Network Interface Name from Prefix of IP Addresses Provided in Variables
+  set_fact:
+    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr0 ) | map(attribute='device') | first }}"
+    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr1 ) | map(attribute='device') | first }}"
+    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.net.ipaddr2 ) | map(attribute='device') | first }}"
+  when: inventory_hostname not in groups['clients']
+
+
+- name: Get Network Interface Name from Prefix of IP Addresses Provided for Ceph Nodes
+  set_fact:
+    netdev0: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.client.net.ipaddr0 ) | map(attribute='device') | first }}"
+    netdev1: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.client.net.ipaddr1 ) | map(attribute='device') | first }}"
+    netdev2: "{{ ansible_interfaces | map('regex_replace', '^', 'ansible_') | map('extract', vars) | selectattr('ipv4', 'defined') | selectattr('ipv4.address', 'match', _ceph.client.net.ipaddr2 ) | map(attribute='device') | first }}"
+  when: inventory_hostname in groups['clients']
+
+
+- name: Get IP Address from Network Device Name Provided
+  set_fact:
+    ipaddr0: "{{ hostvars[inventory_hostname]['ansible_'~netdev0].ipv4.address }}"
+    ipaddr1: "{{ hostvars[inventory_hostname]['ansible_'~netdev1].ipv4.address }}"
+    ipaddr2: "{{ hostvars[inventory_hostname]['ansible_'~netdev2].ipv4.address }}"
+
+
+- name: Define Facts for All Worker's Hostname
+  set_fact:
+    all_ext1_hostnames: "{{ groups['all'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
+    all_nodes_hostname: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+    all_ceph_ipaddrs_with_port: "{{ groups['mon'] | map('extract', hostvars, ['ansible_'~netdev1, 'ipv4', 'address']) | join(':6789,') }}:6789"
+    all_mon_hostnames: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
+    all_osd_hostnames: "{{ groups['osd'] | map('extract', hostvars, ['ansible_hostname']) | join(' ') }}"
+    all_osd_nodes: "{{ groups['osd'] | map('extract', hostvars, ['ansible_hostname']) | join('|') }}"
+    all_nqn_nodes: "{{ groups['mon'] | map('extract', hostvars, ['ansible_hostname']) | join(',') }}"
+

@@ -1,0 +1,28 @@
+---
+- name: Initialize Pool for Rados Block Device
+  shell: |
+    rbd pool init {{ item.name }}
+  register: init_rbd_pool
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ init_rbd_pool }}
+  when: print_debug == true
+
+
+- name: Obtain I/O Information for a Specific Pool or All
+  shell: |
+    ceph osd pool stats {{ item.name }}
+  register: rbd_pool_stats
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ rbd_pool_stats }}
+  when: print_debug == true
+
+
+- name: Create Rados Block Device in Pool
+  shell: |
+    rbd create {{ item.name }} --size {{ item.size }} --pool {{ item.pool }}
+  register: create_rbd_device
+  with_items:
+    - "{{ _rbd.image.nvmeof }}"
+- debug: msg={{ create_rbd_device }}
+  when: print_debug == true
+

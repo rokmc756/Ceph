@@ -1,0 +1,36 @@
+---
+- name: List Hosts for NVME-oF Gateway
+  shell: |
+    ceph orch host ls
+  register: list_hosts
+- debug: msg={{ list_hosts }}
+  when: print_debug == true
+
+
+- name: Create a Pool Named tpool01 with Placement Groups Count 100
+  shell: |
+    ceph osd pool create {{ item.name }} {{ item.pg_count }}
+  register: create_rbd_pool
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ create_rbd_pool }}
+  when: print_debug == true
+
+
+- name: List Available Pools to Confirm It was Created
+  shell: |
+    ceph osd lspools
+  register: list_ceph_pool
+- debug: msg={{ list_ceph_pool }}
+  when: print_debug == true
+
+
+- name: Enable Pool for Rados Block Device
+  shell: |
+    ceph osd pool application enable {{ item.name }} rbd --yes-i-really-mean-it
+  register: enable_rbd_pool
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ enable_rbd_pool }}
+  when: print_debug == true
+# ceph osd pool application enable {{ item.name }} cephfs
+# ceph osd pool application enable {{ item.name }} rgw --yes-i-really-mean-it
+

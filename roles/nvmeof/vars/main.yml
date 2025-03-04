@@ -1,0 +1,20 @@
+---
+_rbd:
+  pool:
+    - { name: "nvmeof-p01", pg_count: 100 }
+  image:
+    nvmeof:
+      - { name: "nvmeof-img01", pool: "nvmeof-p01", size: "1G" }
+
+
+_nvmeof:
+  gateways:
+    - {
+         name: "jnvme-gw01",
+         pool: "nvmeof-po01",
+         rbd: "nvmeof-img01"
+         ipaddr: "192.168.1.179",
+         port: "5500",
+         nqn: "nqn.2025-03.io.pivotal.jtest:rk9-node07"
+      }
+

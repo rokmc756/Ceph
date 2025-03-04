@@ -1,0 +1,78 @@
+---
+- name: Install the NVME CLI
+  package:
+    name: nvme-cli
+    state: present
+  register: install_nvme_cli
+- debug: msg={{ install_nvme_cli }}
+
+
+- name: Load the NVMe-oF Module
+  shell: |
+    modprobe nvme-fabrics
+  register: load_nvmeof_module
+- debug: msg={{ load_nvmeof_module }}
+
+
+- name: Verify the NVMe/TCP Target is Reachable
+  shell: |
+    nvme discover -t tcp -a {{ item.ipaddr }} -s 4420
+  register: verify_nvme_tcp_target_reachable
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ verify_nvme_tcp_target_reachable }}
+
+
+- name: Connect to the NVMe/TCP Target
+  shell: |
+    nvme connect -t tcp -a {{ item.ipaddr }} -n {{ item.nqn }}
+  register: connect_nvme_tcp_target
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ connect_nvme_tcp_target }}
+
+
+# Verify that the initiator is set up correctly
+- name: List the NVMe Block Devices
+  shell: |
+    nvme list
+  register: list_nvme_block_devices
+- debug: msg={{ list_nvme_block_devices }}
+
+
+- meta: end_play
+
+
+- name: Create a Filesystem on the Desired Device
+  shell: |
+    mkfs.ext4 NVME_NODE_PATH
+  register: create_filesystem
+- debug: msg={{ create_filesystem }}
+
+
+- name: Mount the Filesystem
+  shell: |
+    mkdir /mnt/nvmeof
+    mount NVME_NODE_PATH /mnt/nvmeof
+  register: mount_filesystem
+- debug: msg={{ mount_filesystem }}
+
+
+- name: List the NVME-oF Files
+  shell: |
+    ls /mnt/nvmeof
+  register: list_nvmeof_files
+- debug: msg={{ list_nvmeof_files }}
+
+
+- name: Create a Text File in the Directory
+  shell: |
+    echo "Hello NVME-oF" > /mnt/nvmeof/hello.text
+  register: create_text_file
+- debug: msg={{ create_text_file }}
+
+
+- name: Verify to Access the File
+  shell: |
+    cat /mnt/nvmeof/hello.text
+  register: verify_access_file
+- debug: msg={{ verify_access_file }}
+

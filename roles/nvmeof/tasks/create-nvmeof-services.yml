@@ -1,0 +1,9 @@
+---
+- name:  Deploy NVEM-OF Container Services
+  shell: |
+    "ceph orch apply nvmeof {{ item.name }} --placement='{{ ceph.mon_host_num }} {{ all_mon_hostnames }}'"
+  register: deploy_iscsi_gw
+  with_items: "{{ _nvmeof.pool }}"
+- debug: msg={{ deploy_iscsi_gw }}
+  when: print_debug == true
+

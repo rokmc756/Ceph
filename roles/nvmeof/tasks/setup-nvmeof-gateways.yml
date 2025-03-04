@@ -1,0 +1,79 @@
+---
+- name: Download the NVMEOF-CLI Container
+  shell: |
+    podman pull quay.io/ceph/nvmeof-cli:latest
+  register: download_nvmeof_cli_container
+- debug: msg={{ download_nvmeof_cli_container }}
+  when: print_debug == true
+
+
+- name: Create an NVMe Subsystem
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} \
+    --server-port {{ item.port }} subsystem add --subsystem {{ item.nqn }}
+  register: create_nvme_subsystem
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ create_nvme_subsystem }}
+  when: print_debug == true
+# The subsystem NQN is a user defined string, for example nqn.2016-06.io.spdk:cnode1.
+
+
+# Define the IP port on the gateway that will process the NVME/TCP commands and I/O:
+# On the install node, get the NVME-oF Gateway name:
+- name: Get the NVME-oF Gateway Name
+  shell: |
+    ceph orch ps | grep nvme
+  register: get_nvme_of_gw_name
+- debug: msg={{ get_nvme_of_gw_name }}
+  when: print_debug == true
+
+
+- name: Define the IP Port for the Gateway
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
+    listener add --subsystem {{ item.nqn }} --gateway-name {{ item.name }} --traddr {{ item.ipaddr }} --trsvcid 4420
+  register: define_ip_port_for_gateway
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ define_ip_port_for_gateway }}
+  when: print_debug == true
+
+
+- name: Allow the Initiator Host to Connect to the Newly-Created NVMe Subsystem
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
+    host add --subsystem {{ item.nqn }} --host "{{ all_nqn_nodes }}"
+  register: allow_initiator_hosts
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ allow_initiator_hosts }}
+  when: print_debug == true
+
+
+- name: List All Subsystems Configured in the Gateway
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} \
+    --server-port {{ item.port }} subsystem list
+  register: list_all_subsystem
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ list_all_subsystem }}
+  when: print_debug == true
+
+
+- name: Create a New NVMe Namespace
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
+    namespace add --subsystem {{ item.nqn }} --rbd-pool {{ item.pool }} --rbd-image {{ item.rbd }}
+  register: create_new_nvme_namespace
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ create_new_nvme_namespace }}
+  when: print_debug == true
+
+
+- name: List All Namespaces in the Subsystem
+  shell: |
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
+    namespace list --subsystem {{ item.nqn }}
+  register: list_all_namespace_subsystem
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ list_all_namespace_subsystem }}
+  when: print_debug == true
+
