@@ -27,16 +27,28 @@
   when: (( service is defined and service == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
+- name: Setup NVMEoF Initiator NGN
+  import_tasks: setup-nvmeof-initiator.yml
+  tags: setup, create, install
+  when: ( gateway is defined and gateway == true ) and inventory_hostname in groups['clients']
+
+
 - name: Setup NVME-OF Gateways
   import_tasks: setup-nvmeof-gateways.yml
   tags: setup, create, install
   when: (( gateway is defined and gateway == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
-- name: Install NVME-OF Clients
-  import_tasks: install-nvmeof-clients.yml
-  tags: setup, create, install
-  when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
+#- name: Install NVME-OF Clients
+#  import_tasks: install-nvmeof-clients.yml
+#  tags: setup, create, install
+#  when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
+
+
+- name: Remove NVME-OF Gateways
+  import_tasks: remove-nvmeof-gateways.yml
+  tags: remove, delete, uninstall
+  when: (( gateway is defined and gateway == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Remove NVME-OF Container Services

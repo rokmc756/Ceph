@@ -1,25 +1,11 @@
 ---
-- name: Install the NVME CLI
-  package:
-    name: nvme-cli
-    state: present
-  register: install_nvme_cli
-- debug: msg={{ install_nvme_cli }}
-
-
-- name: Load the NVMe-oF Module
-  shell: |
-    modprobe nvme-fabrics
-  register: load_nvmeof_module
-- debug: msg={{ load_nvmeof_module }}
-
-
 - name: Verify the NVMe/TCP Target is Reachable
   shell: |
-    nvme discover -t tcp -a {{ item.ipaddr }} -s 4420
+    nvme discover -t tcp -a {{ item.ipaddr }}
   register: verify_nvme_tcp_target_reachable
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ verify_nvme_tcp_target_reachable }}
+# nvme discover -t tcp -a {{ item.ipaddr }} -s 4420
 
 
 - name: Connect to the NVMe/TCP Target
@@ -28,51 +14,62 @@
   register: connect_nvme_tcp_target
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ connect_nvme_tcp_target }}
+# nvme connect -t tcp -a 192.168.1.171 -n nqn.2025-03.io.pivotal.jtest:rk9-node01
+# already connected
 
 
 # Verify that the initiator is set up correctly
-- name: List the NVMe Block Devices
+#- name: List the NVMe Block Devices
+#  shell: |
+#    nvme list
+#  register: list_nvme_block_devices
+#- debug: msg={{ list_nvme_block_devices }}
+
+
+- name: Create a Filesystem
   shell: |
-    nvme list
-  register: list_nvme_block_devices
-- debug: msg={{ list_nvme_block_devices }}
-
-
-- meta: end_play
-
-
-- name: Create a Filesystem on the Desired Device
-  shell: |
-    mkfs.ext4 NVME_NODE_PATH
+    mkfs.xfs /dev/nvme1
   register: create_filesystem
 - debug: msg={{ create_filesystem }}
 
 
-- name: Mount the Filesystem
-  shell: |
-    mkdir /mnt/nvmeof
-    mount NVME_NODE_PATH /mnt/nvmeof
-  register: mount_filesystem
-- debug: msg={{ mount_filesystem }}
+- name: Create Directory to Mount
+  file:
+    path: "/mnt/jnvme-dir01"
+    state: directory
+    owner: root
+    group: root
+    mode: 0777
+    recurse: yes
+  register: create_nvme_dir
+- debug: msg={{ create_nvme_dir }}
+  when: print_debug == true
 
 
-- name: List the NVME-oF Files
-  shell: |
-    ls /mnt/nvmeof
-  register: list_nvmeof_files
-- debug: msg={{ list_nvmeof_files }}
+- name: Mount Ephemeral Volume
+  mount:
+    path: "/mnt/jnvme-dir01"
+    src: "/dev/nvme1"
+    fstype: xfs
+    state: ephemeral
+  register: mount_nvme_dir
+- debug: msg={{ mount_nvme_dir }}
+  when: print_debug == true
 
 
-- name: Create a Text File in the Directory
-  shell: |
-    echo "Hello NVME-oF" > /mnt/nvmeof/hello.text
-  register: create_text_file
-- debug: msg={{ create_text_file }}
+- name: Conditionally Create a File if It does not Exist
+  copy:
+    content: "Hellow Ceph NVMEoF World!"
+    dest: "/mnt/jnvme-dir01/test-nvme01.txt"
+    force: no
+    owner: root
+    group: root
+    mode: 0644
 
 
 - name: Verify to Access the File
   shell: |
-    cat /mnt/nvmeof/hello.text
+    cat /mnt/jnvme-dir01/test-nvme01.txt
   register: verify_access_file
 - debug: msg={{ verify_access_file }}
 

@@ -8,7 +8,7 @@
   when: print_debug == true
 
 
-- name: Download the NVMEOF-CLI Container
+- name: Download the NVMEoF CLI Container
   shell: |
     podman pull quay.io/ceph/nvmeof-cli:latest
   register: download_nvmeof_cli_container
@@ -16,20 +16,17 @@
   when: print_debug == true
 
 
-- name: Create an NVMe Subsystem
+- name: Add an NVMEoF Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} \
-    --server-port {{ item.port }} subsystem add --subsystem {{ item.nqn }}
-  register: create_nvme_subsystem
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
+    subsystem add --subsystem {{ item.nqn }}
+  register: add_nvme_subsystem
   with_items: "{{ _nvmeof.gateways }}"
-- debug: msg={{ create_nvme_subsystem }}
+- debug: msg={{ add_nvme_subsystem }}
   when: print_debug == true
-# The subsystem NQN is a user defined string, for example nqn.2016-06.io.spdk:cnode1.
 
 
-# Define the IP port on the gateway that will process the NVME/TCP commands and I/O:
-# On the install node, get the NVME-oF Gateway name:
-- name: Get the NVME-oF Gateway Name
+- name: Get the NVMEoF Gateway Name
   shell: |
     ceph orch ps | grep nvme
   register: get_nvme_of_gw_name
@@ -40,7 +37,7 @@
 - name: Define the IP Port for the Gateway
   shell: |
     podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    listener add --subsystem {{ item.nqn }} --gateway-name {{ item.name }} --traddr {{ item.ipaddr }} --trsvcid 4420
+    listener add --subsystem {{ item.nqn }} --host-name rk9-node01 --traddr {{ item.ipaddr }} --trsvcid 4420
   register: define_ip_port_for_gateway
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ define_ip_port_for_gateway }}
@@ -50,7 +47,7 @@
 - name: Allow the Initiator Host to Connect to the Newly-Created NVMe Subsystem
   shell: |
     podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    host add --subsystem {{ item.nqn }} --host "{{ all_nqn_nodes }}"
+    host add --subsystem {{ item.nqn }} --host {{ initiator_nqn }}
   register: allow_initiator_hosts
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ allow_initiator_hosts }}
@@ -59,15 +56,14 @@
 
 - name: List All Subsystems Configured in the Gateway
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} \
-    --server-port {{ item.port }} subsystem list
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} subsystem list
   register: list_all_subsystem
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ list_all_subsystem }}
   when: print_debug == true
 
 
-- name: Create a New NVMe Namespace
+- name: Create a New NVMEoF Namespace
   shell: |
     podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
     namespace add --subsystem {{ item.nqn }} --rbd-pool {{ item.pool }} --rbd-image {{ item.rbd }}
@@ -79,30 +75,9 @@
 
 - name: List All Namespaces in the Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    namespace list --subsystem {{ item.nqn }}
+    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} namespace list --subsystem {{ item.nqn }}
   register: list_all_namespace_subsystem
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ list_all_namespace_subsystem }}
   when: print_debug == true
-
-
-
-# sh create-nvme-gateway.sh
-# WARN[0000] Using cgroups-v1 which is deprecated in favor of cgroups-v2 with Podman v5 and will be removed in a future version. Set environment variable `PODMAN_IGNORE_CGROUPSV1_WARNING` to hide this warning.
-# usage: python3 -m control.cli listener add [-h] --subsystem SUBSYSTEM --host-name HOST_NAME [--verify-host-name] --traddr TRADDR [--trsvcid TRSVCID]
-#                                            [--adrfam {ipv4,IPV4,ipv6,IPV6}] [--secure]
-# error: the following arguments are required: --host-name/-t
-
-# cat create-nvme-gateway.sh
-# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.173 --server-port 5500 \
-# listener add --subsystem nqn.2025-03.io.pivotal.jtest:rk9-node03 --gateway-name jtest-nvme-gw01 --traddr 192.168.1.173 --trsvcid 4420
-#
-#
-# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address GATEWAY_IP --server-port GATEWAY_PORT 5500 \
-# listener add --subsystem SUBSYSTEM_NQN --gateway-name GATEWAY_NAME --traddr GATEWAY_IP --trsvcid 4420
-#
-#
-# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.171 --server-port 5500 \
-# subsystem add --subsystem nqn.2025-03.io.pivotal.jtest:rk9-node01
 

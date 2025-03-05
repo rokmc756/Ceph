@@ -20,3 +20,5 @@
 - debug: msg={{ check_nvmeof_container_removed }}
   when: print_debug == true
 
+# https://www.ibm.com/docs/en/storage-ceph/7.1?topic=gateway-removing-nvme-service
+

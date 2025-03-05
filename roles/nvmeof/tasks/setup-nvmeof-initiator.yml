@@ -1,0 +1,33 @@
+---
+- name: Install the NVME CLI
+  package:
+    name: nvme-cli
+    state: present
+  register: install_nvme_cli
+- debug: msg={{ install_nvme_cli }}
+
+
+- name: Load the NVMe-oF Module
+  shell: |
+    modprobe {{ item }}
+  register: load_nvmeof_module
+  with_items:
+    - nvme-fabrics
+    - nvme-tcp
+- debug: msg={{ load_nvmeof_module }}
+
+
+- name: Get NQN from Initiator Hosts
+  shell: |
+    cat /etc/nvme/hostnqn
+  register: get_initiator_nqn
+- debug: msg={{ get_initiator_nqn }}
+
+
+- name: Set Fact for Initiator NQN
+  set_fact:
+    initiator_nqn: "{{ get_initiator_nqn.stdout }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: True
+  with_items: "{{ groups['mon'] }}"
+

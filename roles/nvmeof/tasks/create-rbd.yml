@@ -8,7 +8,7 @@
   when: print_debug == true
 
 
-- name: Obtain I/O Information for a Specific Pool or All
+- name: Obtain I/O Information for a Specific Pool
   shell: |
     ceph osd pool stats {{ item.name }}
   register: rbd_pool_stats

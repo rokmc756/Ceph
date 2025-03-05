@@ -31,6 +31,3 @@
   with_items: "{{ _rbd.pool }}"
 - debug: msg={{ enable_rbd_pool }}
   when: print_debug == true
-# ceph osd pool application enable {{ item.name }} cephfs
-# ceph osd pool application enable {{ item.name }} rgw --yes-i-really-mean-it
-
