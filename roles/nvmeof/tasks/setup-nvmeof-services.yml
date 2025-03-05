@@ -1,0 +1,19 @@
+---
+- name:  Deploy NVME-OF Container Services
+  shell: "ceph orch apply nvmeof {{ item.name }} --placement='{{ _ceph.mon_host_num }} {{ all_mon_hostnames }}'"
+  register: deploy_nvmeof_containers
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ deploy_nvmeof_containers }}
+  when: print_debug == true
+
+
+- name: Check if NVME-OF Container Services is Running Successfully
+  shell: |
+    ceph orch ps | grep nvmeof | grep running | wc -l
+  register: check_nvmeof_container_services
+  until: check_nvmeof_container_services.stdout|int == _ceph.mon_host_num|int
+  retries: 10
+  delay: 10
+- debug: msg={{ check_nvmeof_container_services }}
+  when: print_debug == true
+

@@ -5,7 +5,7 @@
 
 
 - name: Set Facts for Network and Packages Fnformations
-  import_tasks: set-block-facts.yml
+  import_tasks: set-nvmeof-facts.yml
   tags: install, uninstall, enable, disable, create, delete, prepare, setup, remove
 
 
@@ -21,8 +21,8 @@
   when: (( rbd is defined and rbd == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
-- name: Create NVME-OF Container Services
-  import_tasks: create-nvmeof-services.yml
+- name: Setup NVME-OF Container Services
+  import_tasks: setup-nvmeof-services.yml
   tags: setup, create, install
   when: (( service is defined and service == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
@@ -30,11 +30,30 @@
 - name: Setup NVME-OF Gateways
   import_tasks: setup-nvmeof-gateways.yml
   tags: setup, create, install
-  when: (( gateway is defined and gateway == true ) and ( client is not defined )) and inventory_hostname in groups['mon']
+  when: (( gateway is defined and gateway == true ) and ( client is not defined )) and inventory_hostname in groups['control']
 
 
 - name: Install NVME-OF Clients
   import_tasks: install-nvmeof-clients.yml
   tags: setup, create, install
   when: ( client is defined and client == true ) and inventory_hostname in groups['clients']
+
+
+- name: Remove NVME-OF Container Services
+  import_tasks: remove-nvmeof-services.yml
+  tags: remove, delete, uninstall
+  when: (( service is defined and service == true ) and ( client is not defined )) and inventory_hostname in groups['control']
+
+
+- name: Delete Rados Block Devices on Pools
+  import_tasks: delete-rbd.yml
+  tags: delete, uninstall
+  when: (( rbd is defined and rbd == true ) and ( client is not defined )) and inventory_hostname in groups['control']
+
+
+- name: Delete Pools for Rados Block Devices
+  import_tasks: delete-pool.yml
+  tags: delete, uninstall
+  when: (( pool is defined and pool == true ) and ( client is not defined )) and inventory_hostname in groups['control']
+
 

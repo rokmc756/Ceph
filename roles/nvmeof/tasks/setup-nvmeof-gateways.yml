@@ -1,4 +1,13 @@
 ---
+- name: Install Container Networking Plugins Pacakage
+  package:
+    name: containernetworking-plugins
+    state: present
+  register: install_container_networking_plugins
+- debug: msg={{ install_container_networking_plugins }}
+  when: print_debug == true
+
+
 - name: Download the NVMEOF-CLI Container
   shell: |
     podman pull quay.io/ceph/nvmeof-cli:latest
@@ -76,4 +85,24 @@
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ list_all_namespace_subsystem }}
   when: print_debug == true
+
+
+
+# sh create-nvme-gateway.sh
+# WARN[0000] Using cgroups-v1 which is deprecated in favor of cgroups-v2 with Podman v5 and will be removed in a future version. Set environment variable `PODMAN_IGNORE_CGROUPSV1_WARNING` to hide this warning.
+# usage: python3 -m control.cli listener add [-h] --subsystem SUBSYSTEM --host-name HOST_NAME [--verify-host-name] --traddr TRADDR [--trsvcid TRSVCID]
+#                                            [--adrfam {ipv4,IPV4,ipv6,IPV6}] [--secure]
+# error: the following arguments are required: --host-name/-t
+
+# cat create-nvme-gateway.sh
+# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.173 --server-port 5500 \
+# listener add --subsystem nqn.2025-03.io.pivotal.jtest:rk9-node03 --gateway-name jtest-nvme-gw01 --traddr 192.168.1.173 --trsvcid 4420
+#
+#
+# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address GATEWAY_IP --server-port GATEWAY_PORT 5500 \
+# listener add --subsystem SUBSYSTEM_NQN --gateway-name GATEWAY_NAME --traddr GATEWAY_IP --trsvcid 4420
+#
+#
+# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.171 --server-port 5500 \
+# subsystem add --subsystem nqn.2025-03.io.pivotal.jtest:rk9-node01
 

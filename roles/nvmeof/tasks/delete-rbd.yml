@@ -1,0 +1,20 @@
+---
+- name: Remove Block Device Image in {{ rbd.pool_name }} Pool
+  shell: |
+    rbd rm {{ item.name }} -p {{ item.pool }}
+  register: remove_rbd_image
+  ignore_errors: true
+  with_items:
+    - "{{ _rbd.image.nvmeof }}"
+- debug: msg={{ remove_rbd_image }}
+  when: print_debug == true
+
+
+- name: Obtain I/O Information for a Specific Pool or All
+  shell: |
+    ceph osd pool stats {{ item.name }}
+  register: rbd_pool_stats
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ rbd_pool_stats }}
+  when: print_debug == true
+

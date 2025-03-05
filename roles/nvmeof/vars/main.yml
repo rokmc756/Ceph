@@ -12,7 +12,7 @@ _nvmeof:
     - {
          name: "jnvme-gw01",
          pool: "nvmeof-po01",
-         rbd: "nvmeof-img01"
+         rbd: "nvmeof-img01",
          ipaddr: "192.168.1.179",
          port: "5500",
          nqn: "nqn.2025-03.io.pivotal.jtest:rk9-node07"

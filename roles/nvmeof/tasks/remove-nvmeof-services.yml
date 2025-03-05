@@ -1,0 +1,22 @@
+---
+- name: Remove NVME-OF Container Services
+  shell: |
+    ceph orch rm nvmeof.{{ item.name }}
+  register: remove_nvmeof_container_services
+  ignore_errors: true
+  with_items: "{{ _rbd.pool }}"
+- debug: msg={{ remove_nvmeof_container_services }}
+  when: print_debug == true
+
+
+- name: Check if NVME-OF Container Services is Deleted Successfully
+  shell: |
+    ceph orch ps | grep nvmeof | grep running | wc -l
+  register: check_nvmeof_container_removed
+  ignore_errors: true
+  until: check_nvmeof_container_removed.stdout|int == 0
+  retries: 10
+  delay: 10
+- debug: msg={{ check_nvmeof_container_removed }}
+  when: print_debug == true
+

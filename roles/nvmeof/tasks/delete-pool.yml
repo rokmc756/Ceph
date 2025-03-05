@@ -1,0 +1,32 @@
+---
+- name: Allow Pool to Delete
+  shell: |
+    ceph tell mon.\* injectargs '--mon-allow-pool-delete=true'
+  register: allow_delete_pool
+  ignore_errors: true
+- debug: msg={{ allow_delete_pool }}
+  when: print_debug == true
+
+
+- name: Remove RBD Pool
+  shell: |
+    ceph osd pool rm {{ item.name }} {{ item.name }} --yes-i-really-really-mean-it
+  register: remove_custom_pool
+  ignore_errors: true
+  with_items:
+    - "{{ _rbd.pool }}"
+- debug: msg={{ remove_custom_pool }}
+  when: print_debug == true
+
+
+- name: Delete RBD Users
+  shell: |
+    ceph auth del client.{{ item }}
+  register: delete_rbd_users
+  ignore_errors: true
+  with_items:
+    - "bootstrap-rbd-mirror"
+    - "bootstrap-rbd"
+- debug: msg={{ delete_rbd_users }}
+  when: print_debug == true
+

@@ -1,0 +1,8 @@
+
+
+podman login registry.access.redhat.com
+
+
+podman create network create podman
+
+
