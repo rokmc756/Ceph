@@ -73,3 +73,22 @@
   register: verify_access_file
 - debug: msg={{ verify_access_file }}
 
+
+
+# nvme discover --transport=tcp --traddr=192.168.1.171 --host-traddr=192.168.1.177 --trsvcid=8009
+# echo "--transport=tcp --traddr=192.168.1.171 --host-traddr=192.168.1.177 --trsvcid=8009" >> /etc/nvme/discovery.conf
+# nvme connect-all
+# nvme list-subsys
+# nvme-subsys2 - NQN=nqn.2025-03.io.pivotal.jtest:rk9-node01
+#               hostnqn=nqn.2014-08.org.nvmexpress:uuid:51e71342-9c6e-6d42-c7bf-0c2ba9990954
+#               iopolicy=numa
+#\
+# +- nvme2 tcp traddr=192.168.1.171,trsvcid=4420,host_traddr=192.168.1.177,src_addr=192.168.1.177 live
+#
+#nvme-subsys0 - NQN=nqn.2014-08.org.nvmexpress:uuid:52e1dac7-e6cd-c6d3-c8a9-6b3b747499d3
+#               hostnqn=nqn.2014-08.org.nvmexpress:uuid:51e71342-9c6e-6d42-c7bf-0c2ba9990954
+#               iopolicy=numa
+#\
+# +- nvme0 pcie 0000:04:00.0 live
+
+
