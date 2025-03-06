@@ -17,3 +17,8 @@
 - debug: msg={{ check_nvmeof_container_services }}
   when: print_debug == true
 
+
+# Verify that the gateway deployment process completed successfully.
+# ceph nvme-gw show nvmeof-p01
+
+

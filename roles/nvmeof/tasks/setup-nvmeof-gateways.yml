@@ -18,12 +18,22 @@
 
 - name: Add an NVMEoF Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    subsystem add --subsystem {{ item.nqn }}
+    {{ nvmeof_cli }} {{ item.ipaddr }} subsystem add --subsystem {{ item.nqn }}
   register: add_nvme_subsystem
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ add_nvme_subsystem }}
   when: print_debug == true
+
+
+- name: Create a New NVMEoF Namespace
+  shell: |
+    {{ nvmeof_cli }} {{ item.ipaddr }} namespace add --subsystem {{ item.nqn }} --rbd-pool {{ item.pool }} --rbd-image {{ item.rbd }}
+  register: create_new_nvme_namespace
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ create_new_nvme_namespace }}
+  when: print_debug == true
+# --rbd-create-image option creates rbd image not exists and it will fail if rbd image exist
+# {{ nvmeof_cli }} {{ item.ipaddr }} namespace add --subsystem {{ item.nqn }} --rbd-pool {{ item.pool }} --rbd-image jtest-nvme-rbd01 --rbd-create-image --size 4096
 
 
 - name: Get the NVMEoF Gateway Name
@@ -36,8 +46,7 @@
 
 - name: Define the IP Port for the Gateway
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    listener add --subsystem {{ item.nqn }} --host-name rk9-node01 --traddr {{ item.ipaddr }} --trsvcid 4420
+    {{ nvmeof_cli }} {{ item.ipaddr }} listener add --subsystem {{ item.nqn }} --host-name rk9-node01 --traddr {{ item.ipaddr }} --trsvcid 4420
   register: define_ip_port_for_gateway
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ define_ip_port_for_gateway }}
@@ -46,38 +55,56 @@
 
 - name: Allow the Initiator Host to Connect to the Newly-Created NVMe Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    host add --subsystem {{ item.nqn }} --host {{ initiator_nqn }}
+    {{ nvmeof_cli }} {{ item.ipaddr }} host add --subsystem {{ item.nqn }} --host '*'
   register: allow_initiator_hosts
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ allow_initiator_hosts }}
   when: print_debug == true
+  # {{ nvmeof_cli }} {{ item.ipaddr }} host add --subsystem {{ item.nqn }} --host {{ initiator_nqn }}
 
 
 - name: List All Subsystems Configured in the Gateway
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} subsystem list
+    {{ nvmeof_cli }} {{ item.ipaddr }} subsystem list
   register: list_all_subsystem
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ list_all_subsystem }}
   when: print_debug == true
 
 
-- name: Create a New NVMEoF Namespace
-  shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    namespace add --subsystem {{ item.nqn }} --rbd-pool {{ item.pool }} --rbd-image {{ item.rbd }}
-  register: create_new_nvme_namespace
-  with_items: "{{ _nvmeof.gateways }}"
-- debug: msg={{ create_new_nvme_namespace }}
-  when: print_debug == true
-
-
 - name: List All Namespaces in the Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} namespace list --subsystem {{ item.nqn }}
+    {{ nvmeof_cli }} {{ item.ipaddr }} namespace list --subsystem {{ item.nqn }}
   register: list_all_namespace_subsystem
   with_items: "{{ _nvmeof.gateways }}"
 - debug: msg={{ list_all_namespace_subsystem }}
   when: print_debug == true
+
+
+- name: List All Listener in the Subsystem
+  shell: |
+    {{ nvmeof_cli }} {{ item.ipaddr }} listener list --subsystem {{ item.nqn }}
+  register: list_all_listener_subsystem
+  with_items: "{{ _nvmeof.gateways }}"
+- debug: msg={{ list_all_listener_subsystem }}
+  when: print_debug == true
+# podman run -it quay.io/ceph/nvmeof-cli:latest --server-address 192.168.1.171 --server-port 5500 listener list --subsystem nqn.2016-06.io.spdk:ceph
+
+
+# podman run -it quay.io/ceph/nvmeof-cli:latest --server-port 5500 --server-address 192.168.1.171 gw info
+# WARN[0000] Using cgroups-v1 which is deprecated in favor of cgroups-v2 with Podman v5 and will be removed in a future version. Set environment variable `PODMAN_IGNORE_CGROUPSV1_WARNING` to hide this warning.
+# CLI's version: 1.4.3
+# Gateway's version: 1.2.5
+# Gateway's name: client.nvmeof.nvmeof-p01.rk9-node01.aslcwx
+# Gateway's host name: rk9-node01
+# Gateway's load balancing group: 1
+# Gateway's address: 192.168.1.171
+# Gateway's port: 5500
+# SPDK version: 24.01
+
+# nvme discover -t rdma -a 192.168.1.171 -s 4420 -vv
+
+# https://cephnotes.ksperis.com/blog/2024/02/15/ceph-nvmeof-vmware/
+
+# https://www.ibm.com/docs/en/storage-ceph/7.1?topic=target-managing-listeners
 

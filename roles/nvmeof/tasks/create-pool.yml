@@ -31,3 +31,4 @@
   with_items: "{{ _rbd.pool }}"
 - debug: msg={{ enable_rbd_pool }}
   when: print_debug == true
+

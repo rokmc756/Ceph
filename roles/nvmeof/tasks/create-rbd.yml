@@ -26,3 +26,16 @@
 - debug: msg={{ create_rbd_device }}
   when: print_debug == true
 
+
+- name: Set NVMeOF Container Image
+  shell: |
+    ceph config set mgr mgr/cephadm/container_image_nvmeof ""
+  register: set_nvmeof_container_image
+- debug: msg={{ set_nvmeof_container_image }}
+  when: print_debug == true
+
+
+# The following setting led to unknown status of starting nvmeof container services
+# ceph config set mgr mgr/cephadm/container_image_nvmeof quay.io/ceph/nvmeof-cli:latest
+
+

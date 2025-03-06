@@ -1,8 +1,7 @@
 ---
 - name: Get NSID
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    namespace list --subsystem {{ item.nqn }} 2> /dev/null | sed 1,6d | awk '{print $4}' | head -1
+    {{ nvmeof_cli }} {{ item.ipaddr }} namespace list --subsystem {{ item.nqn }} 2> /dev/null | sed 1,6d | awk '{print $4}' | head -1
   register: get_nsid
   ignore_errors: true
   with_items: "{{ _nvmeof.gateways }}"
@@ -11,8 +10,7 @@
 
 - name: Remove Namespace
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    namespace del --subsystem {{ item.nqn }} --nsid {{ get_nsid.results[0].stdout }}
+    {{ nvmeof_cli }} {{ item.ipaddr }} namespace del --subsystem {{ item.nqn }} --nsid {{ get_nsid.results[0].stdout }}
   register: remove_namespace
   ignore_errors: true
   with_items: "{{ _nvmeof.gateways }}"
@@ -23,8 +21,7 @@
 
 - name: Remove Listener
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    listener del --host-name rk9-node01 --subsystem {{ item.nqn }} --traddr {{ item.ipaddr }} --trsvcid 4420 --force
+    {{ nvmeof_cli }} {{ item.ipaddr }} listener del --host-name rk9-node01 --subsystem {{ item.nqn }} --traddr {{ item.ipaddr }} --trsvcid 4420 --force
   register: remove_listener
   ignore_errors: true
   with_items: "{{ _nvmeof.gateways }}"
@@ -33,11 +30,9 @@
   when: print_debug == true
 
 
-
 #- name: Remove bdevs in Target
 #  shell: |
-#    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-#    delete_bdev -b nvmeof-img01
+#    {{ nvmeof_cli }} {{ item.ipaddr }} delete_bdev -b nvmeof-img01
 #  register: remove_target_bdevs
 #  ignore_errors: true
 #  with_items: "{{ _nvmeof.gateways }}"
@@ -48,8 +43,7 @@
 
 - name: Remove Subsystem
   shell: |
-    podman run -it quay.io/ceph/nvmeof-cli:latest --server-address {{ item.ipaddr }} --server-port {{ item.port }} \
-    subsystem del --subsystem {{ item.nqn }} --force
+    {{ nvmeof_cli }} {{ item.ipaddr }} subsystem del --subsystem {{ item.nqn }} --force
   register: remove_subsystem
   ignore_errors: true
   with_items: "{{ _nvmeof.gateways }}"
